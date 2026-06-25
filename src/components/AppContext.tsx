@@ -11,7 +11,7 @@ import {
   getDoc 
 } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db, signInWithGoogle, signOutUser } from '../firebase';
+import { auth, db, signInWithGoogle, signOutUser, OperationType, handleFirestoreError } from '../firebase';
 import { Task, Habit, FocusSession, UserProfile, Subtask, ScheduleBlock, ComplexityType, CategoryType } from '../types';
 import { useToast } from './Toast';
 
@@ -188,7 +188,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         
         // Listen to User Profile doc
         const profileRef = doc(db, 'users', firebaseUser.uid);
-        const profileSnap = await getDoc(profileRef);
+        let profileSnap;
+        try {
+          profileSnap = await getDoc(profileRef);
+        } catch (error) {
+          handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
+          return;
+        }
 
         let initialProfile: UserProfile;
         if (!profileSnap.exists()) {
@@ -200,13 +206,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             totalFocusMinutes: 0,
             longestStreak: 0,
           };
-          await setDoc(profileRef, initialProfile);
+          try {
+            await setDoc(profileRef, initialProfile);
+          } catch (error) {
+            handleFirestoreError(error, OperationType.WRITE, `users/${firebaseUser.uid}`);
+            return;
+          }
         } else {
           initialProfile = profileSnap.data() as UserProfile;
         }
         setProfile(initialProfile);
 
         // Realtime sync collections
+        const tasksPath = `users/${firebaseUser.uid}/tasks`;
         const tasksQuery = query(collection(db, 'users', firebaseUser.uid, 'tasks'), orderBy('createdAt', 'desc'));
         const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
           const loadedTasks: Task[] = [];
@@ -214,8 +226,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedTasks.push({ id: docSnap.id, ...docSnap.data() } as Task);
           });
           setTasks(loadedTasks);
+        }, (error) => {
+          handleFirestoreError(error, OperationType.GET, tasksPath);
         });
 
+        const habitsPath = `users/${firebaseUser.uid}/habits`;
         const habitsQuery = query(collection(db, 'users', firebaseUser.uid, 'habits'), orderBy('createdAt', 'desc'));
         const unsubscribeHabits = onSnapshot(habitsQuery, (snapshot) => {
           const loadedHabits: Habit[] = [];
@@ -223,8 +238,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedHabits.push({ id: docSnap.id, ...docSnap.data() } as Habit);
           });
           setHabits(loadedHabits);
+        }, (error) => {
+          handleFirestoreError(error, OperationType.GET, habitsPath);
         });
 
+        const sessionsPath = `users/${firebaseUser.uid}/sessions`;
         const sessionsQuery = query(collection(db, 'users', firebaseUser.uid, 'sessions'), orderBy('createdAt', 'desc'));
         const unsubscribeSessions = onSnapshot(sessionsQuery, (snapshot) => {
           const loadedSessions: FocusSession[] = [];
@@ -232,6 +250,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedSessions.push({ id: docSnap.id, ...docSnap.data() } as FocusSession);
           });
           setSessions(loadedSessions);
+        }, (error) => {
+          handleFirestoreError(error, OperationType.GET, sessionsPath);
         });
 
         setLoading(false);
@@ -321,8 +341,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('Task added in Guest Mode!', 'success');
       return newId;
     } else if (user) {
+      const docPath = `users/${user.uid}/tasks/${newId}`;
       const docRef = doc(db, 'users', user.uid, 'tasks', newId);
-      await setDoc(docRef, newTask);
+      try {
+        await setDoc(docRef, newTask);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, docPath);
+      }
       showToast('Task synchronized to Cloud Firestore!', 'success');
       return newId;
     }
@@ -338,8 +363,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       );
       showToast('Task updated!', 'success');
     } else if (user) {
+      const docPath = `users/${user.uid}/tasks/${taskId}`;
       const docRef = doc(db, 'users', user.uid, 'tasks', taskId);
-      await updateDoc(docRef, { ...updates, updatedAt: nowStr });
+      try {
+        await updateDoc(docRef, { ...updates, updatedAt: nowStr });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
     }
   };
 
@@ -348,8 +378,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
       showToast('Task removed.', 'success');
     } else if (user) {
+      const docPath = `users/${user.uid}/tasks/${taskId}`;
       const docRef = doc(db, 'users', user.uid, 'tasks', taskId);
-      await deleteDoc(docRef);
+      try {
+        await deleteDoc(docRef);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, docPath);
+      }
       showToast('Task removed from Cloud.', 'success');
     }
   };
@@ -396,8 +431,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setHabits((prev) => [newHabit, ...prev]);
       showToast('Habit added in Guest Mode!', 'success');
     } else if (user) {
+      const docPath = `users/${user.uid}/habits/${newId}`;
       const docRef = doc(db, 'users', user.uid, 'habits', newId);
-      await setDoc(docRef, newHabit);
+      try {
+        await setDoc(docRef, newHabit);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, docPath);
+      }
       showToast('Habit synchronized to Firestore!', 'success');
     }
   };
@@ -438,12 +478,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setProfile((prev) => prev ? { ...prev, longestStreak: newStreak } : null);
       }
     } else if (user) {
+      const habitPath = `users/${user.uid}/habits/${habitId}`;
       const docRef = doc(db, 'users', user.uid, 'habits', habitId);
-      await updateDoc(docRef, { streak: newStreak, lastCompleted: newLastCompleted });
+      try {
+        await updateDoc(docRef, { streak: newStreak, lastCompleted: newLastCompleted });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, habitPath);
+      }
       
       if (newStreak > (profile?.longestStreak || 0)) {
+        const profilePath = `users/${user.uid}`;
         const profileRef = doc(db, 'users', user.uid);
-        await updateDoc(profileRef, { longestStreak: newStreak });
+        try {
+          await updateDoc(profileRef, { longestStreak: newStreak });
+        } catch (error) {
+          handleFirestoreError(error, OperationType.UPDATE, profilePath);
+        }
         setProfile((prev) => prev ? { ...prev, longestStreak: newStreak } : null);
       }
     }
@@ -454,8 +504,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setHabits((prev) => prev.filter((h) => h.id !== habitId));
       showToast('Habit removed.', 'success');
     } else if (user) {
+      const docPath = `users/${user.uid}/habits/${habitId}`;
       const docRef = doc(db, 'users', user.uid, 'habits', habitId);
-      await deleteDoc(docRef);
+      try {
+        await deleteDoc(docRef);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, docPath);
+      }
       showToast('Habit removed.', 'success');
     }
   };
@@ -478,12 +533,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       );
       showToast(`Logged ${minutes}m focus block! 🔥`, 'success');
     } else if (user) {
+      const sessionPath = `users/${user.uid}/sessions/${newId}`;
       const docRef = doc(db, 'users', user.uid, 'sessions', newId);
-      await setDoc(docRef, newSession);
+      try {
+        await setDoc(docRef, newSession);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, sessionPath);
+      }
 
+      const profilePath = `users/${user.uid}`;
       const profileRef = doc(db, 'users', user.uid);
       const currentMinutes = profile?.totalFocusMinutes || 0;
-      await updateDoc(profileRef, { totalFocusMinutes: currentMinutes + minutes });
+      try {
+        await updateDoc(profileRef, { totalFocusMinutes: currentMinutes + minutes });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, profilePath);
+      }
       
       setProfile((prev) =>
         prev ? { ...prev, totalFocusMinutes: prev.totalFocusMinutes + minutes } : null

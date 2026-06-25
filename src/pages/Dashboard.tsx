@@ -22,15 +22,23 @@ const CountUpValue: React.FC<{ end: number; duration?: number; suffix?: string }
 
   useEffect(() => {
     let startTimestamp: number | null = null;
+    let rAFId: number;
+
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       setCount(Math.floor(progress * end));
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        rAFId = window.requestAnimationFrame(step);
       }
     };
-    window.requestAnimationFrame(step);
+    rAFId = window.requestAnimationFrame(step);
+
+    return () => {
+      if (rAFId) {
+        window.cancelAnimationFrame(rAFId);
+      }
+    };
   }, [end, duration]);
 
   return <span>{count}{suffix}</span>;
@@ -279,55 +287,80 @@ export const Dashboard: React.FC = () => {
         {/* Left 2/3 Content: Crisis Zone & Recent Tasks */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* Crisis Zone Trigger Alerts (< 3 Hours remaining) */}
-          {crisisTasks.length > 0 && (
-            <motion.section
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="p-6 rounded-2xl bg-gradient-to-br from-[#FC8181]/10 to-transparent border border-[#FC8181]/20 shadow-xl relative overflow-hidden crisis-pulse"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="w-5 h-5 text-[#FC8181] animate-bounce" />
-                <h3 className="text-lg font-bold text-[#FC8181] tracking-tight">🚨 Crisis Zone: Due within 3 Hours</h3>
-              </div>
+          {/* Dedicated Crisis Zone Section */}
+          <motion.section
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className={`p-6 rounded-2xl border shadow-xl relative overflow-hidden transition-all duration-300 ${
+              crisisTasks.length > 0 
+                ? 'bg-gradient-to-br from-[#FC8181]/10 to-transparent border-[#FC8181]/20 crisis-pulse' 
+                : 'bg-[#131929] border-white/5'
+            }`}
+          >
+            {crisisTasks.length > 0 ? (
+              <>
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertTriangle className="w-5 h-5 text-[#FC8181] animate-bounce" />
+                  <h3 className="text-lg font-bold text-[#FC8181] tracking-tight font-sans">🚨 Crisis Zone: Due within 3 Hours</h3>
+                </div>
 
-              <div className="space-y-3">
-                {crisisTasks.map((task) => {
-                  const deadlineTime = new Date(task.deadline).getTime();
-                  const remainingMinutes = Math.max(0, Math.floor((deadlineTime - Date.now()) / (1000 * 60)));
-                  const mm = String(remainingMinutes % 60).padStart(2, '0');
-                  const hh = String(Math.floor(remainingMinutes / 60)).padStart(2, '0');
+                <div className="space-y-3">
+                  {crisisTasks.map((task) => {
+                    const deadlineTime = new Date(task.deadline).getTime();
+                    const remainingMinutes = Math.max(0, Math.floor((deadlineTime - Date.now()) / (1000 * 60)));
+                    const mm = String(remainingMinutes % 60).padStart(2, '0');
+                    const hh = String(Math.floor(remainingMinutes / 60)).padStart(2, '0');
 
-                  return (
-                    <div 
-                      key={task.id}
-                      className="p-4 rounded-xl bg-[#0E1320]/80 border border-[#FC8181]/30 flex items-center justify-between gap-4"
-                    >
-                      <div>
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold text-[#FC8181] bg-[#FC8181]/10 border border-[#FC8181]/20 mr-2 uppercase tracking-wider">
-                          CRISIS
-                        </span>
-                        <span className="text-sm font-bold text-[#F7FAFC] truncate">{task.title}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <div className="text-right flex items-center gap-1.5 text-[#FC8181] font-mono font-bold text-xs bg-[#FC8181]/10 px-2 py-1 rounded-lg">
-                          <Clock className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
-                          <span>{hh}:{mm} Left</span>
+                    return (
+                      <div 
+                        key={task.id}
+                        className="p-4 rounded-xl bg-[#0E1320]/80 border border-[#FC8181]/30 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      >
+                        <div>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold text-[#FC8181] bg-[#FC8181]/10 border border-[#FC8181]/20 mr-2 uppercase tracking-wider">
+                            CRISIS
+                          </span>
+                          <span className="text-sm font-bold text-[#F7FAFC] font-sans truncate">{task.title}</span>
                         </div>
-                        <button
-                          onClick={() => setSelectedCrisisTask(task)}
-                          className="px-3.5 py-1.5 rounded-lg bg-[#FC8181] hover:bg-[#e47474] text-[#080B14] text-xs font-extrabold uppercase tracking-wide cursor-pointer hover:shadow-[0_0_15px_rgba(252,129,129,0.35)] transition-all"
-                        >
-                          Crisis Help
-                        </button>
+                        
+                        <div className="flex items-center gap-3 justify-between md:justify-end">
+                          <div className="text-right flex items-center gap-1.5 text-[#FC8181] font-mono font-bold text-xs bg-[#FC8181]/10 px-2 py-1 rounded-lg">
+                            <Clock className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
+                            <span>{hh}:{mm} Left</span>
+                          </div>
+                          <button
+                            onClick={() => setSelectedCrisisTask(task)}
+                            className="px-3.5 py-1.5 rounded-lg bg-[#FC8181] hover:bg-[#e47474] text-[#080B14] text-xs font-extrabold uppercase tracking-wide cursor-pointer hover:shadow-[0_0_15px_rgba(252,129,129,0.35)] transition-all"
+                          >
+                            Crisis Help
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-3 rounded-xl bg-[#68D391]/10 text-[#68D391] mt-0.5">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#68D391] tracking-tight font-sans">🚨 Crisis Zone: Safe & Stable</h3>
+                    <p className="text-sm text-[#A0AEC0] mt-1 font-sans font-medium">
+                      All timelines are stable. No active tasks are due in the next 3 hours.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <span className="px-3 py-1.5 rounded-full text-[10px] font-mono font-bold text-[#68D391] bg-[#68D391]/10 border border-[#68D391]/20 uppercase tracking-widest">
+                    All Systems Nominal
+                  </span>
+                </div>
               </div>
-            </motion.section>
-          )}
+            )}
+          </motion.section>
 
           {/* Recent Tasks List */}
           <section className="space-y-4">

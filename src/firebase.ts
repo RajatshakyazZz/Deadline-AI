@@ -1,20 +1,11 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut as fbSignOut } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import firebaseAppletConfig from '../firebase-applet-config.json';
 
-// Graceful fallback to the auto-provisioned configuration
-const firebaseConfig = {
-  apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY || 'AIzaSyB29m4hDsHKW2kKcZJjibGBRIINURtftXg',
-  authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN || 'isometric-catalyst-dhh41.firebaseapp.com',
-  projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID || 'isometric-catalyst-dhh41',
-  storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET || 'isometric-catalyst-dhh41.firebasestorage.app',
-  messagingSenderId: (import.meta as any).env.VITE_FIREBASE_MESSAGING_SENDER_ID || '462209499148',
-  appId: (import.meta as any).env.VITE_FIREBASE_APP_ID || '1:462209499148:web:1dc2cff80a49b637b8ee29'
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseAppletConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = getFirestore(app, firebaseAppletConfig.firestoreDatabaseId);
 export const googleProvider = new GoogleAuthProvider();
 
 export const signInWithGoogle = async () => {
@@ -35,3 +26,50 @@ export const signInWithGoogle = async () => {
 export const signOutUser = async () => {
   return await fbSignOut(auth);
 };
+
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
