@@ -7,6 +7,8 @@ import { ToastProvider } from './components/Toast';
 import { AppProvider, useApp } from './components/AppContext';
 import { Layout } from './components/Layout';
 import { LandingPage } from './components/LandingPage';
+import { LogoIcon, LogoAnimated } from './components/Logo';
+import { AriaChat } from './components/chatbot/AriaChat';
 
 // Pages import
 import { Dashboard } from './pages/Dashboard';
@@ -20,23 +22,9 @@ const AppLoader: React.FC = () => {
   return (
     <div className="fixed inset-0 bg-[#080B14] flex flex-col items-center justify-center z-50 select-none">
       <div className="relative mb-6">
-        <motion.div
-          animate={{ 
-            scale: [1, 1.15, 1],
-            rotate: [0, 180, 360]
-          }}
-          transition={{ 
-            repeat: Infinity, 
-            duration: 3, 
-            ease: 'easeInOut' 
-          }}
-          className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#63B3ED] to-[#9F7AEA] shadow-[0_0_50px_rgba(159,122,234,0.4)] flex items-center justify-center"
-        >
-          <Sparkles className="w-10 h-10 text-[#080B14] stroke-[2.5]" />
-        </motion.div>
-        
-        {/* Expanding ring waves */}
-        <span className="absolute -inset-4 rounded-3xl bg-[#63B3ED]/5 animate-ping -z-10" />
+        <LogoAnimated size={64} layout="icon-only" />
+        {/* Pulsing glow while app loads */}
+        <div className="absolute inset-0 bg-[#9F7AEA]/10 filter blur-xl rounded-full animate-pulse -z-10" />
       </div>
 
       <motion.h2 
@@ -70,10 +58,15 @@ const PageNotFound: React.FC = () => {
         transition={{ duration: 0.5, type: 'spring' }}
         className="max-w-md w-full space-y-6 flex flex-col items-center"
       >
-        <div className="relative p-6 rounded-full bg-red-950/20 text-[#FC8181] mb-2">
-          <HelpCircle className="w-16 h-16 animate-bounce" />
-          <span className="absolute inset-0 rounded-full bg-[#FC8181]/5 animate-ping" />
-        </div>
+        <motion.div 
+          className="relative p-6 rounded-full bg-red-950/20 text-[#FC8181] mb-2 cursor-pointer"
+          style={{ rotate: -15 }}
+          whileHover={{ rotate: 0, scale: 1.1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+        >
+          <LogoIcon size={48} />
+          <span className="absolute inset-0 rounded-full bg-[#FC8181]/5 animate-ping -z-10" />
+        </motion.div>
 
         <h2 className="text-4xl font-extrabold font-mono text-[#FC8181]">404</h2>
         <h3 className="text-xl font-bold">Timeline Breach Detected</h3>
@@ -135,6 +128,7 @@ const MainAppRoutes: React.FC = () => {
         {/* Fallback 404 Route */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      {user && <AriaChat />}
     </BrowserRouter>
   );
 };
@@ -162,9 +156,21 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6 }}
-              className="min-h-screen bg-[#080B14]"
+              className="min-h-screen bg-[#050810] relative"
             >
-              <MainAppRoutes />
+              {/* Living Gradient Mesh Background */}
+              <div className="bg-mesh-container">
+                <div className="bg-orb bg-orb-blue" />
+                <div className="bg-orb bg-orb-purple" />
+                <div className="bg-orb bg-orb-teal" />
+              </div>
+
+              {/* Physical Noise Texture Overlay */}
+              <div className="noise-overlay" />
+
+              <div className="relative z-10">
+                <MainAppRoutes />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

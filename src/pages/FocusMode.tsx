@@ -239,7 +239,7 @@ export const FocusMode: React.FC = () => {
       {ambientMode && (
         <button
           onClick={() => setAmbientMode(false)}
-          className="absolute top-6 right-6 p-3 rounded-2xl bg-[#131929] hover:bg-[#1A2235] border border-white/5 text-[#A0AEC0] hover:text-[#F7FAFC] flex items-center gap-2 text-xs font-bold transition-all z-50 cursor-pointer shadow-lg"
+          className="absolute top-6 right-6 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[#A0AEC0] hover:text-[#F7FAFC] flex items-center gap-2 text-xs font-bold transition-all z-50 cursor-pointer shadow-lg"
         >
           <Eye className="w-4 h-4 text-[#63B3ED]" />
           <span>Exit Ambient Focus</span>
@@ -320,7 +320,7 @@ export const FocusMode: React.FC = () => {
           {/* Sound Toggle */}
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-3 rounded-xl bg-[#131929] hover:bg-[#1A2235] border border-white/5 text-[#A0AEC0] hover:text-[#F7FAFC] transition-all cursor-pointer"
+            className="p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[#A0AEC0] hover:text-[#F7FAFC] transition-all cursor-pointer"
             title={soundEnabled ? 'Mute chimes' : 'Enable chimes'}
           >
             {soundEnabled ? <Volume2 className="w-5 h-5 text-[#63B3ED]" /> : <VolumeX className="w-5 h-5" />}
@@ -341,7 +341,7 @@ export const FocusMode: React.FC = () => {
           {/* Reset */}
           <button
             onClick={handleReset}
-            className="p-3 rounded-xl bg-[#131929] hover:bg-[#1A2235] border border-white/5 text-[#A0AEC0] hover:text-[#FC8181] transition-all cursor-pointer"
+            className="p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[#A0AEC0] hover:text-[#FC8181] transition-all cursor-pointer"
             title="Reset interval"
           >
             <RotateCcw className="w-5 h-5" />
@@ -358,7 +358,7 @@ export const FocusMode: React.FC = () => {
                 setSelectedTaskId(e.target.value);
                 setEncouragement("Task targeted. Begin the clock block when ready.");
               }}
-              className="w-full max-w-xs px-4 py-3 rounded-xl bg-[#131929] border border-white/5 focus:border-[#9F7AEA]/40 focus:outline-none text-xs text-[#F7FAFC] text-center"
+              className="w-full max-w-xs px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#9F7AEA]/40 focus:outline-none text-xs text-[#F7FAFC] text-center transition-all focus:bg-white/[0.06] cursor-pointer"
             >
               <option value="">No Active Task (General Focus)</option>
               {activeTasks.map((t) => (
@@ -374,7 +374,7 @@ export const FocusMode: React.FC = () => {
         {!ambientMode && (
           <button
             onClick={() => setAmbientMode(true)}
-            className="px-4 py-2.5 rounded-xl bg-[#131929] hover:bg-[#1A2235] border border-white/5 text-xs font-bold text-[#A0AEC0] hover:text-[#F7FAFC] flex items-center gap-2 transition-all cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-bold text-[#A0AEC0] hover:text-[#F7FAFC] flex items-center gap-2 transition-all cursor-pointer"
           >
             <EyeOff className="w-4 h-4 text-[#9F7AEA]" />
             <span>Enter Ambient Zen Mode</span>
@@ -382,7 +382,7 @@ export const FocusMode: React.FC = () => {
         )}
 
         {/* Sessions indicator & AI message card */}
-        <div className="w-full p-4 rounded-2xl bg-[#131929] border border-white/5 relative overflow-hidden flex flex-col gap-2.5 text-left">
+        <div className="liquid-glass w-full p-5 relative overflow-hidden flex flex-col gap-2.5 text-left">
           <div className="flex justify-between items-center border-b border-white/5 pb-2">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A0AEC0]">Interval Status</span>
             <span className="text-xs font-bold text-[#F6AD55] flex items-center gap-1 font-mono">

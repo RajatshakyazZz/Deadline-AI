@@ -12,7 +12,13 @@ import {
   MoreVertical,
   SlidersHorizontal,
   ChevronDown,
-  BookOpen
+  BookOpen,
+  Check,
+  CalendarDays,
+  ExternalLink,
+  RefreshCw,
+  PlusCircle,
+  ArrowDown
 } from 'lucide-react';
 import { useApp } from '../components/AppContext';
 import { Task, CategoryType, ComplexityType } from '../types';
@@ -20,6 +26,7 @@ import { AddTaskModal } from '../components/AddTaskModal';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CrisisModal } from '../components/CrisisModal';
 import { callGemini } from '../services/gemini';
+import { fetchUpcomingEvents, GoogleCalendarEvent } from '../services/googleCalendar';
 
 // Self-updating Countdown Timer Component
 const CountdownTimer: React.FC<{ deadline: string }> = ({ deadline }) => {
@@ -66,7 +73,16 @@ const CountdownTimer: React.FC<{ deadline: string }> = ({ deadline }) => {
 };
 
 export const MyTasks: React.FC = () => {
-  const { tasks, completeTask, updateTask, deleteTask } = useApp();
+  const { 
+    tasks, 
+    completeTask, 
+    updateTask, 
+    deleteTask,
+    googleAccessToken,
+    connectGoogleCalendar,
+    syncTaskToGoogleCalendar,
+    importGoogleCalendarEvent
+  } = useApp();
   
   // Navigation & filter states
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'crisis'>('all');
@@ -81,6 +97,65 @@ export const MyTasks: React.FC = () => {
   // Sorting overrides (e.g. if prioritized by Gemini)
   const [prioritizedOrder, setPrioritizedOrder] = useState<string[]>([]);
   const [isSortingByAI, setIsSortingByAI] = useState(false);
+
+  // Google Calendar states
+  const [isCalendarPanelOpen, setIsCalendarPanelOpen] = useState(false);
+  const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+
+  // Load Google Calendar Events
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (!googleAccessToken) return;
+      setIsLoadingEvents(true);
+      try {
+        const events = await fetchUpcomingEvents(googleAccessToken, 5);
+        setGoogleEvents(events);
+      } catch (err) {
+        console.error('Failed to load Google Calendar events:', err);
+      } finally {
+        setIsLoadingEvents(false);
+      }
+    };
+    
+    if (googleAccessToken) {
+      loadEvents();
+    }
+  }, [googleAccessToken]);
+
+  const handleRefreshEvents = async () => {
+    if (!googleAccessToken) return;
+    setIsLoadingEvents(true);
+    try {
+      const events = await fetchUpcomingEvents(googleAccessToken, 5);
+      setGoogleEvents(events);
+    } catch (err) {
+      console.error('Failed to refresh Google Calendar events:', err);
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  };
+
+  const handleSyncAllTasksToGoogle = async () => {
+    if (!googleAccessToken) {
+      await connectGoogleCalendar();
+      return;
+    }
+    
+    setIsSyncingAll(true);
+    const unsyncedTasks = tasks.filter(t => !t.completed && !t.googleEventId);
+    
+    for (const task of unsyncedTasks) {
+      try {
+        await syncTaskToGoogleCalendar(task.id);
+      } catch (err) {
+        console.error(`Failed to sync task: ${task.title}`, err);
+      }
+    }
+    
+    setIsSyncingAll(false);
+  };
 
   // Speech helper inside the task board
   const triggerVoiceAdd = () => {
@@ -177,6 +252,19 @@ ${JSON.stringify(taskPayload, null, 2)}`;
         {/* Buttons Toolbar */}
         <div className="flex gap-2.5">
           <button
+            onClick={() => setIsCalendarPanelOpen(!isCalendarPanelOpen)}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 border transition-all active:scale-[0.98] cursor-pointer ${
+              googleAccessToken 
+                ? 'bg-emerald-950/20 border-emerald-500/30 text-[#68D391]' 
+                : 'bg-white/5 border-white/10 text-[#A0AEC0] hover:bg-white/10 hover:text-[#F7FAFC]'
+            }`}
+            title="Google Calendar Integration"
+          >
+            <CalendarDays className="w-4 h-4 text-[#63B3ED]" />
+            <span>Calendar Sync</span>
+          </button>
+
+          <button
             onClick={handleAIPrioritize}
             disabled={isSortingByAI || tasks.length === 0}
             className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-transparent transition-all active:scale-[0.98] cursor-pointer ${
@@ -191,7 +279,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
 
           <button
             onClick={triggerVoiceAdd}
-            className="p-2.5 rounded-xl bg-[#131929] hover:bg-[#1A2235] text-[#A0AEC0] hover:text-[#F7FAFC] border border-white/5 hover:border-white/10 transition-all flex items-center justify-center cursor-pointer"
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[#A0AEC0] hover:text-[#F7FAFC] border border-white/5 hover:border-white/10 transition-all flex items-center justify-center cursor-pointer"
             title="Add task via Voice"
           >
             <Mic className="w-5 h-5 text-[#63B3ED]" />
@@ -199,9 +287,168 @@ ${JSON.stringify(taskPayload, null, 2)}`;
         </div>
       </div>
 
+      {/* Google Calendar Panel */}
+      <AnimatePresence>
+        {isCalendarPanelOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="overflow-hidden"
+          >
+            <div className="liquid-glass p-6 space-y-6 rounded-2xl border border-white/10 shadow-2xl relative">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-[#4285F4]/10 border border-[#4285F4]/20">
+                    <CalendarDays className="w-5 h-5 text-[#4285F4]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#F7FAFC] font-sans">Google Calendar Sync Hub</h3>
+                    <p className="text-[11px] font-medium text-[#A0AEC0] font-sans">Sync tasks with your Google Calendar and import schedule events</p>
+                  </div>
+                </div>
+
+                {googleAccessToken && (
+                  <button
+                    onClick={handleRefreshEvents}
+                    disabled={isLoadingEvents}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-[#A0AEC0] hover:text-[#F7FAFC] transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider"
+                    title="Refresh Calendar Events"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingEvents ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
+                )}
+              </div>
+
+              {!googleAccessToken ? (
+                <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
+                  <div className="max-w-md">
+                    <p className="text-xs text-[#A0AEC0] leading-relaxed font-sans font-medium">
+                      Connect your Google Calendar to synchronize DeadlineAI tasks directly to your personal schedule, set customizable notifications, and pull in upcoming calendar events as actionable tasks.
+                    </p>
+                  </div>
+                  
+                  {/* Styled Sign In with Google Button */}
+                  <button 
+                    onClick={connectGoogleCalendar}
+                    className="gsi-material-button flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-gray-900 font-sans font-bold text-xs hover:bg-gray-10 transition-all hover:scale-[1.02] shadow-md cursor-pointer mx-auto"
+                  >
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-4 h-4">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                    </svg>
+                    <span>Connect Google Calendar</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Column 1: Import Events */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-mono font-bold uppercase text-[#63B3ED] tracking-wider flex items-center gap-1.5">
+                      <ArrowDown className="w-3.5 h-3.5 text-[#63B3ED]" />
+                      <span>Pull Events from GCal</span>
+                    </h4>
+
+                    {isLoadingEvents ? (
+                      <div className="space-y-2 py-4">
+                        <div className="h-10 bg-white/[0.02] border border-white/5 rounded-xl animate-pulse" />
+                        <div className="h-10 bg-white/[0.02] border border-white/5 rounded-xl animate-pulse" />
+                      </div>
+                    ) : googleEvents.length === 0 ? (
+                      <p className="text-xs text-[#A0AEC0] py-4 text-center bg-white/[0.01] rounded-xl border border-dashed border-white/10 font-sans font-medium">
+                        No upcoming calendar events detected in primary calendar.
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                        {googleEvents.map((evt) => {
+                          const hasImported = tasks.some(t => t.googleEventId === evt.id);
+                          const dateStr = evt.start?.dateTime 
+                            ? new Date(evt.start.dateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+                            : evt.start?.date 
+                              ? new Date(evt.start.date).toLocaleDateString()
+                              : 'All Day';
+
+                          return (
+                            <div 
+                              key={evt.id} 
+                              className="p-3 rounded-xl bg-white/[0.02] border border-white/10 hover:border-[#63B3ED]/20 hover:bg-white/[0.04] transition-all flex items-center justify-between gap-3 text-xs"
+                            >
+                              <div className="space-y-0.5 min-w-0 flex-1">
+                                <h5 className="font-bold text-[#F7FAFC] truncate font-sans">{evt.summary}</h5>
+                                <p className="text-[10px] font-mono font-bold text-[#A0AEC0]">{dateStr}</p>
+                              </div>
+
+                              <button
+                                onClick={() => importGoogleCalendarEvent(evt)}
+                                disabled={hasImported}
+                                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer ${
+                                  hasImported
+                                    ? 'bg-emerald-950/20 text-[#68D391] border border-emerald-500/20'
+                                    : 'bg-[#63B3ED]/10 border border-[#63B3ED]/20 text-[#63B3ED] hover:bg-[#63B3ED]/20'
+                                }`}
+                              >
+                                {hasImported ? (
+                                  <>
+                                    <Check className="w-3 h-3" />
+                                    <span>Imported</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <PlusCircle className="w-3 h-3" />
+                                    <span>Import</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Column 2: Push Tasks */}
+                  <div className="space-y-4 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-mono font-bold uppercase text-[#9F7AEA] tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#9F7AEA]" />
+                        <span>Push Deadlines to GCal</span>
+                      </h4>
+                      <p className="text-xs text-[#A0AEC0] leading-relaxed font-sans font-medium">
+                        Push all active, unsynced tasks as time blocks in Google Calendar. Syncing sets a 1-hour event directly preceding each task's deadline with complete AI summaries and actionable tactics.
+                      </p>
+                    </div>
+
+                    <div className="pt-4">
+                      <button
+                        onClick={handleSyncAllTasksToGoogle}
+                        disabled={isSyncingAll || tasks.filter(t => !t.completed && !t.googleEventId).length === 0}
+                        className={`w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer ${
+                          tasks.filter(t => !t.completed && !t.googleEventId).length === 0
+                            ? 'bg-white/[0.02] border border-white/5 text-[#4A5568]'
+                            : 'bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] text-[#080B14] hover:from-[#5aa2d6] hover:to-[#906cd9]'
+                        }`}
+                      >
+                        <RefreshCw className={`w-4 h-4 ${isSyncingAll ? 'animate-spin' : ''}`} />
+                        <span>
+                          {isSyncingAll ? 'Syncing...' : `Sync Active Tasks (${tasks.filter(t => !t.completed && !t.googleEventId).length} pending)`}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Tabs list with Framer Motion Sliding Indicators */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-white/5 pb-2">
-        <div className="flex gap-1 relative overflow-x-auto w-full md:w-auto">
+        <div className="flex gap-1 p-1 bg-white/[0.02] border border-white/5 rounded-2xl relative overflow-x-auto w-full md:w-auto">
           {(['all', 'active', 'completed', 'crisis'] as const).map((tab) => {
             const isActive = activeTab === tab;
             return (
@@ -216,7 +463,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
                 {isActive && (
                   <motion.div
                     layoutId="tasks-active-tab"
-                    className="absolute inset-0 bg-[#63B3ED]/5 border border-[#63B3ED]/20 rounded-xl -z-10"
+                    className="absolute inset-0 bg-[#63B3ED]/10 border border-[#63B3ED]/30 rounded-xl -z-10"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -233,7 +480,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
             placeholder="Search tasks, details..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs font-medium rounded-xl bg-[#131929] border border-white/5 focus:border-[#63B3ED]/30 focus:outline-none text-[#F7FAFC] placeholder-[#4A5568]"
+            className="w-full pl-9 pr-4 py-2.5 text-xs font-medium rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:outline-none text-[#F7FAFC] placeholder-[#4A5568] focus:bg-white/[0.05] transition-all"
           />
           <Search className="w-4 h-4 text-[#4A5568] absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
@@ -246,7 +493,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="p-12 rounded-2xl bg-[#131929] border border-white/5 flex flex-col items-center text-center max-w-md mx-auto"
+            className="liquid-glass p-12 flex flex-col items-center text-center max-w-md mx-auto"
           >
             {/* Inline SVG empty state illustration */}
             <svg className="w-32 h-32 mb-4 text-[#4A5568]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -296,8 +543,14 @@ ${JSON.stringify(taskPayload, null, 2)}`;
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ type: 'spring', damping: 25, stiffness: 220, delay: idx * 0.05 }}
-                    className={`p-5 rounded-2xl bg-[#131929] border border-white/5 relative flex flex-col justify-between overflow-hidden shadow-lg ${
-                      isCrisis && !isCompleted ? 'crisis-pulse border-[#FC8181]/40' : ''
+                    className={`liquid-glass p-5 relative flex flex-col justify-between overflow-hidden shadow-lg ${
+                      isCompleted 
+                        ? 'liquid-glass-safe' 
+                        : isCrisis 
+                          ? 'liquid-glass-crisis crisis-pulse' 
+                          : diffHours < 24 
+                            ? 'liquid-glass-warning' 
+                            : ''
                     }`}
                   >
                     {/* Top action details */}
@@ -344,7 +597,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
                       
                       {/* Countdown element */}
                       {!isCompleted ? (
-                        <div className="flex items-center justify-between bg-[#0E1320] border border-white/5 rounded-xl px-3 py-2">
+                        <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 rounded-xl px-3 py-2">
                           <div className="flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5 text-[#4A5568]" />
                             <span className="text-[10px] font-mono font-bold text-[#A0AEC0] uppercase tracking-wider">Clock</span>
@@ -352,7 +605,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
                           <CountdownTimer deadline={task.deadline} />
                         </div>
                       ) : (
-                        <div className="flex items-center justify-between bg-[#68D391]/10 border border-[#68D391]/20 rounded-xl px-3 py-2">
+                        <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 rounded-xl px-3 py-2">
                           <div className="flex items-center gap-1.5 text-[#68D391]">
                             <CheckCircle2 className="w-4 h-4" />
                             <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Completed</span>
@@ -372,12 +625,12 @@ ${JSON.stringify(taskPayload, null, 2)}`;
                           </div>
                           
                           {/* Progress track */}
-                          <div className="w-full h-1.5 bg-[#0E1320] rounded-full overflow-hidden border border-white/5 relative">
+                          <div className="w-full h-1.5 bg-white/[0.04] rounded-full overflow-hidden border border-white/5 relative">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${progressPercent}%` }}
                               transition={{ duration: 0.6, ease: 'easeOut' }}
-                              className="h-full bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA]"
+                              className="h-full bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] progress-sheen"
                             />
                           </div>
                         </div>
@@ -394,6 +647,23 @@ ${JSON.stringify(taskPayload, null, 2)}`;
                         <span>View Plan</span>
                       </button>
 
+                      <button
+                        onClick={() => syncTaskToGoogleCalendar(task.id)}
+                        disabled={isCompleted}
+                        className={`px-2.5 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          task.googleEventId 
+                            ? 'bg-emerald-950/20 text-[#68D391] border border-emerald-500/20'
+                            : 'bg-white/5 hover:bg-white/10 text-[#A0AEC0] hover:text-[#F7FAFC] border border-white/5'
+                        }`}
+                        title={task.googleEventId ? "Synced to Google Calendar" : "Sync to Google Calendar"}
+                      >
+                        {task.googleEventId ? (
+                          <Check className="w-3.5 h-3.5 text-[#68D391]" />
+                        ) : (
+                          <CalendarDays className="w-3.5 h-3.5 text-[#63B3ED]" />
+                        )}
+                      </button>
+
                       {isCrisis && !isCompleted ? (
                         <button
                           onClick={() => setSelectedCrisisTask(task)}
@@ -407,8 +677,8 @@ ${JSON.stringify(taskPayload, null, 2)}`;
                           onClick={() => completeTask(task.id)}
                           className={`px-3 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                             isCompleted 
-                              ? 'bg-[#131929] border border-[#68D391]/20 text-[#68D391]' 
-                              : 'bg-white/5 hover:bg-[#68D391]/10 text-[#A0AEC0] hover:text-[#68D391] border border-transparent hover:border-[#68D391]/15'
+                              ? 'bg-white/[0.04] border border-[#68D391]/30 text-[#68D391]' 
+                              : 'bg-white/[0.04] hover:bg-[#68D391]/10 text-[#A0AEC0] hover:text-[#68D391] border border-white/5 hover:border-[#68D391]/30'
                           }`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />

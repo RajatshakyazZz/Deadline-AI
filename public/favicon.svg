@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="favGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#63B3ED" />
+      <stop offset="100%" stopColor="#9F7AEA" />
+    </linearGradient>
+  </defs>
+  {/* Layer 1: Squircle background */}
+  <path
+    d="M24 2 C10 2 2 10 2 24 C2 38 10 46 24 46 C38 46 46 38 46 24 C46 10 38 2 24 2Z"
+    fill="url(#favGrad)"
+  />
+  {/* Layer 2: Geometric lightning bolt */}
+  <path
+    d="M27 10 L18 25 L23 25 L21 38 L30 23 L25 23 Z"
+    fill="white"
+  />
+  {/* Layer 3: Accent red dot */}
+  <circle cx="34" cy="34" r="5" fill="#FC8181" />
+  <circle cx="34" cy="34" r="2.5" fill="white" />
+</svg>

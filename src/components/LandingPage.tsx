@@ -1,169 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Timer, Flame, CheckCircle2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Zap, Sparkles, AlertTriangle, Calendar, Flame } from 'lucide-react';
 import { useApp } from './AppContext';
-import { ParticleBackground } from './ParticleBackground';
+import { LogoAnimated } from './Logo';
 
 export const LandingPage: React.FC = () => {
   const { login, loginAsGuest } = useApp();
-  const [activeFeature, setActiveFeature] = useState(0);
-
-  const features = [
-    {
-      icon: Sparkles,
-      title: "AI Prioritizer",
-      description: "Triage your tasks instantly using Gemini 2.0. Generate smart schedules, custom risk-factor audits, and action subtasks automatically.",
-      tag: "Gemini 2.0 Flash",
-      color: "from-[#63B3ED] to-[#9F7AEA]"
-    },
-    {
-      icon: Timer,
-      title: "Ticking Pomodoro",
-      description: "A minimal distraction-free focus workspace with fluid countdown indicators, calming ambient options, and instant feedback loops.",
-      tag: "Aesthetic Rhythm",
-      color: "from-[#FC8181] to-[#F6AD55]"
-    },
-    {
-      icon: Flame,
-      title: "Streak & Crisis Mode",
-      description: "When tasks are under 3 hours, real-time alerts light up in red. Hit Crisis Help for custom-synthesized emergency workflows.",
-      tag: "Fail-Safe Defense",
-      color: "from-[#F6AD55] to-[#68D391]"
-    }
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % features.length);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [features.length]);
 
   return (
-    <div className="relative min-h-screen bg-[#080B14] flex flex-col items-center justify-center overflow-hidden px-4 py-12 select-none">
-      {/* Background canvas */}
-      <ParticleBackground />
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 select-none overflow-hidden bg-transparent">
+      
+      {/* Decorative floating glass cards in background (blurred, showing mock preview) */}
+      <div className="absolute top-1/4 -left-12 w-64 h-40 rounded-2xl bg-white/[0.02] border border-white/10 backdrop-blur-md opacity-20 rotate-12 pointer-events-none hidden lg:block shadow-[0_20px_50px_rgba(0,0,0,0.3)]" />
+      <div className="absolute bottom-1/4 -right-16 w-72 h-44 rounded-2xl bg-white/[0.02] border border-white/10 backdrop-blur-md opacity-25 -rotate-6 pointer-events-none hidden lg:block shadow-[0_20px_50px_rgba(0,0,0,0.3)]" />
 
-      <div className="relative z-10 max-w-4xl w-full flex flex-col items-center text-center">
-        
-        {/* Animated Brand Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, type: 'spring' }}
-          className="mb-4 flex items-center gap-2"
-        >
-          <div className="relative p-3 rounded-2xl bg-gradient-to-br from-[#63B3ED] to-[#9F7AEA] shadow-[0_0_40px_rgba(159,122,234,0.35)]">
-            <Sparkles className="w-8 h-8 text-[#080B14]" />
-          </div>
-        </motion.div>
+      {/* Large Centered Main Liquid Glass Card */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
+        className="liquid-glass max-w-2xl w-full p-8 md:p-12 text-center flex flex-col items-center relative z-10"
+      >
+        {/* Animated logo */}
+        <LogoAnimated size={80} layout="icon-only" className="mb-6" />
 
-        <motion.h1
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.1, type: 'spring' }}
-          className="text-5xl md:text-7xl font-sans font-bold tracking-tight text-[#F7FAFC]"
-        >
+        {/* DeadlineAI Large Bold Title */}
+        <h1 className="text-4xl md:text-5xl font-sans font-extrabold tracking-tight text-white mb-4 select-none" style={{ letterSpacing: '-0.03em' }}>
           Deadline
-          <span className="bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] bg-clip-text text-transparent filter drop-shadow-[0_0_15px_rgba(99,179,237,0.3)]">
+          <span className="bg-gradient-to-br from-[#63B3ED] to-[#9F7AEA] bg-clip-text text-transparent font-extrabold ml-px">
             AI
           </span>
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-[#A0AEC0] text-lg md:text-xl font-medium mt-4 font-sans tracking-wide max-w-md"
-        >
+        {/* Tagline: display text */}
+        <p className="text-[#A0AEC0] text-base md:text-lg font-medium tracking-wide max-w-md mb-8">
           Stop missing deadlines. Start beating them.
-        </motion.p>
+        </p>
 
-        {/* Feature Cycling Carousel */}
-        <div className="w-full max-w-lg mt-12 h-64 flex flex-col justify-center">
-          <AnimatePresence mode="wait">
+        {/* Staggered Feature Chips (Glass Pills) */}
+        <div className="flex flex-wrap justify-center gap-3 mb-10">
+          {[
+            { label: "🤖 AI Task Breakdown", delay: 0.2 },
+            { label: "🚨 Crisis Mode", delay: 0.3 },
+            { label: "📅 Smart Scheduling", delay: 0.4 }
+          ].map((chip, idx) => (
             <motion.div
-              key={activeFeature}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.4 }}
-              className="p-6 rounded-2xl bg-[#131929] border border-white/5 flex flex-col items-center shadow-xl relative overflow-hidden"
+              key={idx}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: chip.delay, type: 'spring', stiffness: 200 }}
+              className="px-4 py-2 rounded-full text-xs font-semibold text-white/90 border border-white/10 backdrop-blur-md bg-white/[0.04] shadow-[0_2px_8px_rgba(0,0,0,0.15)] flex items-center gap-1.5"
+              whileHover={{ 
+                scale: 1.05, 
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                borderColor: 'rgba(255,255,255,0.2)' 
+              }}
             >
-              {/* Corner accent glow */}
-              <div className={`absolute top-0 right-0 w-24 h-24 rounded-full bg-gradient-to-br ${features[activeFeature].color} opacity-10 blur-xl`}></div>
-              
-              <div className="flex items-center gap-3 mb-3">
-                <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest text-[#63B3ED] bg-[#63B3ED]/10 border border-[#63B3ED]/20">
-                  {features[activeFeature].tag}
-                </span>
-              </div>
-
-              {React.createElement(features[activeFeature].icon, {
-                className: "w-8 h-8 text-[#9F7AEA] mb-3"
-              })}
-
-              <h3 className="text-xl font-bold text-[#F7FAFC] font-sans">
-                {features[activeFeature].title}
-              </h3>
-              
-              <p className="text-sm text-[#A0AEC0] mt-2 leading-relaxed max-w-md">
-                {features[activeFeature].description}
-              </p>
+              {chip.label}
             </motion.div>
-          </AnimatePresence>
-
-          {/* Dots Indicator */}
-          <div className="flex justify-center gap-2 mt-4">
-            {features.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveFeature(i)}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  activeFeature === i ? 'bg-[#63B3ED] w-6' : 'bg-[#4A5568]'
-                }`}
-              />
-            ))}
-          </div>
+          ))}
         </div>
 
-        {/* Auth Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5, type: 'spring' }}
-          className="mt-12 flex flex-col sm:flex-row items-center gap-4 w-full justify-center"
-        >
-          {/* Big google login */}
+        {/* Google Authentication in Apple Style (White) */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
           <button
             onClick={login}
-            className="group w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] hover:from-[#5aa2d6] hover:to-[#906cd9] text-[#080B14] font-bold flex items-center justify-center gap-3 transition-all duration-300 active:scale-[0.98] shadow-[0_4px_25px_rgba(159,122,234,0.3)] hover:shadow-[0_4px_35px_rgba(159,122,234,0.5)] cursor-pointer"
+            className="group w-full sm:w-auto px-8 py-3.5 rounded-xl bg-white text-[#0F1423] font-bold flex items-center justify-center gap-3 hover:bg-gray-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] cursor-pointer"
           >
-            <svg className="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24">
-              <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.113-6.887 4.113-4.907 0-8.905-4.013-8.905-8.9s3.998-8.9 8.905-8.9c2.313 0 4.39.84 6.015 2.451l3.111-3.11C18.215 1.012 15.345 0 12.24 0 5.48 0 0 5.48 0 12.24s5.48 12.24 12.24 12.24c6.887 0 12.24-5.48 12.24-12.24 0-.825-.098-1.613-.262-2.385H12.24z"/>
+            <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
             </svg>
-            <span className="font-sans font-bold text-base">Sign in with Google</span>
+            <span className="font-sans font-extrabold text-sm tracking-wide">Continue with Google</span>
           </button>
 
-          {/* Quick Guest login */}
+          {/* Quick Guest Demo Button */}
           <button
             onClick={loginAsGuest}
-            className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#131929] hover:bg-[#1A2235] text-[#A0AEC0] hover:text-[#F7FAFC] font-bold border border-white/5 hover:border-white/10 transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-white/80 hover:text-white font-bold border border-white/10 hover:border-white/20 hover:bg-white/[0.04] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer bg-white/[0.02]"
           >
-            <span className="font-sans font-bold text-base">Quick Guest Demo</span>
+            <span className="font-sans font-bold text-sm tracking-wide">Quick Guest Demo</span>
           </button>
-        </motion.div>
+        </div>
 
         {/* Footer info */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="text-xs text-[#4A5568] mt-16 font-mono tracking-widest uppercase"
-        >
+        <p className="text-[10px] text-gray-500 mt-12 font-mono tracking-widest uppercase">
           Vibe2Ship x Google for Developers Hackathon Entry
-        </motion.p>
-      </div>
+        </p>
+      </motion.div>
     </div>
   );
 };

@@ -22,8 +22,8 @@ const SvgCheckbox: React.FC<{ checked: boolean; onChange: () => void }> = ({ che
     <button
       type="button"
       onClick={onChange}
-      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors relative flex-shrink-0 cursor-pointer ${
-        checked ? 'bg-[#68D391] border-[#68D391]' : 'border-[#4A5568] hover:border-[#63B3ED]'
+      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all relative flex-shrink-0 cursor-pointer ${
+        checked ? 'bg-[#68D391] border-[#68D391]' : 'border-white/20 bg-white/[0.03] hover:border-[#63B3ED]'
       }`}
     >
       <AnimatePresence>
@@ -105,7 +105,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-[#0E1320] border border-white/5 w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl flex flex-col relative max-h-[90vh]"
+        className="liquid-glass border border-white/10 w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl flex flex-col relative max-h-[90vh]"
       >
         {/* Glow corner element */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#63B3ED]/5 to-[#9F7AEA]/5 blur-2xl rounded-full" />
@@ -136,7 +136,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
         </div>
 
         {/* Sliding Tabs Switcher */}
-        <div className="border-b border-white/5 px-6 flex gap-1 bg-[#131929]/40 relative overflow-x-auto w-full">
+        <div className="border-b border-white/5 px-6 flex gap-1 bg-white/[0.02] relative overflow-x-auto w-full">
           {([
             { id: 'subtasks', label: 'Subtasks', icon: CheckSquare },
             { id: 'schedule', label: 'AI Schedule', icon: Calendar },
@@ -180,7 +180,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                 className="grid grid-cols-1 md:grid-cols-3 gap-6"
               >
                 {/* SVG Progress Ring column */}
-                <div className="flex flex-col items-center justify-center text-center p-4 bg-[#131929] border border-white/5 rounded-2xl md:col-span-1">
+                <div className="flex flex-col items-center justify-center text-center p-4 bg-white/[0.03] border border-white/10 rounded-2xl md:col-span-1">
                   <span className="text-xs font-bold text-[#A0AEC0] uppercase tracking-wider mb-4 font-mono">Completion</span>
                   <div className="relative w-28 h-28 flex items-center justify-center mb-2">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -220,7 +220,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                       {task.subtasks.map((sub) => (
                         <div
                           key={sub.id}
-                          className="group flex items-start gap-3 p-3 rounded-xl bg-[#131929]/50 border border-white/5 hover:border-white/10 transition-colors relative"
+                          className="group flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/10 hover:bg-white/[0.05] transition-all relative"
                         >
                           <div className="mt-0.5">
                             <SvgCheckbox
@@ -292,7 +292,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                 </div>
 
                 {task.schedule.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-[#A0AEC0] bg-[#131929] border border-white/5 rounded-2xl">
+                  <div className="p-8 text-center text-xs text-[#A0AEC0] bg-white/[0.03] border border-white/10 rounded-2xl">
                     No custom schedule computed for this task.
                   </div>
                 ) : (
@@ -318,7 +318,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                           <div className="w-1.5 h-1.5 rounded-full bg-[#9F7AEA]" />
                         </div>
 
-                        <div className="p-4 rounded-xl bg-[#131929]/60 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div>
                             <span className="text-xs font-mono font-bold text-[#63B3ED] bg-[#63B3ED]/10 px-2 py-0.5 rounded-md mr-3">
                               {block.time}
@@ -362,7 +362,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="p-4 rounded-xl bg-[#FC8181]/5 border border-[#FC8181]/15 flex items-start gap-3 shadow-sm"
+                        className="liquid-glass liquid-glass-crisis p-4 flex items-start gap-3 shadow-sm"
                       >
                         <AlertTriangle className="w-5 h-5 text-[#FC8181] flex-shrink-0 mt-0.5 animate-pulse" />
                         <div>
@@ -385,7 +385,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                 exit={{ opacity: 0, x: 10 }}
                 className="space-y-4"
               >
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-[#9F7AEA]/10 via-[#131929] to-transparent border border-[#9F7AEA]/20 shadow-xl relative overflow-hidden">
+                <div className="liquid-glass liquid-glass-ai p-5 shadow-xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Sparkles className="w-16 h-16 text-[#9F7AEA]" />
                   </div>
@@ -402,7 +402,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
                 </div>
 
                 {/* Additional task details contextual checklist */}
-                <div className="p-4 bg-[#131929] rounded-xl border border-white/5 flex gap-3 items-center">
+                <div className="p-4 bg-white/[0.04] rounded-xl border border-white/10 flex gap-3 items-center">
                   <Info className="w-5 h-5 text-[#63B3ED] flex-shrink-0" />
                   <p className="text-xs text-[#A0AEC0] font-medium leading-relaxed">
                     This task has an urgency score of <strong className="text-[#63B3ED] font-mono font-bold">{task.urgencyScore}/10</strong>. 
@@ -416,7 +416,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose 
         </div>
 
         {/* Modal Footer actions */}
-        <div className="p-6 border-t border-white/5 bg-[#131929]/30 flex justify-end gap-3 relative z-10">
+        <div className="p-6 border-t border-white/10 bg-white/[0.02] flex justify-end gap-3 relative z-10">
           <button
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 text-xs font-bold text-[#A0AEC0] hover:text-[#F7FAFC] transition-colors cursor-pointer"

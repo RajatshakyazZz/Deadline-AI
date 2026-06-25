@@ -11,9 +11,10 @@ import {
   getDoc 
 } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db, signInWithGoogle, signOutUser, OperationType, handleFirestoreError } from '../firebase';
+import { auth, db, signInWithGoogle, signOutUser, OperationType, handleFirestoreError, getGoogleRedirectToken } from '../firebase';
 import { Task, Habit, FocusSession, UserProfile, Subtask, ScheduleBlock, ComplexityType, CategoryType } from '../types';
 import { useToast } from './Toast';
+import { createCalendarEvent } from '../services/googleCalendar';
 
 interface AppContextType {
   user: any | null;
@@ -35,6 +36,11 @@ interface AppContextType {
   toggleHabit: (habitId: string) => Promise<void>;
   deleteHabit: (habitId: string) => Promise<void>;
   addFocusSession: (minutes: number, tasksWorkedOn: string[]) => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  googleAccessToken: string | null;
+  connectGoogleCalendar: () => Promise<string | null>;
+  syncTaskToGoogleCalendar: (taskId: string) => Promise<void>;
+  importGoogleCalendarEvent: (event: any) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -143,6 +149,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return localStorage.getItem('deadlineai_is_guest') === 'true';
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
 
   // Authentication observer
   useEffect(() => {
@@ -186,34 +193,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (firebaseUser) {
         setUser(firebaseUser);
         
+        // Retrieve redirect access token for Google Workspace/Calendar if present
+        getGoogleRedirectToken().then((token) => {
+          if (token) {
+            setGoogleAccessToken(token);
+          }
+        });
+        
         // Listen to User Profile doc
         const profileRef = doc(db, 'users', firebaseUser.uid);
-        let profileSnap;
+        let initialProfile: UserProfile | null = null;
+        
         try {
-          profileSnap = await getDoc(profileRef);
-        } catch (error) {
-          handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
-          return;
-        }
-
-        let initialProfile: UserProfile;
-        if (!profileSnap.exists()) {
-          initialProfile = {
-            name: firebaseUser.displayName || 'Developer',
-            email: firebaseUser.email || '',
-            photoURL: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-            createdAt: new Date().toISOString(),
-            totalFocusMinutes: 0,
-            longestStreak: 0,
-          };
-          try {
-            await setDoc(profileRef, initialProfile);
-          } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, `users/${firebaseUser.uid}`);
-            return;
+          const profileSnap = await getDoc(profileRef);
+          if (!profileSnap.exists()) {
+            initialProfile = {
+              name: firebaseUser.displayName || 'Developer',
+              email: firebaseUser.email || '',
+              photoURL: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+              createdAt: new Date().toISOString(),
+              totalFocusMinutes: 0,
+              longestStreak: 0,
+            };
+            try {
+              await setDoc(profileRef, initialProfile);
+            } catch (error) {
+              console.warn("Failed to set new profile in Firestore (offline?):", error);
+            }
+          } else {
+            initialProfile = profileSnap.data() as UserProfile;
           }
-        } else {
-          initialProfile = profileSnap.data() as UserProfile;
+          if (initialProfile) {
+            localStorage.setItem(`deadlineai_profile_${firebaseUser.uid}`, JSON.stringify(initialProfile));
+          }
+        } catch (error) {
+          console.warn("Failed to get profile from Firestore (offline?), loading cached profile if available:", error);
+          const cached = localStorage.getItem(`deadlineai_profile_${firebaseUser.uid}`);
+          if (cached) {
+            try {
+              initialProfile = JSON.parse(cached);
+            } catch (e) {
+              console.error("Failed to parse cached profile", e);
+            }
+          }
+          if (!initialProfile) {
+            initialProfile = {
+              name: firebaseUser.displayName || 'Developer',
+              email: firebaseUser.email || '',
+              photoURL: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+              createdAt: new Date().toISOString(),
+              totalFocusMinutes: 0,
+              longestStreak: 0,
+            };
+          }
         }
         setProfile(initialProfile);
 
@@ -226,8 +258,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedTasks.push({ id: docSnap.id, ...docSnap.data() } as Task);
           });
           setTasks(loadedTasks);
+          localStorage.setItem(`deadlineai_tasks_${firebaseUser.uid}`, JSON.stringify(loadedTasks));
         }, (error) => {
-          handleFirestoreError(error, OperationType.GET, tasksPath);
+          console.warn(`Firestore tasks subscription error (${tasksPath}), loading cached:`, error);
+          const cached = localStorage.getItem(`deadlineai_tasks_${firebaseUser.uid}`);
+          if (cached) {
+            try {
+              setTasks(JSON.parse(cached));
+            } catch (e) {}
+          }
         });
 
         const habitsPath = `users/${firebaseUser.uid}/habits`;
@@ -238,8 +277,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedHabits.push({ id: docSnap.id, ...docSnap.data() } as Habit);
           });
           setHabits(loadedHabits);
+          localStorage.setItem(`deadlineai_habits_${firebaseUser.uid}`, JSON.stringify(loadedHabits));
         }, (error) => {
-          handleFirestoreError(error, OperationType.GET, habitsPath);
+          console.warn(`Firestore habits subscription error (${habitsPath}), loading cached:`, error);
+          const cached = localStorage.getItem(`deadlineai_habits_${firebaseUser.uid}`);
+          if (cached) {
+            try {
+              setHabits(JSON.parse(cached));
+            } catch (e) {}
+          }
         });
 
         const sessionsPath = `users/${firebaseUser.uid}/sessions`;
@@ -250,8 +296,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedSessions.push({ id: docSnap.id, ...docSnap.data() } as FocusSession);
           });
           setSessions(loadedSessions);
+          localStorage.setItem(`deadlineai_sessions_${firebaseUser.uid}`, JSON.stringify(loadedSessions));
         }, (error) => {
-          handleFirestoreError(error, OperationType.GET, sessionsPath);
+          console.warn(`Firestore sessions subscription error (${sessionsPath}), loading cached:`, error);
+          const cached = localStorage.getItem(`deadlineai_sessions_${firebaseUser.uid}`);
+          if (cached) {
+            try {
+              setSessions(JSON.parse(cached));
+            } catch (e) {}
+          }
         });
 
         setLoading(false);
@@ -292,7 +345,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setLoading(true);
       setIsDemo(false);
       localStorage.setItem('deadlineai_is_guest', 'false');
-      await signInWithGoogle();
+      const res = await signInWithGoogle();
+      if (res && res.token) {
+        setGoogleAccessToken(res.token);
+      }
       showToast('Successfully logged in with Google!', 'success');
     } catch (err) {
       setLoading(false);
@@ -309,6 +365,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logout = async () => {
     try {
+      setGoogleAccessToken(null);
       if (isDemo) {
         setIsDemo(false);
         localStorage.setItem('deadlineai_is_guest', 'false');
@@ -321,6 +378,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (err) {
       showToast('Sign out failed.', 'error');
+    }
+  };
+
+  // Google Calendar methods
+  const connectGoogleCalendar = async (): Promise<string | null> => {
+    try {
+      const res = await signInWithGoogle();
+      if (res && res.token) {
+        setGoogleAccessToken(res.token);
+        showToast('Google Calendar connected!', 'success');
+        return res.token;
+      }
+      return null;
+    } catch (err) {
+      console.error('Failed to connect Google Calendar:', err);
+      showToast('Failed to connect Google Calendar.', 'error');
+      return null;
+    }
+  };
+
+  const syncTaskToGoogleCalendar = async (taskId: string) => {
+    let token = googleAccessToken;
+    if (!token) {
+      token = await connectGoogleCalendar();
+    }
+    if (!token) {
+      showToast('Google Calendar authentication required.', 'error');
+      return;
+    }
+
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    try {
+      showToast('Syncing task with Google Calendar...', 'info');
+      const eventId = await createCalendarEvent(token, task);
+      await updateTask(taskId, { googleEventId: eventId });
+      showToast('Task synchronized with Google Calendar!', 'success');
+    } catch (error) {
+      console.error('Failed to sync to Google Calendar:', error);
+      showToast('Sync failed. Please ensure permission is granted.', 'error');
+    }
+  };
+
+  const importGoogleCalendarEvent = async (event: any) => {
+    const deadline = event.end?.dateTime || event.end?.date || new Date().toISOString();
+    
+    const taskData = {
+      title: event.summary || 'Google Calendar Event',
+      deadline: new Date(deadline).toISOString(),
+      category: 'personal' as CategoryType,
+      context: event.description || `Imported from Google Calendar.\nLink: ${event.htmlLink || ''}`,
+      complexity: 'medium' as ComplexityType,
+      estimatedHours: 1.0,
+      urgencyScore: 5,
+      summary: event.description ? (event.description.length > 80 ? event.description.substring(0, 80) + '...' : event.description) : 'Imported from Google Calendar',
+      subtasks: [],
+      schedule: [],
+      riskFactors: [],
+      aiRecommendation: 'Schedule focused time block prior to deadline.',
+      googleEventId: event.id
+    };
+
+    const newId = await addTask(taskData);
+    if (newId) {
+      showToast('Event successfully imported as task!', 'success');
     }
   };
 
@@ -345,10 +468,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const docRef = doc(db, 'users', user.uid, 'tasks', newId);
       try {
         await setDoc(docRef, newTask);
+        showToast('Task synchronized to Cloud Firestore!', 'success');
+
+        // Auto-sync to Google Calendar if enabled
+        if (profile?.googleCalendarSyncEnabled && googleAccessToken) {
+          try {
+            const eventId = await createCalendarEvent(googleAccessToken, newTask);
+            await updateDoc(docRef, { googleEventId: eventId, updatedAt: new Date().toISOString() });
+          } catch (gcalError) {
+            console.error('Failed to auto-sync task to Google Calendar:', gcalError);
+          }
+        }
       } catch (error) {
         handleFirestoreError(error, OperationType.WRITE, docPath);
       }
-      showToast('Task synchronized to Cloud Firestore!', 'success');
       return newId;
     }
     return '';
@@ -557,6 +690,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateProfile = async (updates: Partial<UserProfile>) => {
+    if (isDemo) {
+      setProfile((prev) => {
+        if (!prev) return null;
+        const newProfile = { ...prev, ...updates };
+        localStorage.setItem('deadlineai_demo_profile', JSON.stringify(newProfile));
+        return newProfile;
+      });
+      showToast('Profile updated!', 'success');
+    } else if (user) {
+      const docPath = `users/${user.uid}`;
+      const docRef = doc(db, 'users', user.uid);
+      try {
+        await updateDoc(docRef, updates);
+        setProfile((prev) => prev ? { ...prev, ...updates } : null);
+        showToast('Profile updated!', 'success');
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -579,6 +734,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleHabit,
         deleteHabit,
         addFocusSession,
+        updateProfile,
+        googleAccessToken,
+        connectGoogleCalendar,
+        syncTaskToGoogleCalendar,
+        importGoogleCalendarEvent,
       }}
     >
       {children}

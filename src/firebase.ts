@@ -1,17 +1,23 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut as fbSignOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut as fbSignOut, getRedirectResult } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import firebaseAppletConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseAppletConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseAppletConfig.firestoreDatabaseId);
+export const db = getFirestore(app, (firebaseAppletConfig as any).firestoreDatabaseId);
+
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('https://www.googleapis.com/auth/calendar');
 
 export const signInWithGoogle = async () => {
   try {
-    // In iframe, popup might be blocked, so we can try popup, and if it fails, try redirect or fallback
-    return await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    return {
+      user: result.user,
+      token: credential?.accessToken || null
+    };
   } catch (error: any) {
     console.error('Popup blocked or failed, attempting redirect:', error);
     try {
@@ -21,6 +27,19 @@ export const signInWithGoogle = async () => {
       throw error;
     }
   }
+};
+
+export const getGoogleRedirectToken = async () => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      return credential?.accessToken || null;
+    }
+  } catch (error) {
+    console.error('Error getting redirect result:', error);
+  }
+  return null;
 };
 
 export const signOutUser = async () => {

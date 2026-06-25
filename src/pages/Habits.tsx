@@ -135,12 +135,12 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
         <div className="lg:col-span-2 space-y-6">
           
           {/* GitHub-style Contribution grid */}
-          <section className="p-5 rounded-2xl bg-[#131929] border border-white/5 space-y-4">
+          <section className="liquid-glass p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">30-Day Completion Matrix</h3>
               <div className="flex items-center gap-1.5 text-xs text-[#A0AEC0] font-mono">
                 <span>Less</span>
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#131929]" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-white/[0.02]" />
                 <div className="w-2.5 h-2.5 rounded-sm bg-[#68D391]/30" />
                 <div className="w-2.5 h-2.5 rounded-sm bg-[#68D391]/60" />
                 <div className="w-2.5 h-2.5 rounded-sm bg-[#68D391]" />
@@ -151,7 +151,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
             {/* 30 grid cells */}
             <div className="grid grid-cols-10 sm:grid-cols-15 gap-2 justify-center">
               {contributionDays.map((day) => {
-                let cellBg = 'bg-[#131929] border-white/5';
+                let cellBg = 'bg-white/[0.02] border-white/5';
                 if (day.intensity === 1) cellBg = 'bg-[#68D391]/30 border-[#68D391]/10';
                 else if (day.intensity === 2) cellBg = 'bg-[#68D391]/60 border-[#68D391]/20';
                 else if (day.intensity === 3) cellBg = 'bg-[#68D391] border-[#68D391]/30';
@@ -171,7 +171,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
           </section>
 
           {/* Add Habit Form */}
-          <section className="p-5 rounded-2xl bg-[#131929] border border-white/5">
+          <section className="liquid-glass p-5">
             <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans mb-4">Establish Routine Anchor</h3>
             
             <form onSubmit={handleCreateHabit} className="space-y-4">
@@ -185,7 +185,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                     placeholder="e.g. Plan morning sprint list"
                     value={newHabitName}
                     onChange={(e) => setNewHabitName(e.target.value)}
-                    className="w-full px-4 py-2.5 text-xs rounded-xl bg-[#0E1320] border border-white/5 focus:border-[#63B3ED]/30 focus:outline-none text-[#F7FAFC]"
+                    className="w-full px-4 py-2.5 text-xs rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:outline-none text-[#F7FAFC] focus:bg-white/[0.06] transition-all"
                   />
                 </div>
 
@@ -204,7 +204,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                           className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
                             isSelected 
                               ? 'bg-[#63B3ED]/15 border-[#63B3ED] text-[#63B3ED]' 
-                              : 'bg-[#0E1320] border-white/5 text-[#A0AEC0] hover:text-[#F7FAFC]'
+                              : 'bg-white/[0.04] border-white/5 text-[#A0AEC0] hover:text-[#F7FAFC]'
                           }`}
                         >
                           <IconComp className="w-4 h-4" />
@@ -229,7 +229,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
           <section className="space-y-3">
             <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">Active Habits</h3>
             {habits.length === 0 ? (
-              <div className="p-8 text-center text-xs text-[#A0AEC0] bg-[#131929] border border-white/5 rounded-2xl">
+              <div className="liquid-glass p-8 text-center text-xs text-[#A0AEC0]">
                 No active habits established yet. Deploy an anchor above!
               </div>
             ) : (
@@ -243,7 +243,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                     <motion.div
                       key={h.id}
                       layoutId={h.id}
-                      className="p-4 rounded-xl bg-[#131929] border border-white/5 flex items-center justify-between gap-3 shadow-md"
+                      className="liquid-glass p-4 flex items-center justify-between gap-3 shadow-md"
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         {/* Interactive toggle block with satisfying scale bounce */}
@@ -254,7 +254,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                           className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                             isDoneToday 
                               ? 'bg-[#68D391] border-[#68D391] text-[#080B14] shadow-[0_0_15px_rgba(104,211,145,0.3)]' 
-                              : 'bg-[#0E1320] border-white/5 text-[#A0AEC0] hover:border-[#68D391]'
+                              : 'bg-white/[0.03] border-white/10 text-[#A0AEC0] hover:border-[#68D391]'
                           }`}
                         >
                           <Check className="w-4 h-4 stroke-[3]" />
@@ -270,7 +270,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
 
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {/* Custom icon */}
-                        <div className="p-2 rounded-lg bg-[#0E1320] text-[#63B3ED] border border-white/5">
+                        <div className="p-2 rounded-lg bg-white/[0.04] text-[#63B3ED] border border-white/5">
                           <IconComp className="w-4 h-4" />
                         </div>
 
@@ -294,7 +294,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
         <div className="space-y-6">
           
           {/* Day Streak & Record */}
-          <section className="p-5 rounded-2xl bg-[#131929] border border-[#F6AD55]/30 shadow-lg relative overflow-hidden flex flex-col items-center justify-center text-center">
+          <section className="liquid-glass p-5 border-[#F6AD55]/40 shadow-lg relative overflow-hidden flex flex-col items-center justify-center text-center">
             {/* Ambient flame overlay */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#F6AD55]/10 to-transparent blur-xl" />
             
@@ -316,7 +316,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
           </section>
 
           {/* Weekly completion chart (pure CSS layout) */}
-          <section className="p-5 rounded-2xl bg-[#131929] border border-white/5 space-y-4">
+          <section className="liquid-glass p-5 space-y-4">
             <h3 className="text-xs font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">Weekly Consistency Rate</h3>
             
             <div className="flex justify-between items-end h-28 pt-4">
@@ -325,12 +325,12 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                   <span className="text-[9px] font-mono text-[#A0AEC0] font-bold">{pct}%</span>
                   
                   {/* Column block */}
-                  <div className="w-full bg-[#0E1320] h-16 rounded-md overflow-hidden relative border border-white/5 flex items-end">
+                  <div className="w-full bg-white/[0.04] h-16 rounded-md overflow-hidden relative border border-white/5 flex items-end">
                     <motion.div
                       initial={{ height: 0 }}
                       animate={{ height: `${pct}%` }}
                       transition={{ duration: 1.2, ease: 'easeOut', delay: idx * 0.05 }}
-                      className="w-full bg-gradient-to-t from-[#63B3ED] to-[#9F7AEA]"
+                      className="w-full bg-gradient-to-t from-[#63B3ED] to-[#9F7AEA] progress-sheen"
                     />
                   </div>
 
@@ -341,7 +341,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
           </section>
 
           {/* Gemini Habit Progress Analysis Advice */}
-          <section className="p-5 rounded-2xl bg-gradient-to-br from-[#9F7AEA]/10 via-[#131929] to-transparent border border-[#9F7AEA]/25 relative overflow-hidden">
+          <section className="liquid-glass liquid-glass-ai p-5 relative overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4.5 h-4.5 text-[#9F7AEA] animate-pulse" />
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#9F7AEA]">Routine Analysis</span>

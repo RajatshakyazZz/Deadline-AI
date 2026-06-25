@@ -121,7 +121,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
         <button
           onClick={handleRefresh}
           disabled={loading || isRefreshing}
-          className="p-3 rounded-xl bg-[#131929] hover:bg-[#1A2235] border border-white/5 hover:border-white/10 text-[#A0AEC0] hover:text-[#F7FAFC] transition-all flex items-center gap-2 text-xs font-bold disabled:opacity-50 cursor-pointer"
+          className="p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[#A0AEC0] hover:text-[#F7FAFC] transition-all flex items-center gap-2 text-xs font-bold disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline">Refresh Briefing</span>
@@ -139,7 +139,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
             {/* Greeting card shimmer */}
-            <div className="p-6 rounded-2xl bg-[#131929] border border-white/5 md:col-span-3 space-y-4 relative overflow-hidden">
+            <div className="liquid-glass p-6 md:col-span-3 space-y-4 relative overflow-hidden">
               <div className="w-1/3 h-5 bg-white/5 rounded-full animate-pulse" />
               <div className="w-2/3 h-4 bg-white/5 rounded-full animate-pulse" />
               {/* Shimmer overlay */}
@@ -148,13 +148,13 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
 
             {/* Left large col shimmers */}
             <div className="md:col-span-2 space-y-6">
-              <div className="p-6 rounded-2xl bg-[#131929] border border-white/5 h-48 space-y-4">
+              <div className="liquid-glass p-6 h-48 space-y-4">
                 <div className="w-12 h-12 rounded-xl bg-white/5 animate-pulse" />
                 <div className="w-1/2 h-4 bg-white/5 rounded-full animate-pulse" />
                 <div className="w-full h-3 bg-white/5 rounded-full animate-pulse" />
                 <div className="w-3/4 h-3 bg-white/5 rounded-full animate-pulse" />
               </div>
-              <div className="p-6 rounded-2xl bg-[#131929] border border-white/5 h-40 space-y-4">
+              <div className="liquid-glass p-6 h-40 space-y-4">
                 <div className="w-1/4 h-4 bg-white/5 rounded-full animate-pulse" />
                 <div className="w-full h-3 bg-white/5 rounded-full animate-pulse" />
                 <div className="w-5/6 h-3 bg-white/5 rounded-full animate-pulse" />
@@ -163,12 +163,12 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
 
             {/* Right col shimmers */}
             <div className="md:col-span-1 space-y-6">
-              <div className="p-6 rounded-2xl bg-[#131929] border border-white/5 h-44 space-y-3">
+              <div className="liquid-glass p-6 h-44 space-y-3">
                 <div className="w-1/3 h-4 bg-white/5 rounded-full animate-pulse" />
                 <div className="w-full h-10 bg-white/5 rounded-xl animate-pulse" />
                 <div className="w-full h-10 bg-white/5 rounded-xl animate-pulse" />
               </div>
-              <div className="p-6 rounded-2xl bg-[#131929] border border-white/5 h-44 space-y-4">
+              <div className="liquid-glass p-6 h-44 space-y-4">
                 <div className="w-1/3 h-4 bg-white/5 rounded-full animate-pulse" />
                 <div className="w-full h-3 bg-white/5 rounded-full animate-pulse" />
                 <div className="w-2/3 h-3 bg-white/5 rounded-full animate-pulse" />
@@ -188,7 +188,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
               {/* Card 1: Greeting Card with Glowing Animated Gradient Bg */}
               <motion.div
                 variants={itemVariants}
-                className="p-6 rounded-2xl bg-gradient-to-r from-[#131929] via-[#1E2538] to-[#131929] border border-white/5 md:col-span-3 shadow-xl relative overflow-hidden"
+                className="liquid-glass liquid-glass-ai p-6 md:col-span-3 shadow-xl relative overflow-hidden"
               >
                 {/* Floating particles or gradient corner */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#63B3ED]/10 to-transparent blur-xl pointer-events-none" />
@@ -214,7 +214,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
                 {/* Card 2: Today's #1 Priority (Red Accent Glow) */}
                 <motion.div
                   variants={itemVariants}
-                  className="p-6 rounded-2xl bg-[#131929] border border-[#FC8181]/25 shadow-lg relative overflow-hidden"
+                  className="liquid-glass liquid-glass-crisis p-6 shadow-lg relative overflow-hidden"
                 >
                   {/* Warning banner background */}
                   <div className="absolute top-0 left-0 w-full h-1 bg-[#FC8181]" />
@@ -233,10 +233,10 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
                   </p>
                 </motion.div>
 
-                {/* Card 3: Week Overview */}
+                 {/* Card 3: Week Overview */}
                 <motion.div
                   variants={itemVariants}
-                  className="p-6 rounded-2xl bg-[#131929] border border-white/5 space-y-3"
+                  className="liquid-glass p-6 space-y-3"
                 >
                   <div className="flex items-center gap-2 text-[#9F7AEA]">
                     <BookOpen className="w-5 h-5" />
@@ -255,7 +255,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
                 {/* Card 4: Quick Wins < 15 Min Pill List */}
                 <motion.div
                   variants={itemVariants}
-                  className="p-5 rounded-2xl bg-[#131929] border border-white/5 space-y-3.5"
+                  className="liquid-glass p-5 space-y-3.5"
                 >
                   <div className="flex items-center justify-between border-b border-white/5 pb-2">
                     <span className="text-xs font-mono font-bold text-[#63B3ED] uppercase">Quick Wins &lt; 15m</span>
@@ -269,7 +269,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
                       {briefing.quickWins.map((win, idx) => (
                         <div 
                           key={idx}
-                          className="px-3 py-2 rounded-xl bg-[#0E1320] border border-white/5 hover:border-[#63B3ED]/20 text-xs font-semibold text-[#F7FAFC] flex items-center gap-2 transition-colors"
+                          className="px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-[#63B3ED]/20 text-xs font-semibold text-[#F7FAFC] flex items-center gap-2 transition-colors"
                         >
                           <div className="w-1.5 h-1.5 rounded-full bg-[#63B3ED]" />
                           <span className="truncate">{win}</span>
@@ -282,7 +282,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
                 {/* Card 5: Focus Suggestion (Green Accent) */}
                 <motion.div
                   variants={itemVariants}
-                  className="p-5 rounded-2xl bg-[#131929] border border-[#68D391]/25 relative overflow-hidden"
+                  className="liquid-glass liquid-glass-safe p-5 relative overflow-hidden"
                 >
                   {/* Accent border */}
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-[#68D391]" />
@@ -300,7 +300,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
                 {/* Card 6: Italic Purple Motivation Message */}
                 <motion.div
                   variants={itemVariants}
-                  className="p-5 rounded-2xl bg-gradient-to-br from-[#9F7AEA]/5 to-transparent border border-[#9F7AEA]/15 relative overflow-hidden text-center"
+                  className="liquid-glass p-5 relative overflow-hidden text-center"
                 >
                   <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#9F7AEA]">Tactical Fuel</span>
                   <p className="text-xs text-[#A0AEC0] font-bold font-sans italic leading-relaxed mt-2.5">

@@ -1,6 +1,6 @@
 {
   "name": "DeadlineAI",
-  "description": "DeadlineAI - The Last-Minute Life Saver. An AI-powered productivity app with Gemini 2.0 Flash, Pomodoro focus timer, habit tracker, and real-time Crisis Mode.",
+  "description": "DeadlineAI - The Last-Minute Life Saver. An AI-powered productivity app featuring Aria (the context-aware chatbot companion), Pomodoro focus timer, habit tracker, and real-time Crisis Mode.",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

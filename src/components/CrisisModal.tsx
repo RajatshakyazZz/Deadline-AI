@@ -10,8 +10,8 @@ const SvgCrisisCheckbox: React.FC<{ checked: boolean; onChange: () => void }> = 
     <button
       type="button"
       onClick={onChange}
-      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer ${
-        checked ? 'bg-[#FC8181] border-[#FC8181]' : 'border-[#FC8181]/40 bg-red-950/20 hover:border-[#FC8181]'
+      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all flex-shrink-0 cursor-pointer ${
+        checked ? 'bg-[#FC8181] border-[#FC8181]' : 'border-[#FC8181]/40 bg-white/[0.04] hover:border-[#FC8181]'
       }`}
     >
       <AnimatePresence>
@@ -136,7 +136,7 @@ Return ONLY valid JSON (no markdown backticks, no wrapping text):
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-[#080B14] border-2 border-[#FC8181]/40 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(252,129,129,0.3)] max-w-2xl w-full flex flex-col relative max-h-[92vh]"
+        className="liquid-glass liquid-glass-crisis border-2 border-[#FC8181]/40 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(252,129,129,0.3)] max-w-2xl w-full flex flex-col relative max-h-[92vh]"
       >
         {/* Flashing dark-red background hazard overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-red-950/10 via-transparent to-transparent pointer-events-none" />
@@ -195,7 +195,7 @@ Return ONLY valid JSON (no markdown backticks, no wrapping text):
               <div className="space-y-6">
                 
                 {/* Triage Verdict */}
-                <div className="p-4 rounded-xl bg-[#FC8181]/5 border border-[#FC8181]/15 flex items-start gap-3">
+                <div className="liquid-glass liquid-glass-crisis p-4 flex items-start gap-3">
                   <AlertOctagon className="w-5 h-5 text-[#FC8181] flex-shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-xs font-mono font-bold uppercase text-[#FC8181] tracking-wider">
@@ -221,7 +221,7 @@ Return ONLY valid JSON (no markdown backticks, no wrapping text):
                           className={`p-3.5 rounded-xl border flex items-center gap-4 transition-all ${
                             isChecked 
                               ? 'bg-[#FC8181]/5 border-[#FC8181]/30 opacity-60' 
-                              : 'bg-[#131929] border-white/5 hover:border-white/10'
+                              : 'bg-white/[0.03] border border-white/10 hover:bg-white/[0.06]'
                           }`}
                         >
                           <SvgCrisisCheckbox
@@ -248,7 +248,7 @@ Return ONLY valid JSON (no markdown backticks, no wrapping text):
                     {plan.whatToCut.map((cutItem, idx) => (
                       <li
                         key={idx}
-                        className="p-3 rounded-lg bg-red-950/20 border border-red-900/20 text-xs font-semibold text-[#A0AEC0] flex items-center gap-2"
+                        className="p-3 rounded-lg bg-white/[0.04] border border-white/10 text-xs font-semibold text-[#A0AEC0] flex items-center gap-2"
                       >
                         <Zap className="w-3.5 h-3.5 text-[#F6AD55]" />
                         <span>{cutItem}</span>
@@ -263,7 +263,7 @@ Return ONLY valid JSON (no markdown backticks, no wrapping text):
                 </div>
 
                 {/* Final tip block */}
-                <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#FC8181] bg-[#FC8181]/10 px-3 py-2 rounded-xl">
+                <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#FC8181] bg-[#FC8181]/15 border border-[#FC8181]/25 px-3 py-2.5 rounded-xl">
                   <Flame className="w-4 h-4 text-[#FC8181]" />
                   <span>Final Tip: {plan.finalTip}</span>
                 </div>

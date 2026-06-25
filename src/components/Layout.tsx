@@ -12,10 +12,13 @@ import {
   X, 
   ChevronRight, 
   Plus, 
-  Keyboard 
+  Keyboard,
+  Settings
 } from 'lucide-react';
 import { useApp } from './AppContext';
 import { AddTaskModal } from './AddTaskModal';
+import { SettingsModal } from './SettingsModal';
+import { LogoIcon, LogoFull } from './Logo';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, logout, isDemo } = useApp();
@@ -25,6 +28,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Active navigation mapping
   const menuItems = [
@@ -72,39 +77,70 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-[#080B14] text-[#F7FAFC] flex relative">
+    <div className="min-h-screen bg-transparent text-[#F7FAFC] flex relative w-full">
       
       {/* Sidebar - Desktop & Tablet */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#0E1320] border-r border-white/5 p-6 flex-shrink-0 relative z-30 justify-between">
+      <aside 
+        className={`hidden md:flex flex-col transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex-shrink-0 relative z-30 justify-between ${
+          isSidebarCollapsed ? 'w-20 p-4' : 'w-64 p-6'
+        }`}
+        style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(60px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(60px) saturate(200%)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.08)'
+        }}
+      >
         <div className="flex flex-col gap-8">
           
           {/* Brand Logo with Glow */}
-          <Link to="/dashboard" className="flex items-center gap-3 group">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#63B3ED] to-[#9F7AEA] shadow-[0_0_20px_rgba(159,122,234,0.25)] group-hover:shadow-[0_0_30px_rgba(159,122,234,0.4)] transition-all duration-300">
-              <Sparkles className="w-5 h-5 text-[#080B14]" />
-            </div>
-            <span className="text-xl font-bold font-sans tracking-tight text-[#F7FAFC]">
-              Deadline<span className="bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] bg-clip-text text-transparent">AI</span>
-            </span>
+          <Link to="/dashboard" className="flex items-center justify-center gap-3 group">
+            {isSidebarCollapsed ? (
+              <LogoIcon size={32} />
+            ) : (
+              <LogoFull size={32} />
+            )}
           </Link>
 
           {/* User Profile Info */}
           {profile && (
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#131929] border border-white/5">
-              <img 
-                referrerPolicy="no-referrer"
-                src={profile.photoURL} 
-                alt={profile.name} 
-                className="w-10 h-10 rounded-full border border-[#63B3ED]/20 flex-shrink-0"
-              />
-              <div className="overflow-hidden">
-                <p className="text-xs font-mono text-[#63B3ED] uppercase tracking-wider font-semibold">
-                  {isDemo ? 'Guest User' : 'Authenticated'}
-                </p>
-                <p className="text-sm font-bold text-[#F7FAFC] truncate max-w-[130px]" title={profile.name}>
-                  {profile.name}
-                </p>
+            <div className={`flex items-center justify-between rounded-2xl bg-white/[0.03] border border-white/5 transition-all duration-300 ${
+              isSidebarCollapsed ? 'p-1.5 justify-center cursor-pointer hover:bg-white/[0.06] hover:border-[#63B3ED]/30' : 'p-3'
+            }`}
+              onClick={isSidebarCollapsed ? () => setIsSettingsOpen(true) : undefined}
+              title={isSidebarCollapsed ? "Open Settings" : undefined}
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="relative p-0.5 rounded-full bg-gradient-to-br from-[#63B3ED] to-[#9F7AEA] flex-shrink-0">
+                  <img 
+                    referrerPolicy="no-referrer"
+                    src={profile.photoURL} 
+                    alt={profile.name} 
+                    className="w-10 h-10 rounded-full border border-black/50"
+                  />
+                </div>
+                {!isSidebarCollapsed && (
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-mono text-[#63B3ED] uppercase tracking-wider font-semibold">
+                      {isDemo ? 'Guest' : 'Authenticated'}
+                    </p>
+                    <p className="text-sm font-bold text-[#F7FAFC] truncate max-w-[100px]" title={profile.name}>
+                      {profile.name}
+                    </p>
+                  </div>
+                )}
               </div>
+
+              {!isSidebarCollapsed && (
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-[#63B3ED] transition-all cursor-pointer"
+                  title="Open Settings"
+                  id="settings-gear-sidebar"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
 
@@ -117,8 +153,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   key={item.path}
                   to={item.path}
                   className={({ isActive }) => 
-                    `relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 group ${
-                      isActive ? 'text-[#F7FAFC]' : 'text-[#A0AEC0] hover:text-[#F7FAFC] hover:bg-white/[0.02]'
+                    `relative flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'px-4'} py-3 rounded-xl text-sm font-medium transition-all duration-300 group ${
+                      isActive ? 'text-[#F7FAFC]' : 'text-[#A0AEC0] hover:text-[#F7FAFC] hover:bg-white/[0.04]'
                     }`
                   }
                 >
@@ -126,14 +162,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   {isActive && (
                     <motion.div
                       layoutId="sidebar-active-indicator"
-                      className="absolute inset-0 bg-gradient-to-r from-[#63B3ED]/10 to-[#9F7AEA]/10 border-l-2 border-[#63B3ED] rounded-xl z-0"
+                      className="absolute inset-0 bg-white/[0.08] border-l-2 border-[#63B3ED] rounded-xl z-0 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1),0_4px_12px_rgba(0,0,0,0.15)] backdrop-blur-md"
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}
                   
                   <span className="relative z-10 flex items-center gap-3">
-                    <item.icon className={`w-5 h-5 transition-colors ${isActive ? 'text-[#63B3ED]' : 'text-[#A0AEC0] group-hover:text-[#63B3ED]'}`} />
-                    <span className="font-sans font-semibold tracking-wide">{item.name}</span>
+                    <item.icon className={`w-5 h-5 transition-colors flex-shrink-0 ${isActive ? 'text-[#63B3ED]' : 'text-[#A0AEC0] group-hover:text-[#63B3ED]'}`} />
+                    {!isSidebarCollapsed && (
+                      <span className="font-sans font-semibold tracking-wide whitespace-nowrap">{item.name}</span>
+                    )}
                   </span>
                 </NavLink>
               );
@@ -141,22 +179,36 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </nav>
         </div>
 
-        {/* Sidebar Footer with Shortcuts & Logout */}
+        {/* Sidebar Footer with Collapse Toggle, Shortcuts & Logout */}
         <div className="flex flex-col gap-4">
           <button
-            onClick={() => setShowShortcutsHelp(true)}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#A0AEC0] hover:text-[#63B3ED] hover:bg-white/[0.02] transition-all cursor-pointer"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="hidden md:flex items-center justify-center p-2 rounded-xl bg-white/5 border border-white/5 text-[#A0AEC0] hover:text-[#F7FAFC] hover:bg-white/10 transition-all cursor-pointer self-center"
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            <Keyboard className="w-4 h-4" />
-            <span className="font-sans">Keyboard Shortcuts</span>
+            <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isSidebarCollapsed ? '' : 'rotate-180'}`} />
+          </button>
+
+          <button
+            onClick={() => setShowShortcutsHelp(true)}
+            className={`flex items-center gap-3 rounded-xl text-xs font-semibold text-[#A0AEC0] hover:text-[#63B3ED] hover:bg-white/[0.02] transition-all cursor-pointer ${
+              isSidebarCollapsed ? 'justify-center p-2' : 'px-4 py-2.5'
+            }`}
+            title="Keyboard Shortcuts"
+          >
+            <Keyboard className="w-4 h-4 flex-shrink-0" />
+            {!isSidebarCollapsed && <span className="font-sans">Shortcuts</span>}
           </button>
 
           <button
             onClick={logout}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-[#FC8181] hover:text-[#FC8181] hover:bg-[#FC8181]/5 border border-transparent hover:border-[#FC8181]/15 transition-all duration-300 cursor-pointer"
+            className={`flex items-center gap-3 rounded-xl text-sm font-bold text-[#FC8181] hover:text-[#FC8181] hover:bg-[#FC8181]/5 border border-transparent hover:border-[#FC8181]/15 transition-all duration-300 cursor-pointer ${
+              isSidebarCollapsed ? 'justify-center p-2' : 'px-4 py-3'
+            }`}
+            title="Sign Out"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-sans font-semibold">Sign Out</span>
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {!isSidebarCollapsed && <span className="font-sans font-semibold">Sign Out</span>}
           </button>
         </div>
       </aside>
@@ -188,10 +240,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               {/* Header inside drawer */}
               <div className="flex items-center justify-between">
                 <Link to="/dashboard" onClick={() => setIsSidebarOpen(false)} className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-[#63B3ED] to-[#9F7AEA]">
-                    <Sparkles className="w-5 h-5 text-[#080B14]" />
-                  </div>
-                  <span className="text-lg font-bold font-sans">Deadline<span className="text-[#63B3ED]">AI</span></span>
+                  <LogoFull size={32} />
                 </Link>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}
@@ -203,21 +252,34 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
               {/* User Profile inside drawer */}
               {profile && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-[#131929] border border-white/5">
-                  <img 
-                    referrerPolicy="no-referrer"
-                    src={profile.photoURL} 
-                    alt={profile.name} 
-                    className="w-10 h-10 rounded-full border border-[#63B3ED]/20"
-                  />
-                  <div className="overflow-hidden">
-                    <p className="text-xs font-mono text-[#63B3ED] uppercase tracking-wider font-semibold">
-                      {isDemo ? 'Guest User' : 'Authenticated'}
-                    </p>
-                    <p className="text-sm font-bold text-[#F7FAFC] truncate">
-                      {profile.name}
-                    </p>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[#131929] border border-white/5">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <img 
+                      referrerPolicy="no-referrer"
+                      src={profile.photoURL} 
+                      alt={profile.name} 
+                      className="w-10 h-10 rounded-full border border-[#63B3ED]/20"
+                    />
+                    <div className="overflow-hidden">
+                      <p className="text-xs font-mono text-[#63B3ED] uppercase tracking-wider font-semibold">
+                        {isDemo ? 'Guest User' : 'Authenticated'}
+                      </p>
+                      <p className="text-sm font-bold text-[#F7FAFC] truncate max-w-[130px]">
+                        {profile.name}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => {
+                      setIsSidebarOpen(false);
+                      setIsSettingsOpen(true);
+                    }}
+                    className="p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 text-gray-400 hover:text-[#63B3ED] transition-all cursor-pointer"
+                    title="Open Settings"
+                    id="settings-gear-mobile"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
                 </div>
               )}
 
@@ -273,12 +335,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
         
         {/* Breadcrumb Header */}
-        <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between bg-[#080B14]/80 backdrop-blur-md sticky top-0 z-20">
+        <header 
+          className="h-16 px-6 flex items-center justify-between sticky top-0 z-20"
+          style={{
+            background: 'rgba(255, 255, 255, 0.02)',
+            backdropFilter: 'blur(30px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+        >
           <div className="flex items-center gap-3">
             {/* Menu Hamburger on Mobile */}
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden p-2 rounded-xl bg-[#131929] border border-white/5 text-[#A0AEC0] hover:text-[#F7FAFC] transition-all"
+              className="md:hidden p-2 rounded-xl bg-white/5 border border-white/5 text-[#A0AEC0] hover:text-[#F7FAFC] hover:bg-white/10 transition-all cursor-pointer"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -293,7 +363,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           <div className="flex items-center gap-3">
             {/* Quick Stats banner or just clean space */}
-            <span className="hidden sm:inline-block px-3 py-1 rounded-full text-[10px] font-mono uppercase bg-[#131929] text-[#63B3ED] border border-white/5 tracking-wider">
+            <span className="hidden sm:inline-block px-3 py-1 rounded-full text-[10px] font-mono uppercase bg-white/[0.04] text-[#63B3ED] border border-white/10 tracking-widest">
               HACKATHON BUILD v1.0
             </span>
           </div>
@@ -320,6 +390,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <AnimatePresence>
         {isAddTaskOpen && (
           <AddTaskModal onClose={() => setIsAddTaskOpen(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Settings Modal overlay */}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <SettingsModal onClose={() => setIsSettingsOpen(false)} />
         )}
       </AnimatePresence>
 

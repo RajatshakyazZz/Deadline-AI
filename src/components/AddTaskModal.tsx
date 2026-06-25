@@ -157,7 +157,7 @@ Return EXACTLY this JSON structure:
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-        className="bg-[#0E1320] border-t sm:border border-white/5 rounded-t-3xl sm:rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl relative max-h-[92vh] flex flex-col"
+        className="liquid-glass border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl relative max-h-[92vh] flex flex-col"
       >
         {/* Skeleton Shimmer Loading State */}
         <AnimatePresence>
@@ -166,7 +166,7 @@ Return EXACTLY this JSON structure:
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[#0E1320]/95 z-50 flex flex-col items-center justify-center p-8 text-center"
+              className="absolute inset-0 liquid-glass bg-[#080b14]/90 z-50 flex flex-col items-center justify-center p-8 text-center"
             >
               {/* Spinning / pulsing loading gear */}
               <div className="relative mb-6">
@@ -242,7 +242,7 @@ Return EXACTLY this JSON structure:
               placeholder="e.g. Finish chemistry assignment, Prep quarterly taxes"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#131929] border border-white/5 focus:border-[#63B3ED]/40 focus:outline-none text-sm text-[#F7FAFC] placeholder-[#4A5568] transition-colors font-sans font-medium"
+              className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:bg-white/[0.06] focus:outline-none text-sm text-[#F7FAFC] placeholder-[#4A5568] transition-all font-sans font-medium"
             />
           </div>
 
@@ -253,7 +253,7 @@ Return EXACTLY this JSON structure:
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as CategoryType)}
-                className="w-full px-4 py-3 rounded-xl bg-[#131929] border border-white/5 focus:border-[#63B3ED]/40 focus:outline-none text-sm text-[#F7FAFC] capitalize font-sans font-medium"
+                className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:bg-white/[0.06] focus:outline-none text-sm text-[#F7FAFC] capitalize font-sans font-medium transition-all cursor-pointer"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat} className="bg-[#0E1320] text-[#F7FAFC]">
@@ -271,7 +271,7 @@ Return EXACTLY this JSON structure:
                 required
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#131929] border border-white/5 focus:border-[#63B3ED]/40 focus:outline-none text-sm text-[#F7FAFC] font-mono"
+                className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:bg-white/[0.06] focus:outline-none text-sm text-[#F7FAFC] font-mono transition-all"
               />
             </div>
           </div>
@@ -289,7 +289,7 @@ Return EXACTLY this JSON structure:
                 placeholder="List key elements, criteria, or click the mic to speak your mind..."
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
-                className="w-full pl-4 pr-12 py-3 rounded-xl bg-[#131929] border border-white/5 focus:border-[#63B3ED]/40 focus:outline-none text-sm text-[#F7FAFC] placeholder-[#4A5568] transition-colors resize-none font-sans font-medium"
+                className="w-full pl-4 pr-12 py-3 rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:bg-white/[0.06] focus:outline-none text-sm text-[#F7FAFC] placeholder-[#4A5568] transition-all resize-none font-sans font-medium"
               />
 
               {/* Speech Recognition Button */}

@@ -59,6 +59,15 @@ export async function callGemini(prompt: string, jsonMode: boolean = false): Pro
 function getMockFallbackResponse(prompt: string, jsonMode: boolean): string {
   if (!jsonMode) {
     // Normal text advice response
+    if (prompt.includes('habits') || prompt.includes('streaks') || prompt.includes('consistency')) {
+      return "Consistency is the ultimate competitive advantage. Your streak patterns show strong structural potential—maintain your morning anchors and defeat the procrastination loop today.";
+    }
+    if (prompt.includes('pomodoro') || prompt.includes('encouragement')) {
+      if (prompt.includes('BREAK')) {
+        return "Focus session complete. Stand up, stretch, and give your mind a well-deserved breathing space.";
+      }
+      return "Clock is ticking. Lock in, eliminate all side tasks, and let's make these 25 minutes absolute peak performance.";
+    }
     if (prompt.includes('emergency') || prompt.includes('CRISIS')) {
       return "Here is your urgent action plan: Focus purely on completing the core task functionality. Disable all notifications. Put your phone in another room. Do not rewrite existing working components. Allocate 15 minutes to code structure, 90 minutes to core implementation, and 15 minutes to validation. You can do this!";
     }
@@ -66,6 +75,55 @@ function getMockFallbackResponse(prompt: string, jsonMode: boolean): string {
   }
 
   // JSON mode mock responses
+  if (prompt.includes('prioritizedIds') || prompt.includes('rank them in order of absolute execution priority')) {
+    let ids: string[] = [];
+    try {
+      const match = prompt.match(/Task List:\s*(\[[\s\S]*?\])/);
+      if (match && match[1]) {
+        const parsedList = JSON.parse(match[1]);
+        if (Array.isArray(parsedList)) {
+          ids = parsedList.map(t => t.id).filter(Boolean);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return JSON.stringify({
+      prioritizedIds: ids
+    });
+  }
+
+  if (prompt.includes('morning tactical roadmap') || prompt.includes('briefing') || prompt.includes('DeadlineAI')) {
+    let firstTaskTitle = "Tackle core assignment tasks";
+    try {
+      const match = prompt.match(/Tasks:\s*(\[[\s\S]*?\])/);
+      if (match && match[1]) {
+        const parsedTasks = JSON.parse(match[1]);
+        if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {
+          firstTaskTitle = parsedTasks[0].title || firstTaskTitle;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    return JSON.stringify({
+      greeting: "Welcome back, Commander. Time to assert dominance over your timeline.",
+      primaryPriority: {
+        title: firstTaskTitle,
+        reason: "This task holds the highest complexity quotient and soonest deadline. Frontloading this today will secure your week."
+      },
+      quickWins: [
+        "Audit server credentials (5 mins)",
+        "Draft product sync design sliders (10 mins)",
+        "Review habit completion metrics (3 mins)"
+      ],
+      focusSuggestion: "Target 2 Focus blocks (50 mins total) for " + firstTaskTitle + " today. Break immediately after.",
+      weekOverview: "Your workload is heavily weighted toward high-complexity tasks. Focus strictly on executing milestones rather than multi-tasking.",
+      motivation: "Procrastination is the arrogant assumption that you will have the same amount of time tomorrow as you do today. Beat the ticking clock."
+    });
+  }
+
   if (prompt.includes('Analyze this task') || prompt.includes('complexity')) {
     // Determine category based on keywords
     let category = 'assignment';

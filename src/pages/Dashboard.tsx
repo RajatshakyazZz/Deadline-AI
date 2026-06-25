@@ -138,8 +138,7 @@ export const Dashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.05 }}
-            whileHover={{ y: -4, borderColor: 'rgba(99, 179, 237, 0.3)' }}
-            className="p-5 rounded-2xl bg-[#131929] border border-white/5 flex flex-col justify-between"
+            className="liquid-glass p-5 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#A0AEC0] uppercase font-mono tracking-wider">Active Tasks</span>
@@ -160,8 +159,7 @@ export const Dashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            whileHover={{ y: -4, borderColor: 'rgba(104, 211, 145, 0.3)' }}
-            className="p-5 rounded-2xl bg-[#131929] border border-white/5 flex flex-col justify-between"
+            className="liquid-glass p-5 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#A0AEC0] uppercase font-mono tracking-wider">Completed Today</span>
@@ -182,8 +180,7 @@ export const Dashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.15 }}
-            whileHover={{ y: -4, borderColor: 'rgba(246, 173, 85, 0.3)' }}
-            className="p-5 rounded-2xl bg-[#131929] border border-white/5 flex flex-col justify-between"
+            className="liquid-glass p-5 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#A0AEC0] uppercase font-mono tracking-wider">Day Streak</span>
@@ -204,8 +201,7 @@ export const Dashboard: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            whileHover={{ y: -4, borderColor: 'rgba(159, 122, 234, 0.3)' }}
-            className="p-5 rounded-2xl bg-[#131929] border border-white/5 flex flex-col justify-between"
+            className="liquid-glass p-5 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#A0AEC0] uppercase font-mono tracking-wider">Focus Hours</span>
@@ -223,12 +219,12 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Circular SVG Completion Ring */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-          className="p-6 rounded-2xl bg-[#131929] border border-white/5 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden"
-        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.25 }}
+            className="liquid-glass p-6 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden"
+          >
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA]" />
           <span className="text-xs font-bold text-[#A0AEC0] uppercase font-mono tracking-wider mb-3">Today's Target Rate</span>
           
@@ -291,10 +287,10 @@ export const Dashboard: React.FC = () => {
           <motion.section
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className={`p-6 rounded-2xl border shadow-xl relative overflow-hidden transition-all duration-300 ${
+            className={`p-6 shadow-xl relative overflow-hidden ${
               crisisTasks.length > 0 
-                ? 'bg-gradient-to-br from-[#FC8181]/10 to-transparent border-[#FC8181]/20 crisis-pulse' 
-                : 'bg-[#131929] border-white/5'
+                ? 'liquid-glass liquid-glass-crisis crisis-pulse' 
+                : 'liquid-glass'
             }`}
           >
             {crisisTasks.length > 0 ? (
@@ -314,7 +310,7 @@ export const Dashboard: React.FC = () => {
                     return (
                       <div 
                         key={task.id}
-                        className="p-4 rounded-xl bg-[#0E1320]/80 border border-[#FC8181]/30 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                        className="p-4 rounded-xl bg-white/[0.04] border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4"
                       >
                         <div>
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold text-[#FC8181] bg-[#FC8181]/10 border border-[#FC8181]/20 mr-2 uppercase tracking-wider">
@@ -373,7 +369,7 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {recentTasks.length === 0 ? (
-              <div className="p-8 rounded-2xl bg-[#131929] border border-white/5 text-center text-sm text-[#A0AEC0]">
+              <div className="liquid-glass p-8 text-center text-sm text-[#A0AEC0]">
                 No active tasks logged yet. Hit the FAB + to launch your first task!
               </div>
             ) : (
@@ -384,8 +380,7 @@ export const Dashboard: React.FC = () => {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.1 }}
-                    whileHover={{ x: 3, borderColor: 'rgba(255,255,255,0.12)' }}
-                    className="p-4 rounded-xl bg-[#131929] border border-white/5 flex items-center justify-between gap-4 transition-colors cursor-pointer"
+                    className="p-4 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between gap-4 transition-all duration-300 cursor-pointer hover:bg-white/[0.06] hover:border-white/15"
                     onClick={() => setSelectedDetailTask(task)}
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
@@ -442,13 +437,7 @@ export const Dashboard: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.3 }}
             onClick={() => navigate('/briefing')}
-            className="p-5 rounded-2xl bg-[#131929] border border-transparent bg-gradient-to-r from-[#131929] to-[#1a2235] hover:shadow-[0_0_20px_rgba(159,122,234,0.15)] relative cursor-pointer group"
-            style={{
-              borderImage: 'linear-gradient(135deg, #63B3ED, #9F7AEA) 1',
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              borderRadius: '16px' // CSS workaround for border-image with border-radius
-            }}
+            className="liquid-glass liquid-glass-ai p-5 cursor-pointer group"
           >
             <div className="flex items-center justify-between mb-3">
               <span className="px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest text-[#9F7AEA] bg-[#9F7AEA]/10 border border-[#9F7AEA]/20">
@@ -471,7 +460,7 @@ export const Dashboard: React.FC = () => {
           </motion.div>
 
           {/* 7-Day Habit Streak Mini-Calendar */}
-          <section className="p-5 rounded-2xl bg-[#131929] border border-white/5 space-y-4">
+          <section className="liquid-glass p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">Streak Mini-Calendar</h3>
               <span className="text-[10px] font-mono text-[#F6AD55] font-bold flex items-center gap-1">
@@ -487,8 +476,8 @@ export const Dashboard: React.FC = () => {
                     day.active 
                       ? 'bg-gradient-to-br from-[#63B3ED]/15 to-[#9F7AEA]/15 border-[#63B3ED] text-[#F7FAFC]' 
                       : day.completed 
-                        ? 'bg-[#1A2235]/60 border-[#F6AD55]/30 text-[#F6AD55]'
-                        : 'bg-[#0E1320] border-transparent text-[#A0AEC0]'
+                        ? 'bg-white/[0.06] border-[#F6AD55]/40 text-[#F6AD55]'
+                        : 'bg-white/[0.02] border-transparent text-[#A0AEC0]'
                   }`}
                   title={`${day.dateStr} - Habits completed: ${day.completed ? 'Yes' : 'No'}`}
                 >
@@ -509,7 +498,7 @@ export const Dashboard: React.FC = () => {
 
             <button
               onClick={() => navigate('/habits')}
-              className="w-full mt-2 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-[#A0AEC0] hover:text-[#F7FAFC] transition-all border border-transparent hover:border-white/5 cursor-pointer"
+              className="w-full mt-2 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-bold text-[#A0AEC0] hover:text-[#F7FAFC] transition-all border border-white/5 hover:border-white/10 cursor-pointer"
             >
               Open Habits Console
             </button>

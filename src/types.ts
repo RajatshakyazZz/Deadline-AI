@@ -9,6 +9,7 @@ export interface UserProfile {
   createdAt: string;
   totalFocusMinutes: number;
   longestStreak: number;
+  googleCalendarSyncEnabled?: boolean;
 }
 
 export interface Subtask {
@@ -49,6 +50,7 @@ export interface Task {
   aiRecommendation: string;
   completed: boolean;
   completedAt?: string | null;
+  googleEventId?: string;
   createdAt: string;
   updatedAt: string;
 }
