@@ -25,6 +25,178 @@ export const FocusMode: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const timerIntervalRef = useRef<any>(null);
 
+  // Ambient Focus soundtrack states & refs
+  const [ambientAudioType, setAmbientAudioType] = useState<'none' | 'white-noise' | 'lofi-beats'>('none');
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const whiteNoiseNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const whiteNoiseGainRef = useRef<GainNode | null>(null);
+  const lofiIntervalRef = useRef<any>(null);
+
+  const stopAmbientSound = () => {
+    if (whiteNoiseNodeRef.current) {
+      try {
+        whiteNoiseNodeRef.current.stop();
+      } catch {}
+      whiteNoiseNodeRef.current = null;
+    }
+    if (lofiIntervalRef.current) {
+      clearInterval(lofiIntervalRef.current);
+      lofiIntervalRef.current = null;
+    }
+  };
+
+  const startWhiteNoise = (ctx: AudioContext) => {
+    stopAmbientSound();
+    
+    const bufferSize = 2 * ctx.sampleRate;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+    
+    const whiteNoise = ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(650, ctx.currentTime);
+    
+    const gainNode = ctx.createGain();
+    gainNode.gain.setValueAtTime(0.04, ctx.currentTime);
+    
+    whiteNoise.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    whiteNoise.start();
+    
+    whiteNoiseNodeRef.current = whiteNoise;
+    whiteNoiseGainRef.current = gainNode;
+  };
+
+  const startLofiBeats = (ctx: AudioContext) => {
+    stopAmbientSound();
+    
+    let beatCount = 0;
+    
+    const playBeat = () => {
+      const now = ctx.currentTime;
+      
+      if (beatCount % 4 === 0 || beatCount % 4 === 2) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.25);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
+      
+      if (beatCount % 4 === 1) {
+        const chords = beatCount % 8 === 1 
+          ? [196.00, 246.94, 293.66, 392.00] 
+          : [130.81, 164.81, 196.00, 261.63];
+          
+        chords.forEach(f => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.connect(gain);
+          
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(400, now);
+          
+          gain.connect(filter);
+          filter.connect(ctx.destination);
+          
+          osc.frequency.setValueAtTime(f, now);
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.015, now + 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+          osc.start(now);
+          osc.stop(now + 1.3);
+        });
+      }
+
+      if (beatCount % 4 === 2) {
+        const snareBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
+        const output = snareBuffer.getChannelData(0);
+        for (let i = 0; i < snareBuffer.length; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        const noiseNode = ctx.createBufferSource();
+        noiseNode.buffer = snareBuffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(950, now);
+        
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0.02, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        
+        noiseNode.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        noiseNode.start(now);
+        noiseNode.stop(now + 0.13);
+      }
+      
+      if (beatCount % 2 === 1) {
+        const hatOsc = ctx.createOscillator();
+        const hatGain = ctx.createGain();
+        hatOsc.type = 'triangle';
+        hatOsc.connect(hatGain);
+        hatGain.connect(ctx.destination);
+        hatOsc.frequency.setValueAtTime(6500, now);
+        hatGain.gain.setValueAtTime(0.004, now);
+        hatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        hatOsc.start(now);
+        hatOsc.stop(now + 0.05);
+      }
+      
+      beatCount = (beatCount + 1) % 16;
+    };
+    
+    playBeat();
+    lofiIntervalRef.current = setInterval(playBeat, 750);
+  };
+
+  useEffect(() => {
+    if (isRunning && soundEnabled) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new AudioCtx();
+        }
+        const ctx = audioCtxRef.current;
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        
+        if (ambientAudioType === 'white-noise') {
+          startWhiteNoise(ctx);
+        } else if (ambientAudioType === 'lofi-beats') {
+          startLofiBeats(ctx);
+        } else {
+          stopAmbientSound();
+        }
+      }
+    } else {
+      stopAmbientSound();
+    }
+
+    return () => {
+      stopAmbientSound();
+    };
+  }, [isRunning, soundEnabled, ambientAudioType]);
+
   const activeTasks = tasks.filter(t => !t.completed);
 
   // Sound effect synthesizer (Web Audio API)
@@ -346,6 +518,40 @@ export const FocusMode: React.FC = () => {
           >
             <RotateCcw className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Ambient Soundtrack Selector */}
+        <div className="w-full space-y-2 flex flex-col items-center">
+          <span className="text-[10px] font-mono font-bold text-[#A0AEC0] uppercase tracking-wider flex items-center gap-1">
+            <Volume2 className="w-3 h-3 text-[#63B3ED]" /> Ambient Focus Track
+          </span>
+          <div className="flex gap-1.5 p-1 bg-white/[0.02] border border-white/5 rounded-xl">
+            {(['none', 'white-noise', 'lofi-beats'] as const).map((track) => {
+              const isActive = ambientAudioType === track;
+              let label = 'No Soundtrack';
+              if (track === 'white-noise') label = 'Deep Focus 🌫️';
+              if (track === 'lofi-beats') label = 'Light Flow 🎧';
+              
+              return (
+                <button
+                  key={track}
+                  onClick={() => {
+                    setAmbientAudioType(track);
+                    if (!soundEnabled) {
+                      setSoundEnabled(true);
+                    }
+                  }}
+                  className={`px-3.5 py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#63B3ED]/15 border border-[#63B3ED]/30 text-[#63B3ED]'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Active Task Selector Selector */}

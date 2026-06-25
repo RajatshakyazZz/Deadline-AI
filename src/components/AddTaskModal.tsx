@@ -47,7 +47,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({ onClose }) => {
 
   // Loading steps text sequence for the Gemini analysis skeleton
   const analysisMessages = [
-    "Establishing neural pipeline to Gemini 2.0...",
+    "Establishing neural pipeline to Gemini 3.5...",
     "Estimating total execution duration hours...",
     "Assessing urgency vectors & risk factors...",
     "Synthesizing 4-step tactical subtask list...",

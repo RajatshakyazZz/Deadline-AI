@@ -693,6 +693,68 @@ export const AriaChat: React.FC = () => {
               />
             </div>
 
+            {/* VOICE LISTENING HUD OVERLAY */}
+            <AnimatePresence>
+              {isListening && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 30, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                  className="absolute bottom-[84px] left-3 right-3 p-4 bg-[#080D1A]/95 border border-[#63B3ED]/30 rounded-2xl backdrop-blur-3xl shadow-[0_8px_32px_rgba(99,179,237,0.15)] z-[100]"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                      </span>
+                      <span className="text-xs font-bold text-[#F7FAFC] uppercase tracking-wider font-mono">Aria is Listening...</span>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        if (recognitionRef.current) recognitionRef.current.stop();
+                      }}
+                      className="text-gray-400 hover:text-white text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 hover:bg-white/10 cursor-pointer transition-all active:scale-95"
+                    >
+                      STOP
+                    </button>
+                  </div>
+                  
+                  {/* Holographic Glowing Soundwave Visualizer */}
+                  <div className="flex items-center justify-center space-x-1.5 py-3 h-14 bg-black/20 rounded-xl border border-white/5 shadow-inner">
+                    {[...Array(9)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1.5 rounded-full bg-gradient-to-t from-[#63B3ED] to-[#9F7AEA]"
+                        style={{
+                          boxShadow: '0 0 10px rgba(99, 179, 237, 0.4)'
+                        }}
+                        animate={{
+                          height: [10, 42, 14, 30, 10][i % 5]
+                        }}
+                        transition={{
+                          duration: 0.5 + (i * 0.08),
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          ease: "easeInOut"
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="mt-3 text-center">
+                    <p className="text-[9px] text-[#A0AEC0] font-mono uppercase tracking-widest mb-1.5">Try speaking requests like:</p>
+                    <div className="flex flex-col gap-1 text-[10px] text-gray-300">
+                      <span className="bg-white/[0.02] py-1 px-2 rounded border border-white/5 truncate">"Add task: Design Figma wireframes"</span>
+                      <span className="bg-white/[0.02] py-1 px-2 rounded border border-white/5 truncate">"Stressed and panicking about deadlines"</span>
+                      <span className="bg-white/[0.02] py-1 px-2 rounded border border-white/5 truncate">"Recommend what urgent task I should work on"</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* INPUT FOOTER ROW */}
             <div
               id="aria-chat-input-row"
@@ -713,14 +775,18 @@ export const AriaChat: React.FC = () => {
                 {/* Voice speech to text button */}
                 <motion.button
                   onClick={toggleVoiceInput}
-                  animate={isListening ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-                  transition={{ repeat: isListening ? Infinity : 0, duration: 1 }}
-                  className={`p-1.5 rounded-lg cursor-pointer ${
-                    isListening ? 'bg-red-500 text-white shadow-lg shadow-red-500/50' : 'text-gray-400 hover:text-white'
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.9 }}
+                  animate={isListening ? { scale: [1, 1.15, 1], boxShadow: "0 0 12px rgba(239, 68, 68, 0.6)" } : { scale: 1 }}
+                  transition={isListening ? { repeat: Infinity, duration: 1.2, ease: "easeInOut" } : { duration: 0.2 }}
+                  className={`p-2 rounded-xl cursor-pointer flex items-center justify-center transition-all ${
+                    isListening 
+                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/50' 
+                      : 'bg-white/5 text-[#A0AEC0] hover:text-[#63B3ED] hover:bg-white/10 hover:shadow-[0_0_8px_rgba(99,179,237,0.3)]'
                   }`}
-                  title={isListening ? 'Listening...' : 'Voice input'}
+                  title={isListening ? 'Aria is listening... click to stop' : 'Speak to Aria'}
                 >
-                  <Mic size={16} />
+                  <Mic size={16} className={isListening ? 'animate-pulse' : ''} />
                 </motion.button>
               </div>
 

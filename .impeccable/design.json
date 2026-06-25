@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-25T02:00:00Z",
+  "title": "Design System: DeadlineAI",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Ice Blue", "canonical": "#63B3ED", "tonalRamp": ["#0c2338", "#113554", "#164870", "#1a5b8c", "#2b7bb8", "#4ea1e0", "#63b3ed", "#a5d8f9"] },
+      "secondary": { "role": "secondary", "displayName": "Neon Violet", "canonical": "#9F7AEA", "tonalRamp": ["#1f0d38", "#33165c", "#471e80", "#5b26a4", "#7b36cf", "#904ee0", "#9f7aea", "#c7aff0"] },
+      "tertiary": { "role": "tertiary", "displayName": "Fresh Teal", "canonical": "#68D391", "tonalRamp": ["#092617", "#113d25", "#195433", "#216c41", "#2fa061", "#4fbe80", "#68d391", "#a3e8c0"] },
+      "neutral-bg": { "role": "neutral", "displayName": "Cosmic Void Black", "canonical": "#050810", "tonalRamp": ["#010204", "#030408", "#050810", "#090e1b", "#121d37", "#1d2e54", "#2c4376", "#445e9a"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Space Grotesk", "purpose": "Hero greetings and main countdowns only." },
+      "body": { "displayName": "Body Space Grotesk", "purpose": "General UI controls, settings, and chatbot dialogue." },
+      "mono": { "displayName": "Telemetry JetBrains Mono", "purpose": "All timers, metric cells, streak badges, and status labels." }
+    },
+    "shadows": [
+      { "name": "cockpit-glow", "value": "0 8px 32px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2)", "purpose": "Lift cards from deep space." }
+    ],
+    "motion": [
+      { "name": "fluid-spring", "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "purpose": "Spring animation for glass elements scaling up." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Liquid Glass Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Standard elevated glass container panel with light highlight reflection.",
+      "html": "<div class=\"ds-card\"><h3>COCKPIT STATUS</h3><p>Systems nominal. Ready to deploy habit routines.</p></div>",
+      "css": ".ds-card { background: rgba(255, 255, 255, 0.05); -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.12); border-top: 1px solid rgba(255, 255, 255, 0.3); border-bottom: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 20px; color: #F7FAFC; font-family: 'Space Grotesk', sans-serif; box-shadow: 0 0 0 0.5px rgba(255,255,255,0.08) inset, 0 1px 0 0 rgba(255,255,255,0.2) inset, 0 8px 32px rgba(0, 0, 0, 0.35); position: relative; overflow: hidden; } .ds-card h3 { margin-top: 0; color: #63B3ED; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; letter-spacing: 0.1em; }"
+    },
+    {
+      "name": "Primary Accent Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Solid focus action button using Ice Blue theme.",
+      "html": "<button class=\"ds-btn-primary\">ANCHOR ROUTINE</button>",
+      "css": ".ds-btn-primary { background: #63B3ED; color: #050810; font-family: 'Space Grotesk', sans-serif; font-weight: 600; border: none; border-radius: 12px; padding: 10px 20px; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); } .ds-btn-primary:hover { background: #4299E1; transform: scale(1.02) translateY(-1px); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Cosmic Command Flight Deck",
+    "overview": "The DeadlineAI interface is designed to emulate the clean, high-intensity atmosphere of a spacecraft cockpit. It relies on glassmorphic textures, dark translucent layers, and crisp typography to encourage deep focus.",
+    "keyCharacteristics": [
+      "Liquid Glass Materials with 40px blur",
+      "Physical Specular Highlights on borders",
+      "Instrument-grade Typography pairing"
+    ],
+    "rules": [
+      { "name": "The 80-15-5 Accent Rule", "body": "80% deep background, 15% glass borders, exactly 5% high-chroma active accent.", "section": "colors" },
+      { "name": "The Telemetry Monospace Rule", "body": "All countdowns, dates, and metrics must be typeset in JetBrains Mono.", "section": "typography" }
+    ],
+    "dos": [
+      "Do wrap major panels in liquid-glass cards.",
+      "Do use monospaced fonts for numerical variables."
+    ],
+    "donts": [
+      "Don't use flat opaque panels.",
+      "Don't add unrequested diagnostic port numbers or telemetry noise."
+    ]
+  }
+}

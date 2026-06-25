@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -326,411 +326,22 @@
   pointer-events: none;
 }
 
-/* ==========================================
-   LIGHT THEME GLASSMORPHIC CUSTOM STYLE OVERRIDES
-   ========================================== */
-.light-theme {
-  background-color: #F3F5F9 !important;
-  color: #2D3748 !important;
-}
-
-.light-theme .bg-mesh-container {
-  background-color: #F3F5F9 !important;
-}
-
-/* Soft white background structures for custom orbs in light theme */
-.light-theme .bg-orb-blue {
-  background: radial-gradient(circle, rgba(99, 179, 237, 0.15) 0%, rgba(99, 179, 237, 0) 70%) !important;
-}
-
-.light-theme .bg-orb-purple {
-  background: radial-gradient(circle, rgba(159, 122, 234, 0.12) 0%, rgba(159, 122, 234, 0) 75%) !important;
-}
-
-.light-theme .bg-orb-teal {
-  background: radial-gradient(circle, rgba(56, 178, 172, 0.1) 0%, rgba(56, 178, 172, 0) 70%) !important;
-}
-
-/* Override general background colors to soft light surfaces */
-.light-theme .bg-[#080D1A],
-.light-theme .bg-[#060A14],
-.light-theme .bg-[#080B14],
-.light-theme .bg-[#0C0E17],
-.light-theme .bg-[#131929],
-.light-theme .bg-[#1A2235],
-.light-theme .bg-slate-950,
-.light-theme .bg-slate-900,
-.light-theme .bg-gray-900,
-.light-theme .bg-[#1A1F2C],
-.light-theme .bg-black/40 {
-  background-color: rgba(255, 255, 255, 0.85) !important;
-  color: #2D3748 !important;
-}
-
-/* Ensure strong heading and title contrast in light mode */
-.light-theme .text-white,
-.light-theme .text-slate-50,
-.light-theme .text-gray-50,
-.light-theme .text-neutral-100,
-.light-theme .text-zinc-100,
-.light-theme .text-slate-100,
-.light-theme .text-gray-100,
-.light-theme .text-\[\#F7FAFC\],
-.light-theme .text-\[\#F8FAFC\],
-.light-theme .text-\[\#E2E8F0\],
-.light-theme .text-\[\#cbd5e0\],
-.light-theme .text-\[\#cbd5e1\],
-.light-theme h1,
-.light-theme h2,
-.light-theme h3,
-.light-theme h4,
-.light-theme h5,
-.light-theme h6 {
-  color: #1A202C !important;
-}
-
-/* Make secondary body text perfectly readable */
-.light-theme .text-gray-300,
-.light-theme .text-slate-300,
-.light-theme .text-zinc-300,
-.light-theme .text-gray-400,
-.light-theme .text-slate-400,
-.light-theme .text-zinc-400,
-.light-theme .text-\[\#A0AEC0\],
-.light-theme .text-\[\#A0AEC1\] {
-  color: #4A5568 !important;
-}
-
-/* Make muted or helper text readable */
-.light-theme .text-gray-500,
-.light-theme .text-slate-500 {
-  color: #64748B !important;
-}
-
-/* Color specific high legibility text overrides in light mode */
-.light-theme .text-\[\#FC8181\],
-.light-theme .text-red-400 {
-  color: #C53030 !important; /* Rich red */
-}
-.light-theme .bg-\[\#FC8181\]\/10,
-.light-theme .bg-\[\#FC8181\]\/15,
-.light-theme .bg-\[\#FC8181\]\/5 {
-  background-color: rgba(229, 62, 62, 0.12) !important;
-}
-
-.light-theme .text-\[\#F6AD55\],
-.light-theme .text-orange-400 {
-  color: #DD6B20 !important; /* Rich orange/amber */
-}
-.light-theme .bg-\[\#F6AD55\]\/10,
-.light-theme .bg-\[\#F6AD55\]\/15 {
-  background-color: rgba(221, 107, 32, 0.12) !important;
-}
-
-.light-theme .text-\[\#68D391\],
-.light-theme .text-green-400 {
-  color: #22543D !important; /* Rich deep green */
-}
-.light-theme .bg-\[\#68D391\]\/10,
-.light-theme .bg-\[\#68D391\]\/15,
-.light-theme .bg-\[\#68D391\]\/30,
-.light-theme .bg-\[\#68D391\]\/60 {
-  background-color: rgba(34, 84, 61, 0.12) !important;
-}
-
-.light-theme .text-\[\#63B3ED\],
-.light-theme .text-blue-400 {
-  color: #2B6CB0 !important; /* Rich blue */
-}
-.light-theme .bg-\[\#63B3ED\]\/10,
-.light-theme .bg-\[\#63B3ED\]\/15 {
-  background-color: rgba(43, 108, 176, 0.12) !important;
-}
-
-.light-theme .text-\[\#9F7AEA\],
-.light-theme .text-purple-400 {
-  color: #553C9A !important; /* Rich deep purple */
-}
-.light-theme .bg-\[\#9F7AEA\]\/10,
-.light-theme .bg-\[\#9F7AEA\]\/15 {
-  background-color: rgba(85, 60, 154, 0.12) !important;
-}
-
-/* Transform dark liquid-glass into light-glassmorphic material */
-.light-theme .liquid-glass,
-.light-theme [style*="background: rgba(255, 255, 255, 0.02)"],
-.light-theme [style*="background: rgba(255, 255, 255, 0.05)"],
-.light-theme [style*="background: rgba(255, 255, 255, 0.04)"] {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-  border-top-color: rgba(255, 255, 255, 0.95) !important;
-  border-bottom-color: rgba(0, 0, 0, 0.06) !important;
-  box-shadow: 
-    0 10px 25px -5px rgba(0, 0, 0, 0.06),
-    0 8px 16px -6px rgba(0, 0, 0, 0.03),
-    0 0 1px 0 rgba(0, 0, 0, 0.05),
-    0 1px 0 0 rgba(255, 255, 255, 0.6) inset !important;
-  backdrop-filter: blur(40px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
-}
-
-/* Light Theme liquid-glass hover transformations */
-.light-theme .liquid-glass:hover {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border-top-color: rgba(255, 255, 255, 1) !important;
-  box-shadow: 
-    0 20px 35px -8px rgba(0, 0, 0, 0.09),
-    0 10px 20px -6px rgba(0, 0, 0, 0.05),
-    0 0 1px 0 rgba(0, 0, 0, 0.08),
-    0 1px 0 0 rgba(255, 255, 255, 0.8) inset !important;
-  transform: translateY(-3px) !important;
-}
-
-/* Light Theme liquid-glass active transformations */
-.light-theme .liquid-glass:active {
-  transform: translateY(0px) scale(0.99) !important;
-  box-shadow: 
-    0 6px 12px -3px rgba(0, 0, 0, 0.08),
-    0 2px 4px -1px rgba(0, 0, 0, 0.04),
-    0 0 1px 0 rgba(0, 0, 0, 0.05),
-    0 1px 0 0 rgba(255, 255, 255, 0.4) inset !important;
-}
-
-/* Adaptive glass colors for helper cards in light mode */
-.light-theme .liquid-glass-crisis {
-  background: rgba(254, 215, 215, 0.45) !important;
-  border: 1px solid rgba(229, 62, 62, 0.18) !important;
-  border-top: 1px solid rgba(229, 62, 62, 0.35) !important;
-  box-shadow: 
-    0 10px 25px -5px rgba(229, 62, 62, 0.08),
-    0 8px 16px -6px rgba(229, 62, 62, 0.04),
-    0 0 1px 0 rgba(229, 62, 62, 0.1) !important;
-}
-.light-theme .liquid-glass-crisis:hover {
-  background: rgba(254, 215, 215, 0.6) !important;
-  border-top-color: rgba(229, 62, 62, 0.45) !important;
-  box-shadow: 
-    0 20px 35px -8px rgba(229, 62, 62, 0.12),
-    0 10px 20px -6px rgba(229, 62, 62, 0.06),
-    0 0 1px 0 rgba(229, 62, 62, 0.15) !important;
-  transform: translateY(-3px) !important;
-}
-
-.light-theme .liquid-glass-warning {
-  background: rgba(254, 235, 200, 0.45) !important;
-  border: 1px solid rgba(221, 107, 32, 0.18) !important;
-  border-top: 1px solid rgba(221, 107, 32, 0.35) !important;
-  box-shadow: 
-    0 10px 25px -5px rgba(221, 107, 32, 0.08),
-    0 8px 16px -6px rgba(221, 107, 32, 0.04),
-    0 0 1px 0 rgba(221, 107, 32, 0.1) !important;
-}
-.light-theme .liquid-glass-warning:hover {
-  background: rgba(254, 235, 200, 0.6) !important;
-  border-top-color: rgba(221, 107, 32, 0.45) !important;
-  box-shadow: 
-    0 20px 35px -8px rgba(221, 107, 32, 0.12),
-    0 10px 20px -6px rgba(221, 107, 32, 0.06),
-    0 0 1px 0 rgba(221, 107, 32, 0.15) !important;
-  transform: translateY(-3px) !important;
-}
-
-.light-theme .liquid-glass-safe {
-  background: rgba(198, 246, 213, 0.45) !important;
-  border: 1px solid rgba(34, 84, 61, 0.15) !important;
-  border-top: 1px solid rgba(34, 84, 61, 0.3) !important;
-  box-shadow: 
-    0 10px 25px -5px rgba(34, 84, 61, 0.08),
-    0 8px 16px -6px rgba(34, 84, 61, 0.04),
-    0 0 1px 0 rgba(34, 84, 61, 0.1) !important;
-}
-.light-theme .liquid-glass-safe:hover {
-  background: rgba(198, 246, 213, 0.6) !important;
-  border-top-color: rgba(34, 84, 61, 0.4) !important;
-  box-shadow: 
-    0 20px 35px -8px rgba(34, 84, 61, 0.12),
-    0 10px 20px -6px rgba(34, 84, 61, 0.06),
-    0 0 1px 0 rgba(34, 84, 61, 0.15) !important;
-  transform: translateY(-3px) !important;
-}
-
-.light-theme .liquid-glass-ai {
-  background: rgba(233, 216, 253, 0.45) !important;
-  border: 1px solid rgba(85, 60, 154, 0.15) !important;
-  border-top: 1px solid rgba(85, 60, 154, 0.3) !important;
-  box-shadow: 
-    0 10px 25px -5px rgba(85, 60, 154, 0.08),
-    0 8px 16px -6px rgba(85, 60, 154, 0.04),
-    0 0 1px 0 rgba(85, 60, 154, 0.1) !important;
-}
-.light-theme .liquid-glass-ai:hover {
-  background: rgba(233, 216, 253, 0.6) !important;
-  border-top-color: rgba(85, 60, 154, 0.4) !important;
-  box-shadow: 
-    0 20px 35px -8px rgba(85, 60, 154, 0.12),
-    0 10px 20px -6px rgba(85, 60, 154, 0.06),
-    0 0 1px 0 rgba(85, 60, 154, 0.15) !important;
-  transform: translateY(-3px) !important;
-}
-
-.light-theme .liquid-glass-calendar {
-  background: rgba(235, 248, 255, 0.45) !important;
-  border: 1px solid rgba(43, 108, 176, 0.15) !important;
-  border-top: 1px solid rgba(43, 108, 176, 0.3) !important;
-  box-shadow: 
-    0 10px 25px -5px rgba(43, 108, 176, 0.08),
-    0 8px 16px -6px rgba(43, 108, 176, 0.04),
-    0 0 1px 0 rgba(43, 108, 176, 0.1) !important;
-}
-.light-theme .liquid-glass-calendar:hover {
-  background: rgba(235, 248, 255, 0.6) !important;
-  border-top-color: rgba(43, 108, 176, 0.4) !important;
-  box-shadow: 
-    0 20px 35px -8px rgba(43, 108, 176, 0.12),
-    0 10px 20px -6px rgba(43, 108, 176, 0.06),
-    0 0 1px 0 rgba(43, 108, 176, 0.15) !important;
-  transform: translateY(-3px) !important;
-}
-
-/* Light glass material for sidebar and header elements */
-.light-theme aside,
-.light-theme header,
-.light-theme .bg-slate-900\/50,
-.light-theme .bg-[#080D1A]\/80 {
-  background: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(40px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-/* Dynamic transparent background overlay and border translation helper */
-.light-theme [class*="bg-white/"] {
-  background-color: rgba(0, 0, 0, 0.03) !important;
-}
-.light-theme [class*="bg-white/"]:hover {
-  background-color: rgba(0, 0, 0, 0.06) !important;
-}
-
-.light-theme [class*="border-white/"] {
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-.light-theme [class*="border-white/"]:hover {
-  border-color: rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Adjust standard explicit borders and dividers */
-.light-theme .border-white\/10,
-.light-theme .border-white\/5,
-.light-theme .border-white\/8,
-.light-theme .border-slate-800,
-.light-theme .border-gray-800,
-.light-theme .border-white\/20,
-.light-theme [style*="borderBottom: 1px solid rgba(255, 255, 255, 0.08)"],
-.light-theme [style*="borderRight: 1px solid rgba(255, 255, 255, 0.08)"] {
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-/* Darker hover background effects for interactive components */
-.light-theme .hover\:bg-white\/5:hover,
-.light-theme .hover\:bg-white\/10:hover,
-.light-theme .bg-white\/5,
-.light-theme .bg-white\/10 {
-  background-color: rgba(0, 0, 0, 0.04) !important;
-}
-
-.light-theme .hover\:bg-white\/12:hover,
-.light-theme .bg-white\/12 {
-  background-color: rgba(0, 0, 0, 0.06) !important;
-}
-
-/* Polish interactive input fields, selectors, and dropdowns */
-.light-theme input,
-.light-theme textarea,
-.light-theme select {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  color: #1A202C !important;
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
-}
-
-.light-theme input::placeholder,
-.light-theme textarea::placeholder,
-.light-theme .placeholder-\[\#4A5568\]::placeholder {
-  color: #718096 !important;
-}
-
-/* Light Scrollbar Styling */
-.light-theme ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15) !important;
-}
-
-.light-theme ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Dynamic Aria Floating AI Assistant Adaptations */
-.light-theme #aria-chat-window {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.08) !important;
-}
-
-.light-theme #aria-chat-header {
-  background: rgba(255, 255, 255, 0.8) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-}
-
-.light-theme #aria-chat-header .text-white {
-  color: #1A202C !important;
-}
-
-.light-theme #aria-chat-messages {
-  background: rgba(245, 247, 251, 0.6) !important;
-}
-
-.light-theme #aria-chat-input-row {
-  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
-  background: rgba(255, 255, 255, 0.8) !important;
-}
-
-.light-theme #aria-chat-input-row input {
-  background-color: rgba(0, 0, 0, 0.03) !important;
-  border-color: rgba(0, 0, 0, 0.06) !important;
-  color: #1A202C !important;
-}
-
-.light-theme [id^="chat-bubble-msg-aria"] {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  color: #2D3748 !important;
-}
-
-.light-theme #quick-replies-container button {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  color: #4A5568 !important;
-}
-
-.light-theme #quick-replies-container button:hover {
-  background-color: rgba(0, 0, 0, 0.04) !important;
-  color: #1A202C !important;
-}
-
-/* Apple Liquid Glass Buttons */
+/* Apple Liquid Glass Buttons (Global, with !important overrides to protect from light-theme flattening) */
 .apple-glass-btn {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 0.625rem 1.25rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
   overflow: hidden;
   user-select: none;
 }
@@ -751,88 +362,426 @@
 
 /* Hover/Active states */
 .apple-glass-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.35);
-  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 .apple-glass-btn:active {
-  transform: translateY(1px) scale(0.98);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transform: translateY(1px) scale(0.98) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Preserve original button colors & svg inherits */
+.apple-glass-btn,
+.apple-glass-btn *,
+.apple-glass-btn svg {
+  color: inherit !important;
 }
 
 /* Color Presets */
 .apple-glass-indigo {
-  background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%);
-  color: #FFFFFF;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(79, 70, 229, 0.25);
+  background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(79, 70, 229, 0.25) !important;
 }
 .apple-glass-indigo:hover {
-  background: linear-gradient(180deg, #5A52FF 0%, #4A3FFA 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(79, 70, 229, 0.4);
+  background: linear-gradient(180deg, #5A52FF 0%, #4A3FFA 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(79, 70, 229, 0.4) !important;
 }
 
 .apple-glass-blue {
-  background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%);
-  color: #FFFFFF;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(37, 99, 235, 0.25);
+  background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(37, 99, 235, 0.25) !important;
 }
 .apple-glass-blue:hover {
-  background: linear-gradient(180deg, #4E91FF 0%, #2E72FF 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(180deg, #4E91FF 0%, #2E72FF 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(37, 99, 235, 0.4) !important;
 }
 
 .apple-glass-green {
-  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
-  color: #FFFFFF;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(5, 150, 105, 0.25);
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(5, 150, 105, 0.25) !important;
 }
 .apple-glass-green:hover {
-  background: linear-gradient(180deg, #14CE90 0%, #06AF7B 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(5, 150, 105, 0.4);
+  background: linear-gradient(180deg, #14CE90 0%, #06AF7B 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(5, 150, 105, 0.4) !important;
 }
 
 .apple-glass-purple {
-  background: linear-gradient(180deg, #8B5CF6 0%, #7C3AED 100%);
-  color: #FFFFFF;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(124, 58, 237, 0.25);
+  background: linear-gradient(180deg, #8B5CF6 0%, #7C3AED 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(124, 58, 237, 0.25) !important;
 }
 .apple-glass-purple:hover {
-  background: linear-gradient(180deg, #9C72FF 0%, #8749FF 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(124, 58, 237, 0.4);
+  background: linear-gradient(180deg, #9C72FF 0%, #8749FF 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(124, 58, 237, 0.4) !important;
 }
 
 .apple-glass-red {
-  background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
-  color: #FFFFFF;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(220, 38, 38, 0.25);
+  background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(220, 38, 38, 0.25) !important;
 }
 .apple-glass-red:hover {
-  background: linear-gradient(180deg, #FF5B5B 0%, #E93535 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(220, 38, 38, 0.4);
+  background: linear-gradient(180deg, #FF5B5B 0%, #E93535 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(220, 38, 38, 0.4) !important;
 }
 
 .apple-glass-gray {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-  color: #F3F4F6;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 10px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%) !important;
+  color: #F3F4F6 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 10px rgba(0, 0, 0, 0.15) !important;
 }
 .apple-glass-gray:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 14px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 14px rgba(0, 0, 0, 0.2) !important;
 }
 
-.light-theme .apple-glass-gray {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.01) 100%);
-  color: #1F2937;
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0, 0, 0, 0.05);
+/* ==========================================
+   LIGHT THEME NEUMORPHISM (SOFT UI) DESIGN SYSTEM
+   ========================================== */
+.light-theme {
+  background-color: #E0E5EC !important;
+  color: #3D4852 !important;
+  font-family: "DM Sans", "Inter", sans-serif !important;
 }
-.light-theme .apple-glass-gray:hover {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.02) 100%);
-  border-color: rgba(0, 0, 0, 0.12);
+
+.light-theme .bg-mesh-container {
+  background-color: #E0E5EC !important;
+}
+
+/* Hide or tone down the colored animated mesh orbs to maintain monochromatic clay discipline */
+.light-theme .bg-orb {
+  opacity: 0.02 !important;
+}
+
+/* Universal Typography Controls for WCAG compliance */
+.light-theme h1,
+.light-theme h2,
+.light-theme h3,
+.light-theme h4,
+.light-theme h5,
+.light-theme h6,
+.light-theme .text-white,
+.light-theme .text-slate-50,
+.light-theme .text-gray-50,
+.light-theme .text-neutral-100,
+.light-theme .text-zinc-100,
+.light-theme .text-slate-100,
+.light-theme .text-gray-100,
+.light-theme .text-\[\#F7FAFC\],
+.light-theme .text-\[\#F8FAFC\],
+.light-theme .text-\[\#E2E8F0\],
+.light-theme .text-\[\#cbd5e0\],
+.light-theme .text-\[\#cbd5e1\] {
+  color: #3D4852 !important;
+  font-family: "Plus Jakarta Sans", "Space Grotesk", sans-serif !important;
+}
+
+.light-theme .text-gray-300,
+.light-theme .text-slate-300,
+.light-theme .text-zinc-300,
+.light-theme .text-gray-400,
+.light-theme .text-slate-400,
+.light-theme .text-zinc-400,
+.light-theme .text-\[\#A0AEC0\],
+.light-theme .text-\[\#A0AEC1\] {
+  color: #6B7280 !important;
+}
+
+.light-theme .text-gray-500,
+.light-theme .text-slate-500 {
+  color: #6B7280 !important;
+}
+
+/* Color specific high legibility text overrides in light mode */
+.light-theme .text-\[\#FC8181\],
+.light-theme .text-red-400 {
+  color: #C53030 !important; /* Rich red */
+}
+.light-theme .bg-\[\#FC8181\]\/10,
+.light-theme .bg-\[\#FC8181\]\/15,
+.light-theme .bg-\[\#FC8181\]\/5 {
+  background-color: rgba(229, 62, 62, 0.12) !important;
+}
+
+/* Accent and Status Colors */
+.light-theme .text-indigo-400,
+.light-theme .text-indigo-500,
+.light-theme .text-violet-400,
+.light-theme .text-violet-500,
+.light-theme .text-purple-400 {
+  color: #6C63FF !important;
+}
+
+/* Success States (Teal Accent Secondary) */
+.light-theme .text-\[\#68D391\],
+.light-theme .text-\[\#38B2AC\],
+.light-theme .text-green-400,
+.light-theme .text-teal-400 {
+  color: #38B2AC !important;
+}
+
+/* Danger/Crisis (Red) */
+.light-theme .text-\[\#FC8181\],
+.light-theme .text-red-400,
+.light-theme .text-red-500 {
+  color: #E53E3E !important;
+}
+
+/* Neumorphic Shadow Play Utilities */
+.light-theme .shadow-extruded,
+.light-theme .shadow-lg,
+.light-theme .shadow-md,
+.light-theme .shadow-xl {
+  box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Core Container (Cards & Modals) */
+.light-theme .liquid-glass,
+.light-theme [style*="background: rgba(255, 255, 255, 0.02)"],
+.light-theme [style*="background: rgba(255, 255, 255, 0.05)"],
+.light-theme [style*="background: rgba(255, 255, 255, 0.04)"],
+.light-theme .bg-\[\#080D1A\],
+.light-theme .bg-\[\#060A14\],
+.light-theme .bg-\[\#080B14\],
+.light-theme .bg-\[\#0C0E17\],
+.light-theme .bg-\[\#131929\],
+.light-theme .bg-\[\#1A2235\],
+.light-theme .bg-\[\#0F172A\],
+.light-theme .bg-\[\#0E1320\],
+.light-theme .bg-\[\#0D111E\],
+.light-theme .bg-\[\#050810\],
+.light-theme .bg-\[\#0B0F19\],
+.light-theme .bg-\[\#090D16\],
+.light-theme .bg-slate-950,
+.light-theme .bg-slate-900,
+.light-theme .bg-slate-800,
+.light-theme .bg-gray-900,
+.light-theme .bg-\[\#1A1F2C\],
+.light-theme .bg-black\/40 {
+  background: #E0E5EC !important;
+  border-radius: 32px !important;
+  border: none !important;
+  box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+  transform: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Modals & Popups light-theme overlays (so transparent backdrops look light and blurry instead of dark) */
+.light-theme .bg-\[\#0B0F19\]\/80,
+.light-theme .bg-\[\#080B14\]\/85,
+.light-theme .bg-black\/70,
+.light-theme .bg-[#000000]/60 {
+  background-color: rgba(224, 229, 236, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* Remove glass specular reflections which destroy neumorphism flat-surface illusion */
+.light-theme .liquid-glass::before,
+.light-theme .liquid-glass::after,
+.light-theme .primary-btn-glass::before {
+  display: none !important;
+}
+
+/* Hover and Press behavior for Neumorphic Cards */
+.light-theme .liquid-glass:hover,
+.light-theme .hover-extruded:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 12px 12px 20px rgba(163, 177, 198, 0.7), -12px -12px 20px rgba(255, 255, 255, 0.6) !important;
+}
+
+.light-theme .liquid-glass:active {
+  transform: translateY(0.5px) scale(0.99) !important;
+  box-shadow: inset 6px 6px 10px rgba(163, 177, 198, 0.6), inset -6px -6px 10px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Card Modifiers using Custom Neumorphic Colored Shadows */
+.light-theme .liquid-glass-crisis {
+  background: #E0E5EC !important;
+  box-shadow: 9px 9px 16px rgba(229, 62, 62, 0.25), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+}
+.light-theme .liquid-glass-crisis:hover {
+  box-shadow: 12px 12px 20px rgba(229, 62, 62, 0.32), -12px -12px 20px rgba(255, 255, 255, 0.6) !important;
+}
+
+.light-theme .liquid-glass-warning {
+  background: #E0E5EC !important;
+  box-shadow: 9px 9px 16px rgba(221, 107, 32, 0.25), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+}
+.light-theme .liquid-glass-warning:hover {
+  box-shadow: 12px 12px 20px rgba(221, 107, 32, 0.32), -12px -12px 20px rgba(255, 255, 255, 0.6) !important;
+}
+
+.light-theme .liquid-glass-safe {
+  background: #E0E5EC !important;
+  box-shadow: 9px 9px 16px rgba(56, 178, 172, 0.25), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+}
+.light-theme .liquid-glass-safe:hover {
+  box-shadow: 12px 12px 20px rgba(56, 178, 172, 0.32), -12px -12px 20px rgba(255, 255, 255, 0.6) !important;
+}
+
+.light-theme .liquid-glass-ai {
+  background: #E0E5EC !important;
+  box-shadow: 9px 9px 16px rgba(108, 99, 255, 0.25), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+}
+.light-theme .liquid-glass-ai:hover {
+  box-shadow: 12px 12px 20px rgba(108, 99, 255, 0.32), -12px -12px 20px rgba(255, 255, 255, 0.6) !important;
+}
+
+.light-theme .liquid-glass-calendar {
+  background: #E0E5EC !important;
+  box-shadow: 9px 9px 16px rgba(43, 108, 176, 0.25), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+}
+.light-theme .liquid-glass-calendar:hover {
+  box-shadow: 12px 12px 20px rgba(43, 108, 176, 0.32), -12px -12px 20px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Sidebar, Header and Navigation layout - molded with same surface illusion */
+.light-theme aside,
+.light-theme header,
+.light-theme .bg-slate-900\/50,
+.light-theme .bg-\[\#080D1A\]\/80 {
+  background: #E0E5EC !important;
+  border: none !important;
+  box-shadow: 5px 5px 15px rgba(163, 177, 198, 0.4), -5px -5px 15px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Navigation items */
+.light-theme [class*="bg-white/"]:not(button):not(.apple-glass-btn),
+.light-theme [class*="bg-slate-900/10"]:not(button):not(.apple-glass-btn),
+.light-theme [class*="bg-white/5"]:not(button):not(.apple-glass-btn),
+.light-theme [class*="bg-white/10"]:not(button):not(.apple-glass-btn),
+.light-theme [class*="bg-white/12"]:not(button):not(.apple-glass-btn) {
+  background-color: #E0E5EC !important;
+  border: none !important;
+  box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5) !important;
+  color: #3D4852 !important;
+}
+
+.light-theme [class*="bg-white/"]:hover:not(button):not(.apple-glass-btn),
+.light-theme [class*="bg-white/10"]:hover:not(button):not(.apple-glass-btn) {
+  box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.5), -5px -5px 10px rgba(255, 255, 255, 0.6) !important;
+}
+
+.light-theme [class*="border-white/"],
+.light-theme [class*="border-slate-800"],
+.light-theme [class*="border-gray-800"] {
+  border-color: rgba(163, 177, 198, 0.35) !important;
+}
+
+/* Adjust standard explicit borders and dividers */
+.light-theme .border-white\/10,
+.light-theme .border-white\/5,
+.light-theme .border-white\/8,
+.light-theme .border-slate-800,
+.light-theme .border-gray-800,
+.light-theme .border-white\/20,
+.light-theme [style*="borderBottom: 1px solid rgba(255, 255, 255, 0.08)"],
+.light-theme [style*="borderRight: 1px solid rgba(255, 255, 255, 0.08)"] {
+  border-color: rgba(163, 177, 198, 0.35) !important;
+}
+
+/* Darker hover background effects for interactive components */
+.light-theme .hover\:bg-white\/5:hover:not(button):not(.apple-glass-btn),
+.light-theme .hover\:bg-white\/10:hover:not(button):not(.apple-glass-btn),
+.light-theme .bg-white\/5:not(button):not(.apple-glass-btn),
+.light-theme .bg-white\/10:not(button):not(.apple-glass-btn) {
+  background-color: #E0E5EC !important;
+  box-shadow: inset 2px 2px 5px rgba(163, 177, 198, 0.4), inset -2px -2px 5px rgba(255, 255, 255, 0.4) !important;
+}
+
+.light-theme .hover\:bg-white\/12:hover:not(button):not(.apple-glass-btn),
+.light-theme .bg-white\/12:not(button):not(.apple-glass-btn) {
+  background-color: #E0E5EC !important;
+  box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Neumorphic Inset Deep Inputs */
+.light-theme input,
+.light-theme textarea,
+.light-theme select {
+  background-color: #E0E5EC !important;
+  color: #3D4852 !important;
+  border-radius: 16px !important;
+  border: none !important;
+  box-shadow: inset 6px 6px 12px rgba(163, 177, 198, 0.7), inset -6px -6px 12px rgba(255, 255, 255, 0.6) !important;
+  padding: 12px 16px !important;
+  outline: none !important;
+  transition: all 0.3s ease-out !important;
+}
+
+.light-theme input::placeholder,
+.light-theme textarea::placeholder,
+.light-theme .placeholder-\[\#4A5568\]::placeholder {
+  color: #A0AEC0 !important;
+}
+
+/* Aria Chat Window Adaptations */
+.light-theme #aria-chat-window {
+  background: #E0E5EC !important;
+  border: none !important;
+  box-shadow: 12px 12px 30px rgba(163, 177, 198, 0.6), -12px -12px 30px rgba(255, 255, 255, 0.6) !important;
+  border-radius: 24px !important;
+}
+
+.light-theme #aria-chat-header {
+  background: #E0E5EC !important;
+  border-bottom: none !important;
+  box-shadow: inset 0 -3px 6px rgba(163, 177, 198, 0.3) !important;
+}
+
+.light-theme #aria-chat-messages {
+  background: #E0E5EC !important;
+}
+
+.light-theme #aria-chat-input-row {
+  background: #E0E5EC !important;
+  box-shadow: inset 0 3px 6px rgba(163, 177, 198, 0.3) !important;
+  border-top: none !important;
+}
+
+.light-theme #aria-chat-input-row input {
+  box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5) !important;
+}
+
+.light-theme [id^="chat-bubble-msg-aria"] {
+  background: #E0E5EC !important;
+  border: none !important;
+  box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.5), -5px -5px 10px rgba(255, 255, 255, 0.5) !important;
+  border-radius: 16px !important;
+}
+
+.light-theme #quick-replies-container button {
+  background: #E0E5EC !important;
+  border: none !important;
+  box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Apple glass buttons do not have light-theme overrides, preserving original dark glass colors per user intent */
+
+/* Light Scrollbar Styling */
+.light-theme ::-webkit-scrollbar-thumb {
+  background: rgba(163, 177, 198, 0.8) !important;
+}
+
+.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(163, 177, 198, 1) !important;
+}
+
+.light-theme .calendar-scrollbar::-webkit-scrollbar-track {
+  background: rgba(163, 177, 198, 0.1) !important;
+}
+.light-theme .calendar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(163, 177, 198, 0.6) !important;
+}
+.light-theme .calendar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(163, 177, 198, 0.8) !important;
 }
 
 

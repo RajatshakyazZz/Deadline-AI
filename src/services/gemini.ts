@@ -1,4 +1,4 @@
-// Direct client-side REST call to Gemini 2.0 Flash API to avoid Vite Node-polyfill compile errors.
+// Direct client-side REST call to Gemini 3.5 Flash API to avoid Vite Node-polyfill compile errors.
 export async function callGemini(prompt: string, jsonMode: boolean = false): Promise<string> {
   // First read from import.meta.env
   let apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
@@ -17,7 +17,7 @@ export async function callGemini(prompt: string, jsonMode: boolean = false): Pro
   }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',

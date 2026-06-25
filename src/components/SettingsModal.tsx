@@ -186,6 +186,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   </button>
                 </div>
 
+                {/* Crisis Mode Auto Trigger Switch Area */}
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-white font-sans flex items-center gap-1.5">
+                      <ShieldAlert className="w-4 h-4 text-[#FC8181]" /> Auto Crisis Trigger
+                    </p>
+                    <p className="text-[10px] font-medium text-gray-400 font-sans max-w-[200px]">
+                      Automatically activates Crisis Mode on dashboard if &gt;3 high-priority tasks are overdue.
+                    </p>
+                  </div>
+
+                  {/* Toggle Switch */}
+                  <button
+                    onClick={() => updateProfile({ crisisModeAutoEnabled: !profile.crisisModeAutoEnabled })}
+                    className={`w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer outline-none relative flex items-center ${
+                      profile.crisisModeAutoEnabled ? 'bg-red-500' : 'bg-white/10'
+                    }`}
+                    id="toggle-crisis-auto-switch"
+                  >
+                    <motion.div
+                      layout
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      className="w-5 h-5 rounded-full bg-white shadow-md"
+                      style={{
+                        marginLeft: profile.crisisModeAutoEnabled ? '20px' : '0px'
+                      }}
+                    />
+                  </button>
+                </div>
+
                 {/* Connection Status & Trigger */}
                 <div className="space-y-3">
                   {googleAccessToken ? (

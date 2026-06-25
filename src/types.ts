@@ -10,6 +10,7 @@ export interface UserProfile {
   totalFocusMinutes: number;
   longestStreak: number;
   googleCalendarSyncEnabled?: boolean;
+  crisisModeAutoEnabled?: boolean;
 }
 
 export interface Subtask {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -85,6 +85,86 @@ export const MyTasks: React.FC = () => {
     isAddTaskOpen,
     setIsAddTaskOpen
   } = useApp();
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const triggerConfetti = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#63B3ED', '#9F7AEA', '#FC8181', '#68D391', '#F6AD55'];
+    const particles: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      color: string;
+      rotation: number;
+      vRot: number;
+    }> = [];
+
+    const spawnCount = 120;
+    for (let i = 0; i < spawnCount; i++) {
+      const fromLeft = i < spawnCount / 2;
+      particles.push({
+        x: fromLeft ? 0 : canvas.width,
+        y: canvas.height * 0.8,
+        vx: fromLeft ? Math.random() * 8 + 5 : -(Math.random() * 8 + 5),
+        vy: -(Math.random() * 15 + 10),
+        size: Math.random() * 6 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * Math.PI * 2,
+        vRot: (Math.random() - 0.5) * 0.2
+      });
+    }
+
+    let frames = 0;
+    const drawParticles = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.4;
+        p.vx *= 0.98;
+        p.rotation += p.vRot;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+
+        if (p.y > canvas.height) {
+          particles.splice(idx, 1);
+        }
+      });
+
+      frames++;
+      if (particles.length > 0 && frames < 180) {
+        requestAnimationFrame(drawParticles);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    drawParticles();
+  };
+
+  const handleCompleteTask = async (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task && !task.completed) {
+      triggerConfetti();
+    }
+    await completeTask(taskId);
+  };
   
   // Navigation & filter states
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'crisis'>('all');
@@ -240,6 +320,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
 
   return (
     <div className="space-y-6 select-none">
+      <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />
       
       {/* Header and Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -677,7 +758,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
                         </button>
                       ) : (
                         <button
-                          onClick={() => completeTask(task.id)}
+                          onClick={() => handleCompleteTask(task.id)}
                           className={`px-3 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                             isCompleted 
                               ? 'bg-white/[0.04] border border-[#68D391]/30 text-[#68D391]' 

@@ -86,6 +86,15 @@ export const Dashboard: React.FC = () => {
     return diffHours > 0 && diffHours < 3;
   });
 
+  // Overdue high-priority/critical tasks
+  const overdueHighPriorityTasks = activeTasks.filter(t => {
+    const isOverdue = new Date(t.deadline).getTime() < Date.now();
+    const isHighPriority = t.complexity === 'high' || t.complexity === 'critical';
+    return isOverdue && isHighPriority;
+  });
+
+  const isAutoCrisisModeActivated = !!profile?.crisisModeAutoEnabled && overdueHighPriorityTasks.length > 3;
+
   // Recent tasks (last 3 added/updated)
   const recentTasks = [...tasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
 
@@ -120,12 +129,42 @@ export const Dashboard: React.FC = () => {
         className="flex flex-col gap-1"
       >
         <h2 className="text-3xl md:text-4xl font-sans font-bold tracking-tight text-[#F7FAFC]">
-          {greeting}, <span className="bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] bg-clip-text text-transparent font-extrabold">{profile?.name || 'Developer'}</span>
+          {greeting}, <span className="text-[#63B3ED] font-extrabold">{profile?.name || 'Developer'}</span>
         </h2>
         <p className="text-sm font-medium text-[#A0AEC0] font-sans">
           Welcome back to the command center. Let's crush these timelines today.
         </p>
       </motion.div>
+
+      {/* Auto-Triggered Emergency Crisis Banner */}
+      {isAutoCrisisModeActivated && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-5 rounded-2xl border border-[#FC8181]/40 bg-[#FC8181]/10 text-[#FC8181] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg shadow-[#FC8181]/10 animate-pulse"
+          style={{ animationDuration: '4s' }}
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 rounded-xl bg-[#FC8181]/20 border border-[#FC8181]/30 flex items-center justify-center animate-bounce" style={{ animationDuration: '2s' }}>
+              <AlertTriangle className="w-6 h-6 text-[#FC8181]" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold font-sans tracking-tight">🚨 CRITICAL AUTOMATIC SYSTEM CRISIS ACTIVATED</h3>
+              <p className="text-xs font-sans text-red-300 mt-0.5 leading-normal max-w-xl">
+                There are <strong className="text-white font-mono">{overdueHighPriorityTasks.length} high-priority or critical tasks</strong> currently overdue on your dashboard. Overdue limits have exceeded safety thresholds. Immediate tactical execution is recommended!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              navigate('/tasks?filter=crisis');
+            }}
+            className="px-4 py-2 rounded-xl bg-[#FC8181] text-[#080B14] font-extrabold text-xs uppercase tracking-wider hover:bg-white hover:text-red-500 transition-all cursor-pointer shadow-md"
+          >
+            Tactical Workspace
+          </button>
+        </motion.div>
+      )}
 
       {/* Grid: Stat Cards & Progress Gauge */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -296,7 +335,7 @@ export const Dashboard: React.FC = () => {
             {crisisTasks.length > 0 ? (
               <>
                 <div className="flex items-center gap-2 mb-4">
-                  <AlertTriangle className="w-5 h-5 text-[#FC8181] animate-bounce" />
+                  <AlertTriangle className="w-5 h-5 text-[#FC8181] animate-pulse" />
                   <h3 className="text-lg font-bold text-[#FC8181] tracking-tight font-sans">🚨 Crisis Zone: Due within 3 Hours</h3>
                 </div>
 
@@ -450,7 +489,7 @@ export const Dashboard: React.FC = () => {
               Synthesize Your Tactical Daily Roadmap
             </h4>
             <p className="text-xs text-[#A0AEC0] mt-1.5 leading-relaxed font-sans font-medium">
-              Let Gemini 2.0 scan all pending items and draft your custom morning checklist.
+              Let Gemini 3.5 scan all pending items and draft your custom morning checklist.
             </p>
 
             <div className="mt-4 flex items-center justify-between text-xs font-bold text-[#63B3ED]">

@@ -428,7 +428,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
         </div>
 
         {/* 30-Day Grid Layout: Dynamic, Beautiful, & Scrollable */}
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 pb-4">
+        <div className="overflow-x-auto calendar-scrollbar pb-4 relative">
           <div 
             className="grid gap-y-3 min-w-[950px] pr-2"
             style={{
@@ -436,7 +436,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
             }}
           >
             {/* --- COLUMN HEADERS (Day Numbers) --- */}
-            <div className="text-xs font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono self-center">
+            <div className={`text-xs font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono self-center sticky left-0 z-20 ${isLight ? 'bg-[#f7fafc]' : 'bg-[#0a0e17]'} pr-3 border-r border-white/5 h-full flex items-center shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)]`}>
               Active Habits
             </div>
             {monthDaysArray.map((day) => {
@@ -472,8 +472,8 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                 return (
                   <React.Fragment key={h.id}>
                     
-                    {/* Habit Label Column */}
-                    <div className="flex items-center justify-between gap-2 pr-3 border-r border-white/5 min-w-0">
+                    {/* Habit Label Column - Sticky left frozen */}
+                    <div className={`flex items-center justify-between gap-2 pr-3 border-r border-white/5 min-w-0 sticky left-0 z-10 ${isLight ? 'bg-[#f7fafc]' : 'bg-[#0a0e17]'} py-1 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)]`}>
                       <div className="flex items-center gap-2.5 min-w-0">
                         {/* Emoji or Fallback representation */}
                         <span className="text-xl flex-shrink-0">{habitIcon}</span>
@@ -490,7 +490,11 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                       {/* Edit Pencil icon */}
                       <button
                         onClick={() => handleEditHabitClick(h)}
-                        className="p-1.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/10 hover:bg-white/[0.06] text-[#4A5568] hover:text-[#A0AEC0] transition-all cursor-pointer flex-shrink-0"
+                        className={`p-1.5 rounded-lg border transition-all cursor-pointer flex-shrink-0 ${
+                          isLight 
+                            ? 'bg-black/[0.02] border-black/5 hover:border-black/10 hover:bg-black/[0.04] text-slate-500 hover:text-slate-700' 
+                            : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.06] text-[#4A5568] hover:text-[#A0AEC0]'
+                        }`}
                         title={`Edit "${h.name}"`}
                       >
                         <Edit2 className="w-3 h-3" />
@@ -790,7 +794,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                   <label className="text-[10px] font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono">
                     Pick an Emoji Icon
                   </label>
-                  <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-1 bg-white/[0.01] rounded-xl border border-white/5">
+                  <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto calendar-scrollbar p-1 bg-white/[0.01] rounded-xl border border-white/5">
                     {popularEmojis.map((emoji) => {
                       const isSelected = newHabitEmoji === emoji && !customEmoji;
                       return (
@@ -834,14 +838,14 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                   <button
                     type="button"
                     onClick={() => setIsNewHabitModalOpen(false)}
-                    className="apple-glass-btn apple-glass-gray"
+                    className="apple-glass-btn apple-glass-gray text-[#F3F4F6] hover:text-white"
                   >
                     Cancel
                   </button>
 
                   <button
                     type="submit"
-                    className="apple-glass-btn apple-glass-blue"
+                    className="apple-glass-btn apple-glass-blue text-white"
                   >
                     Anchor Routine
                   </button>
@@ -907,7 +911,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                   <label className="text-[10px] font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono">
                     Pick an Emoji Icon
                   </label>
-                  <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-1 bg-white/[0.01] rounded-xl border border-white/5">
+                  <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto calendar-scrollbar p-1 bg-white/[0.01] rounded-xl border border-white/5">
                     {popularEmojis.map((emoji) => {
                       const isSelected = editHabitEmoji === emoji;
                       return (
@@ -960,14 +964,14 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                     <button
                       type="button"
                       onClick={() => setIsEditHabitModalOpen(false)}
-                      className="apple-glass-btn apple-glass-gray"
+                      className="apple-glass-btn apple-glass-gray text-[#F3F4F6] hover:text-white"
                     >
                       Cancel
                     </button>
 
                     <button
                       type="submit"
-                      className="apple-glass-btn apple-glass-blue"
+                      className="apple-glass-btn apple-glass-blue text-white"
                     >
                       Save Changes
                     </button>

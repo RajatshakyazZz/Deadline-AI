@@ -114,7 +114,7 @@ Return ONLY valid JSON (no markdown backticks, no raw text):
         <div>
           <h2 className="text-2xl md:text-3xl font-sans font-bold text-[#F7FAFC] tracking-tight">AI Tactical Briefing</h2>
           <p className="text-xs md:text-sm font-medium text-[#A0AEC0] font-sans">
-            Gemini 2.0 compiler scanning your entire workload queue.
+            Gemini 3.5 compiler scanning your entire workload queue.
           </p>
         </div>
 
