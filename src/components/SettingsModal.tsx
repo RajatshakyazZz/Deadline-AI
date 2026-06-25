@@ -5,7 +5,6 @@ import {
   CalendarDays, 
   Check, 
   AlertTriangle, 
-  Sparkles, 
   User, 
   Mail, 
   Clock, 
@@ -16,6 +15,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useApp } from './AppContext';
+import { LogoIcon } from './Logo';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -87,8 +87,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
         {/* Header */}
         <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/[0.01]">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#63B3ED] to-[#9F7AEA]/30 border border-[#63B3ED]/20">
-              <Sparkles className="w-5 h-5 text-[#63B3ED]" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#63B3ED] to-[#9F7AEA]/30 border border-[#63B3ED]/20 flex items-center justify-center">
+              <LogoIcon size={20} />
             </div>
             <div>
               <h2 className="text-lg font-bold font-sans text-white">System Settings</h2>

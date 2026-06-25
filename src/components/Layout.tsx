@@ -13,7 +13,9 @@ import {
   ChevronRight, 
   Plus, 
   Keyboard,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useApp } from './AppContext';
 import { AddTaskModal } from './AddTaskModal';
@@ -30,6 +32,22 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Active theme tracking
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('deadlineai_theme');
+    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+  });
+
+  useEffect(() => {
+    const body = document.body;
+    if (theme === 'light') {
+      body.classList.add('light-theme');
+    } else {
+      body.classList.remove('light-theme');
+    }
+    localStorage.setItem('deadlineai_theme', theme);
+  }, [theme]);
 
   // Active navigation mapping
   const menuItems = [
@@ -362,10 +380,24 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Quick Stats banner or just clean space */}
-            <span className="hidden sm:inline-block px-3 py-1 rounded-full text-[10px] font-mono uppercase bg-white/[0.04] text-[#63B3ED] border border-white/10 tracking-widest">
-              HACKATHON BUILD v1.0
-            </span>
+            {/* Quick light/dark theme switcher */}
+            <button
+              onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-white/[0.04] text-[#63B3ED] hover:text-[#9F7AEA] border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer active:scale-95 shadow-inner"
+              title={theme === 'dark' ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙'}
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-yellow-400 animate-pulse" />
+                  <span className="text-[10px] uppercase font-mono tracking-wider">Light Mode</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="text-[10px] uppercase font-mono tracking-wider">Dark Mode</span>
+                </>
+              )}
+            </button>
           </div>
         </header>
 
