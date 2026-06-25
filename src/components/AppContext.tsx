@@ -41,6 +41,8 @@ interface AppContextType {
   connectGoogleCalendar: () => Promise<string | null>;
   syncTaskToGoogleCalendar: (taskId: string) => Promise<void>;
   importGoogleCalendarEvent: (event: any) => Promise<void>;
+  isAddTaskOpen: boolean;
+  setIsAddTaskOpen: (open: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -144,6 +146,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [habits, setHabits] = useState<Habit[]>([]);
   const [sessions, setSessions] = useState<FocusSession[]>([]);
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState<boolean>(false);
   
   const [isDemo, setIsDemo] = useState<boolean>(() => {
     return localStorage.getItem('deadlineai_is_guest') === 'true';
@@ -739,6 +742,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         connectGoogleCalendar,
         syncTaskToGoogleCalendar,
         importGoogleCalendarEvent,
+        isAddTaskOpen,
+        setIsAddTaskOpen,
       }}
     >
       {children}

@@ -75,7 +75,7 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
   // Fallback to default chips + any relevant dynamic ones
   const defaultChips = [
     '📋 Show my urgent tasks',
-    '⚡ How do I add a task?',
+    '➕ Add Task Now',
     '🚨 What is Crisis Mode?',
     '⏱ Start Focus Mode',
     '💡 Give me productivity tips',

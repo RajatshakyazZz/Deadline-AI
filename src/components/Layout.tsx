@@ -23,12 +23,11 @@ import { SettingsModal } from './SettingsModal';
 import { LogoIcon, LogoFull } from './Logo';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, logout, isDemo } = useApp();
+  const { profile, logout, isDemo, isAddTaskOpen, setIsAddTaskOpen } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);

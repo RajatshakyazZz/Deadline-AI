@@ -81,13 +81,14 @@ export const MyTasks: React.FC = () => {
     googleAccessToken,
     connectGoogleCalendar,
     syncTaskToGoogleCalendar,
-    importGoogleCalendarEvent
+    importGoogleCalendarEvent,
+    isAddTaskOpen,
+    setIsAddTaskOpen
   } = useApp();
   
   // Navigation & filter states
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'crisis'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [voiceLaunchPreActive, setVoiceLaunchPreActive] = useState(false);
 
   // Focus & detail modal states

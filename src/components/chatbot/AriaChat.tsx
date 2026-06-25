@@ -25,13 +25,13 @@ const RoboticHand: React.FC<RoboticHandProps> = ({ isWaving }) => {
   return (
     <motion.div
       id="aria-wave-hand-robotic"
-      className="absolute -top-7 -right-2 w-10 h-10 select-none pointer-events-none drop-shadow-[0_2px_8px_rgba(99,179,237,0.5)] flex items-center justify-center z-10"
-      style={{ transformOrigin: 'bottom center' }}
+      className="absolute -top-7 -left-5 w-10 h-10 select-none pointer-events-none drop-shadow-[0_2px_8px_rgba(99,179,237,0.6)] flex items-center justify-center z-10"
+      style={{ transformOrigin: 'bottom right' }}
       animate={isWaving ? { 
-        rotate: [-18, 18, -18, 18, -18, 18, -18, 0],
+        rotate: [-30, 5, -30, 5, -30, 5, -30, -10],
         x: [0, -1.5, 1.5, -1.5, 1.5, -1.5, 1.5, 0],
         y: [0, -1, 0, -1, 0, -1, 0, 0]
-      } : { rotate: 0, x: 0, y: 0 }}
+      } : { rotate: -10, x: 0, y: 0 }}
       transition={{ 
         duration: 1.8, 
         ease: "easeInOut" 
@@ -109,7 +109,7 @@ const RoboticHand: React.FC<RoboticHandProps> = ({ isWaving }) => {
 };
 
 export const AriaChat: React.FC = () => {
-  const { profile, tasks, habits, sessions, showToast } = useApp();
+  const { profile, tasks, habits, sessions, showToast, setIsAddTaskOpen } = useApp();
   
   // Chat window visibility states
   const [isOpen, setIsOpen] = useState(false);
@@ -359,6 +359,25 @@ export const AriaChat: React.FC = () => {
 
     // Trigger Easter eggs if matches
     const lowerText = messageText.toLowerCase().trim();
+    if (
+      lowerText.includes('add task') || 
+      lowerText.includes('add a task') || 
+      lowerText.includes('how to add') || 
+      lowerText.includes('how do i add') || 
+      lowerText.includes('how does adding a task') ||
+      lowerText === '📋 add task now' || 
+      lowerText === '➕ add task now'
+    ) {
+      setIsAddTaskOpen(true);
+      setAriaExpression('excited');
+      setIsWaving(true);
+      setTimeout(() => setIsWaving(false), 2000);
+      setTimeout(() => {
+        typeOutAriaResponse("I have automatically opened the **Create AI-Prioritized Task** window for you! 📋 Fill in your task details, and I will instantly analyze its complexity, subtasks, and deadlines for you. 🚀");
+      }, 500);
+      return;
+    }
+
     if (lowerText === 'roast me') {
       setTimeout(() => {
         typeOutAriaResponse(getAriaMockResponse('roast me', historyPayload));
@@ -509,14 +528,17 @@ export const AriaChat: React.FC = () => {
         onClick={handleOpenChat}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed z-[9999] bottom-7 right-7 md:bottom-7 md:right-7 w-16 h-16 rounded-full flex items-center justify-center cursor-pointer select-none border border-white/20 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400"
+        className="fixed z-[9999] bottom-7 right-7 md:bottom-7 md:right-7 w-16 h-16 rounded-full flex items-center justify-center cursor-pointer select-none transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
         style={{
           background: isOpen 
-            ? 'linear-gradient(135deg, #FC8181, #E53E3E)' // Red-ish close state
-            : 'linear-gradient(135deg, #63B3ED, #9F7AEA)', // Blue-purple idle state
+            ? 'linear-gradient(135deg, #FC8181, #E53E3E)' // Red close state
+            : '#080D1A', // Dark cyber-blue background matching head
+          border: isOpen 
+            ? '1px solid rgba(255, 255, 255, 0.2)' 
+            : '1.8px solid rgba(99, 179, 237, 0.5)', // Neon blue border
           boxShadow: isOpen
             ? '0 8px 32px rgba(229, 62, 62, 0.4), 0 0 0 1px rgba(255,255,255,0.2) inset'
-            : '0 8px 32px rgba(99, 179, 237, 0.4), 0 0 0 1px rgba(255,255,255,0.2) inset, 0 1px 0 rgba(255,255,255,0.3) inset',
+            : '0 8px 32px rgba(99, 179, 237, 0.35), 0 0 15px rgba(99, 179, 237, 0.15), inset 0 0 10px rgba(99, 179, 237, 0.15)',
         }}
       >
         {/* Coded Robotic Waving Hand above button */}

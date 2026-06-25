@@ -34,31 +34,23 @@ export const AriaFace: React.FC<AriaFaceProps> = ({
   };
   const finalSize = typeof size === 'number' ? size : sizeMap[size] || 48;
 
-  // Resolve expressions SVG parameters
-  let mouthPath = "M17 30 Q24 36 31 30"; // Happy curve
-  let leftEyeR = 4;
-  let rightEyeR = 4;
-  let eyebrowLeftPath = "";
-  let eyebrowRightPath = "";
+  // Resolve expressions SVG parameters for robotic '<' and '>' eyes
+  let leftEyePath = "M 18 19 L 14 22 L 18 25"; // default '<'
+  let rightEyePath = "M 30 19 L 34 22 L 30 25"; // default '>'
+  let mouthPath = "M 20 31 Q 24 35 28 31"; // happy curve '-'
 
   if (expression === 'thinking') {
-    mouthPath = "M18 31 L30 31"; // Flat straight line
-    leftEyeR = 3.5; // squint left eye
-    rightEyeR = 4;
-    eyebrowLeftPath = "M14 16 L20 18"; // tilted
-    eyebrowRightPath = "M28 18 L34 16"; // tilted up
+    leftEyePath = "M 18 21 L 14 22 L 18 23"; // narrow squint
+    rightEyePath = "M 30 21 L 34 22 L 30 23"; // narrow squint
+    mouthPath = "M 21 31 L 27 31"; // straight dash '-'
   } else if (expression === 'excited') {
-    mouthPath = "M15 28 Q24 40 33 28"; // Wide open smile
-    leftEyeR = 5; // Wider eyes
-    rightEyeR = 5;
-    eyebrowLeftPath = "M14 15 Q18 13 21 16"; // Arched up
-    eyebrowRightPath = "M27 16 Q30 13 34 15"; // Arched up
+    leftEyePath = "M 17 17 L 13 22 L 17 27"; // larger '<'
+    rightEyePath = "M 31 17 L 35 22 L 31 27"; // larger '>'
+    mouthPath = "M 19 29 Q 24 38 29 29"; // wide open cyber smile
   } else if (expression === 'concerned') {
-    mouthPath = "M17 33 Q24 27 31 33"; // Soft sad curve
-    leftEyeR = 4;
-    rightEyeR = 4;
-    eyebrowLeftPath = "M15 18 L21 15"; // Inner eyebrow ends up (worried)
-    eyebrowRightPath = "M27 15 L33 18"; // Worried slant
+    leftEyePath = "M 18 20 L 14 22 L 18 24";
+    rightEyePath = "M 30 20 L 34 22 L 30 24";
+    mouthPath = "M 20 33 Q 24 29 28 33"; // soft inverse curve
   }
 
   // Define variants for idle bobbing, thinking tilting, and excited jumps
@@ -72,31 +64,31 @@ export const AriaFace: React.FC<AriaFaceProps> = ({
       },
     },
     thinking: {
-      rotate: [-5, 5, -5],
+      rotate: [-4, 4, -4],
       y: [0, -1, 0],
       transition: {
         rotate: {
-          duration: 0.8,
+          duration: 1.0,
           repeat: Infinity,
           ease: 'easeInOut',
         },
         y: {
-          duration: 1.5,
+          duration: 1.8,
           repeat: Infinity,
           ease: 'easeInOut',
         },
       },
     },
     excited: {
-      y: [0, -8, 0],
-      scale: [1, 1.1, 1],
+      y: [0, -7, 0],
+      scale: [1, 1.08, 1],
       transition: {
-        duration: 0.45,
+        duration: 0.4,
         ease: 'easeOut',
       },
     },
     concerned: {
-      y: [0, -1, 0],
+      y: [0, -1.5, 0],
       transition: {
         duration: 3.5,
         repeat: Infinity,
@@ -122,113 +114,100 @@ export const AriaFace: React.FC<AriaFaceProps> = ({
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <linearGradient id="faceGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#63B3ED" />
-            <stop offset="100%" stopColor="#9F7AEA" />
-          </linearGradient>
-          <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+          <filter id="cyberGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="1.8" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+          <radialGradient id="antennaGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#63B3ED" />
+            <stop offset="100%" stopColor="transparent" />
+          </radialGradient>
         </defs>
 
-        {/* Outer Glow in Excited Mode */}
-        {expression === 'excited' && (
-          <circle
-            cx="24"
-            cy="24"
-            r="24"
-            fill="#9F7AEA"
-            opacity="0.35"
-            filter="url(#softGlow)"
-          />
-        )}
+        {/* Antenna Base Joint */}
+        <ellipse cx="24" cy="8" rx="3.5" ry="1.5" fill="#4A5568" stroke="#cbd5e0" strokeWidth="0.5" />
 
-        {/* Base Face Circle */}
-        <circle cx="24" cy="24" r="24" fill="url(#faceGrad)" />
+        {/* Antenna Stem */}
+        <line x1="24" y1="8" x2="24" y2="2" stroke="#cbd5e0" strokeWidth="1.5" strokeLinecap="round" />
 
-        {/* Eyebrows if present */}
-        {eyebrowLeftPath && (
-          <path
-            d={eyebrowLeftPath}
-            stroke="white"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            opacity="0.9"
-          />
-        )}
-        {eyebrowRightPath && (
-          <path
-            d={eyebrowRightPath}
-            stroke="white"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            opacity="0.9"
-          />
-        )}
+        {/* Glowing Antenna Node (Pulse effect) */}
+        <motion.circle
+          cx="24"
+          cy="2"
+          r="2.5"
+          fill="#63B3ED"
+          filter="url(#cyberGlow)"
+          animate={{
+            scale: [1, 1.25, 1],
+            opacity: [0.8, 1, 0.8],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
 
-        {/* Left Eye Group */}
+        {/* Base Robotic Face Circle - Dark/Black inner cavity, glowing border */}
+        <circle 
+          cx="24" 
+          cy="26" 
+          r="17" 
+          fill="#080D1A" 
+          stroke="#63B3ED" 
+          strokeWidth="2.2" 
+          filter="url(#cyberGlow)" 
+          className="shadow-inner"
+        />
+
+        {/* Left Eye Group (Articulated '<') */}
         <g id="left-eye-group">
-          <motion.ellipse
-            cx="17"
-            cy="21"
-            rx={leftEyeR}
-            ry={blink ? 0.4 : leftEyeR}
-            fill="white"
-            animate={{ scaleY: blink ? 0.1 : 1 }}
+          <motion.path
+            d={leftEyePath}
+            stroke="#63B3ED"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+            animate={blink ? { scaleY: 0.1, y: 1 } : { scaleY: 1, y: 0 }}
+            style={{ transformOrigin: '16px 22px' }}
             transition={{ duration: 0.12 }}
           />
-          {!blink && (
-            <>
-              {/* Pupil */}
-              <circle cx="18" cy="22" r="2" fill="#1A1A2E" />
-              {/* Eye Shine */}
-              <circle cx="19" cy="21" r="0.8" fill="white" />
-            </>
-          )}
         </g>
 
-        {/* Right Eye Group */}
+        {/* Right Eye Group (Articulated '>') */}
         <g id="right-eye-group">
-          <motion.ellipse
-            cx="31"
-            cy="21"
-            rx={rightEyeR}
-            ry={blink ? 0.4 : rightEyeR}
-            fill="white"
-            animate={{ scaleY: blink ? 0.1 : 1 }}
+          <motion.path
+            d={rightEyePath}
+            stroke="#63B3ED"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+            animate={blink ? { scaleY: 0.1, y: 1 } : { scaleY: 1, y: 0 }}
+            style={{ transformOrigin: '32px 22px' }}
             transition={{ duration: 0.12 }}
           />
-          {!blink && (
-            <>
-              {/* Pupil */}
-              <circle cx="32" cy="22" r="2" fill="#1A1A2E" />
-              {/* Eye Shine */}
-              <circle cx="33" cy="21" r="0.8" fill="white" />
-            </>
-          )}
         </g>
 
-        {/* Smile Path */}
+        {/* Robotic Mouth Path (dash) */}
         <motion.path
           d={mouthPath}
-          stroke="white"
-          strokeWidth="2.5"
+          stroke="#63B3ED"
+          strokeWidth="2.2"
           fill="none"
           strokeLinecap="round"
           animate={{ d: mouthPath }}
           transition={{ duration: 0.2 }}
         />
 
-        {/* Star Sparkles around face for Excited Mode */}
+        {/* Cyber sparks around head in Excited Mode */}
         {expression === 'excited' && (
-          <g opacity="0.9">
-            {/* Top Left Sparkle */}
-            <path d="M-2 -2 L-1 -5 L0 -2 L3 -1 L0 0 L-1 3 L-2 0 L-5 -1 Z" fill="#FEE08B" />
-            {/* Top Right Sparkle */}
-            <path d="M46 -4 L47 -7 L48 -4 L51 -3 L48 -2 L47 1 L46 -2 L43 -3 Z" fill="#63B3ED" />
-            {/* Bottom Left Sparkle */}
-            <path d="M-4 44 L-3 41 L-2 44 L1 45 L-2 46 L-3 49 L-4 46 L-7 45 Z" fill="#EBF8FF" />
+          <g opacity="0.95">
+            <line x1="4" y1="12" x2="1" y2="9" stroke="#9F7AEA" strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="44" y1="12" x2="47" y2="9" stroke="#9F7AEA" strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="2" y1="38" x2="-1" y2="41" stroke="#63B3ED" strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="46" y1="38" x2="49" y2="41" stroke="#63B3ED" strokeWidth="1.2" strokeLinecap="round" />
           </g>
         )}
       </svg>
