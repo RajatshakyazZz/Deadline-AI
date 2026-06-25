@@ -254,10 +254,10 @@ ${JSON.stringify(taskPayload, null, 2)}`;
         <div className="flex gap-2.5">
           <button
             onClick={() => setIsCalendarPanelOpen(!isCalendarPanelOpen)}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 border transition-all active:scale-[0.98] cursor-pointer ${
+            className={`apple-glass-btn text-xs font-bold uppercase tracking-wider ${
               googleAccessToken 
-                ? 'bg-emerald-950/20 border-emerald-500/30 text-[#68D391]' 
-                : 'bg-white/5 border-white/10 text-[#A0AEC0] hover:bg-white/10 hover:text-[#F7FAFC]'
+                ? 'apple-glass-green text-[#D1FAE5]' 
+                : 'apple-glass-gray'
             }`}
             title="Google Calendar Integration"
           >
@@ -268,10 +268,10 @@ ${JSON.stringify(taskPayload, null, 2)}`;
           <button
             onClick={handleAIPrioritize}
             disabled={isSortingByAI || tasks.length === 0}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-transparent transition-all active:scale-[0.98] cursor-pointer ${
+            className={`apple-glass-btn text-xs font-bold uppercase tracking-wider ${
               isSortingByAI 
-                ? 'bg-[#131929] text-[#A0AEC0] border-white/5 animate-pulse' 
-                : 'bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] hover:from-[#5aa2d6] hover:to-[#906cd9] text-[#080B14] shadow-[0_4px_15px_rgba(159,122,234,0.2)]'
+                ? 'apple-glass-gray animate-pulse' 
+                : 'apple-glass-purple text-white'
             }`}
           >
             <Sparkles className={`w-4 h-4 ${isSortingByAI ? 'animate-spin' : ''}`} />
@@ -280,7 +280,7 @@ ${JSON.stringify(taskPayload, null, 2)}`;
 
           <button
             onClick={triggerVoiceAdd}
-            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[#A0AEC0] hover:text-[#F7FAFC] border border-white/5 hover:border-white/10 transition-all flex items-center justify-center cursor-pointer"
+            className="apple-glass-btn apple-glass-gray !p-2.5"
             title="Add task via Voice"
           >
             <Mic className="w-5 h-5 text-[#63B3ED]" />
@@ -505,10 +505,12 @@ ${JSON.stringify(taskPayload, null, 2)}`;
               Looks like your timeline is completely clean. Click the floating + button to schedule your next prioritized event.
             </p>
             <button
+              id="add-task-empty-state-btn"
               onClick={() => setIsAddTaskOpen(true)}
-              className="px-5 py-2.5 rounded-xl bg-[#131929] border border-white/10 hover:border-white/20 hover:bg-[#1A2235] text-xs font-bold text-[#F7FAFC] transition-colors cursor-pointer"
+              className="apple-glass-btn apple-glass-indigo font-bold text-xs uppercase tracking-wider px-6 py-3"
             >
-              Add Task Now
+              <PlusCircle className="w-4 h-4" />
+              <span>Add Task Now</span>
             </button>
           </motion.div>
         ) : (

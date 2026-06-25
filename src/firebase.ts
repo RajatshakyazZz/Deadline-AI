@@ -21,6 +21,7 @@ export const signInWithGoogle = async () => {
   } catch (error: any) {
     console.error('Popup blocked or failed, attempting redirect:', error);
     try {
+      localStorage.setItem('deadlineai_pending_redirect', 'true');
       await signInWithRedirect(auth, googleProvider);
     } catch (redirectError) {
       console.error('Redirect sign in also failed:', redirectError);
@@ -31,13 +32,19 @@ export const signInWithGoogle = async () => {
 
 export const getGoogleRedirectToken = async () => {
   try {
+    const isPending = localStorage.getItem('deadlineai_pending_redirect') === 'true';
+    if (!isPending) {
+      return null;
+    }
     const result = await getRedirectResult(auth);
+    localStorage.removeItem('deadlineai_pending_redirect');
     if (result) {
       const credential = GoogleAuthProvider.credentialFromResult(result);
       return credential?.accessToken || null;
     }
   } catch (error) {
     console.error('Error getting redirect result:', error);
+    localStorage.removeItem('deadlineai_pending_redirect');
   }
   return null;
 };

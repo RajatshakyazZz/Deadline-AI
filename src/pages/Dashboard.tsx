@@ -326,7 +326,7 @@ export const Dashboard: React.FC = () => {
                           </div>
                           <button
                             onClick={() => setSelectedCrisisTask(task)}
-                            className="px-3.5 py-1.5 rounded-lg bg-[#FC8181] hover:bg-[#e47474] text-[#080B14] text-xs font-extrabold uppercase tracking-wide cursor-pointer hover:shadow-[0_0_15px_rgba(252,129,129,0.35)] transition-all"
+                            className="apple-glass-btn apple-glass-red text-xs font-extrabold uppercase tracking-wide !px-3.5 !py-1.5 shadow-lg"
                           >
                             Crisis Help
                           </button>
@@ -497,8 +497,9 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <button
+              id="open-habits-console-btn"
               onClick={() => navigate('/habits')}
-              className="w-full mt-2 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-bold text-[#A0AEC0] hover:text-[#F7FAFC] transition-all border border-white/5 hover:border-white/10 cursor-pointer"
+              className="apple-glass-btn apple-glass-gray w-full mt-2 text-xs font-bold uppercase tracking-wider"
             >
               Open Habits Console
             </button>

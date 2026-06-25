@@ -715,5 +715,128 @@
   color: #1A202C !important;
 }
 
+/* Apple Liquid Glass Buttons */
+.apple-glass-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Glass Reflection Sheen Overlay */
+.apple-glass-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hover/Active states */
+.apple-glass-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.apple-glass-btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Color Presets */
+.apple-glass-indigo {
+  background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+.apple-glass-indigo:hover {
+  background: linear-gradient(180deg, #5A52FF 0%, #4A3FFA 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(79, 70, 229, 0.4);
+}
+
+.apple-glass-blue {
+  background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+.apple-glass-blue:hover {
+  background: linear-gradient(180deg, #4E91FF 0%, #2E72FF 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(37, 99, 235, 0.4);
+}
+
+.apple-glass-green {
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(5, 150, 105, 0.25);
+}
+.apple-glass-green:hover {
+  background: linear-gradient(180deg, #14CE90 0%, #06AF7B 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(5, 150, 105, 0.4);
+}
+
+.apple-glass-purple {
+  background: linear-gradient(180deg, #8B5CF6 0%, #7C3AED 100%);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(124, 58, 237, 0.25);
+}
+.apple-glass-purple:hover {
+  background: linear-gradient(180deg, #9C72FF 0%, #8749FF 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(124, 58, 237, 0.4);
+}
+
+.apple-glass-red {
+  background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+.apple-glass-red:hover {
+  background: linear-gradient(180deg, #FF5B5B 0%, #E93535 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(220, 38, 38, 0.4);
+}
+
+.apple-glass-gray {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  color: #F3F4F6;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+.apple-glass-gray:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .apple-glass-gray {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.01) 100%);
+  color: #1F2937;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+.light-theme .apple-glass-gray:hover {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.02) 100%);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+
+
+
 
 

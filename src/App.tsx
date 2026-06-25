@@ -133,47 +133,56 @@ const MainAppRoutes: React.FC = () => {
   );
 };
 
-export default function App() {
+function AppContent() {
+  const { loading } = useApp();
   const [showIntro, setShowIntro] = useState(true);
 
-  // High-fidelity intro loader timeout on mount
+  // High-fidelity intro loader linked to actual loading status
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowIntro(false);
-    }, 1500); // 1.5 seconds splash intro
-    return () => clearTimeout(timer);
-  }, []);
+    if (!loading) {
+      const timer = setTimeout(() => {
+        setShowIntro(false);
+      }, 300); // Super responsive 300ms transition instead of a hardcoded 1.5s block
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
+  return (
+    <AnimatePresence mode="wait">
+      {showIntro ? (
+        <AppLoader key="intro-splash" />
+      ) : (
+        <motion.div
+          key="main-app"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="min-h-screen bg-[#050810] relative"
+        >
+          {/* Living Gradient Mesh Background */}
+          <div className="bg-mesh-container">
+            <div className="bg-orb bg-orb-blue" />
+            <div className="bg-orb bg-orb-purple" />
+            <div className="bg-orb bg-orb-teal" />
+          </div>
+
+          {/* Physical Noise Texture Overlay */}
+          <div className="noise-overlay" />
+
+          <div className="relative z-10">
+            <MainAppRoutes />
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+export default function App() {
   return (
     <ToastProvider>
       <AppProvider>
-        <AnimatePresence mode="wait">
-          {showIntro ? (
-            <AppLoader key="intro-splash" />
-          ) : (
-            <motion.div
-              key="main-app"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              className="min-h-screen bg-[#050810] relative"
-            >
-              {/* Living Gradient Mesh Background */}
-              <div className="bg-mesh-container">
-                <div className="bg-orb bg-orb-blue" />
-                <div className="bg-orb bg-orb-purple" />
-                <div className="bg-orb bg-orb-teal" />
-              </div>
-
-              {/* Physical Noise Texture Overlay */}
-              <div className="noise-overlay" />
-
-              <div className="relative z-10">
-                <MainAppRoutes />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <AppContent />
       </AppProvider>
     </ToastProvider>
   );

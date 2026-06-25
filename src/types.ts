@@ -62,6 +62,7 @@ export interface Habit {
   streak: number;
   lastCompleted: string; // YYYY-MM-DD
   createdAt: string;
+  completedDates?: string[];
 }
 
 export interface FocusSession {

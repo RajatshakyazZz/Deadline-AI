@@ -33,7 +33,8 @@ interface AppContextType {
   toggleSubtask: (taskId: string, subtaskId: string) => Promise<void>;
   completeTask: (taskId: string) => Promise<void>;
   addHabit: (name: string, icon: string) => Promise<void>;
-  toggleHabit: (habitId: string) => Promise<void>;
+  toggleHabit: (habitId: string, customDateStr?: string) => Promise<void>;
+  updateHabit: (habitId: string, updates: Partial<Habit>) => Promise<void>;
   deleteHabit: (habitId: string) => Promise<void>;
   addFocusSession: (minutes: number, tasksWorkedOn: string[]) => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
@@ -133,10 +134,58 @@ const MOCK_TASKS: Task[] = [
   }
 ];
 
+const getRelativeDateStr = (daysAgo: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString().split('T')[0];
+};
+
 const MOCK_HABITS: Habit[] = [
-  { id: 'h1', name: 'Plan Tasks with DeadlineAI', icon: 'Sparkles', streak: 12, lastCompleted: new Date().toISOString().split('T')[0], createdAt: new Date().toISOString() },
-  { id: 'h2', name: 'Pomodoro Focus block', icon: 'Timer', streak: 4, lastCompleted: '', createdAt: new Date().toISOString() },
-  { id: 'h3', name: 'Review Deadlines daily', icon: 'Flame', streak: 9, lastCompleted: new Date().toISOString().split('T')[0], createdAt: new Date().toISOString() },
+  { 
+    id: 'h1', 
+    name: '4L Water Daily', 
+    icon: '💧', 
+    streak: 5, 
+    lastCompleted: getRelativeDateStr(0), 
+    completedDates: [getRelativeDateStr(0), getRelativeDateStr(1), getRelativeDateStr(2), getRelativeDateStr(3), getRelativeDateStr(4)],
+    createdAt: new Date().toISOString() 
+  },
+  { 
+    id: 'h2', 
+    name: '5 Hrs Study Daily', 
+    icon: '📚', 
+    streak: 3, 
+    lastCompleted: getRelativeDateStr(0), 
+    completedDates: [getRelativeDateStr(0), getRelativeDateStr(1), getRelativeDateStr(2)],
+    createdAt: new Date().toISOString() 
+  },
+  { 
+    id: 'h3', 
+    name: '1 Hr Workout Daily', 
+    icon: '💪', 
+    streak: 1, 
+    lastCompleted: getRelativeDateStr(0), 
+    completedDates: [getRelativeDateStr(0)],
+    createdAt: new Date().toISOString() 
+  },
+  { 
+    id: 'h4', 
+    name: 'Take Bath Daily', 
+    icon: '🚿', 
+    streak: 5, 
+    lastCompleted: getRelativeDateStr(0), 
+    completedDates: [getRelativeDateStr(0), getRelativeDateStr(1), getRelativeDateStr(2), getRelativeDateStr(3), getRelativeDateStr(4)],
+    createdAt: new Date().toISOString() 
+  },
+  { 
+    id: 'h5', 
+    name: 'Wake up at 6am', 
+    icon: '⏰', 
+    streak: 1, 
+    lastCompleted: getRelativeDateStr(0), 
+    completedDates: [getRelativeDateStr(0)],
+    createdAt: new Date().toISOString() 
+  }
 ];
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -156,6 +205,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Authentication observer
   useEffect(() => {
+    let unsubscribeTasks: (() => void) | null = null;
+    let unsubscribeHabits: (() => void) | null = null;
+    let unsubscribeSessions: (() => void) | null = null;
+
     if (isDemo) {
       // Demo authentication mock
       const mockUser = {
@@ -192,9 +245,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      // Clean up previous collection listeners to prevent memory leaks/multiple callbacks
+      if (unsubscribeTasks) { unsubscribeTasks(); unsubscribeTasks = null; }
+      if (unsubscribeHabits) { unsubscribeHabits(); unsubscribeHabits = null; }
+      if (unsubscribeSessions) { unsubscribeSessions(); unsubscribeSessions = null; }
+
       if (firebaseUser) {
         setUser(firebaseUser);
+        localStorage.setItem('deadlineai_has_authenticated', 'true');
         
         // Retrieve redirect access token for Google Workspace/Calendar if present
         getGoogleRedirectToken().then((token) => {
@@ -203,12 +262,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         });
         
-        // Listen to User Profile doc
+        // 1. Instantly load cached offline data from localStorage for near-zero loading times!
+        const cachedProfile = localStorage.getItem(`deadlineai_profile_${firebaseUser.uid}`);
+        const cachedTasks = localStorage.getItem(`deadlineai_tasks_${firebaseUser.uid}`);
+        const cachedHabits = localStorage.getItem(`deadlineai_habits_${firebaseUser.uid}`);
+        const cachedSessions = localStorage.getItem(`deadlineai_sessions_${firebaseUser.uid}`);
+
+        const fallbackProfile: UserProfile = {
+          name: firebaseUser.displayName || 'Developer',
+          email: firebaseUser.email || '',
+          photoURL: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+          createdAt: new Date().toISOString(),
+          totalFocusMinutes: 0,
+          longestStreak: 0,
+        };
+
+        if (cachedProfile) {
+          try { setProfile(JSON.parse(cachedProfile)); } catch (e) {}
+        } else {
+          // Instantly set optimistic profile to make first-time logins/signups snappy and seamless!
+          setProfile(fallbackProfile);
+        }
+        if (cachedTasks) {
+          try { setTasks(JSON.parse(cachedTasks)); } catch (e) {}
+        }
+        if (cachedHabits) {
+          try { setHabits(JSON.parse(cachedHabits)); } catch (e) {}
+        }
+        if (cachedSessions) {
+          try { setSessions(JSON.parse(cachedSessions)); } catch (e) {}
+        }
+
+        // Set loading false IMMEDIATELY to avoid locking the user behind an intro screen
+        setLoading(false);
+
+        // 2. Load and provision user profile from Firestore asynchronously
         const profileRef = doc(db, 'users', firebaseUser.uid);
-        let initialProfile: UserProfile | null = null;
-        
-        try {
-          const profileSnap = await getDoc(profileRef);
+        getDoc(profileRef).then((profileSnap) => {
+          let initialProfile: UserProfile | null = null;
           if (!profileSnap.exists()) {
             initialProfile = {
               name: firebaseUser.displayName || 'Developer',
@@ -218,29 +309,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               totalFocusMinutes: 0,
               longestStreak: 0,
             };
-            try {
-              await setDoc(profileRef, initialProfile);
-            } catch (error) {
+            setDoc(profileRef, initialProfile).catch((error) => {
               console.warn("Failed to set new profile in Firestore (offline?):", error);
-            }
+            });
           } else {
             initialProfile = profileSnap.data() as UserProfile;
           }
           if (initialProfile) {
+            setProfile(initialProfile);
             localStorage.setItem(`deadlineai_profile_${firebaseUser.uid}`, JSON.stringify(initialProfile));
           }
-        } catch (error) {
-          console.warn("Failed to get profile from Firestore (offline?), loading cached profile if available:", error);
-          const cached = localStorage.getItem(`deadlineai_profile_${firebaseUser.uid}`);
-          if (cached) {
-            try {
-              initialProfile = JSON.parse(cached);
-            } catch (e) {
-              console.error("Failed to parse cached profile", e);
-            }
-          }
-          if (!initialProfile) {
-            initialProfile = {
+        }).catch((error) => {
+          console.warn("Failed to get profile from Firestore, using cache or fallback:", error);
+          if (!cachedProfile) {
+            const fallbackProfile: UserProfile = {
               name: firebaseUser.displayName || 'Developer',
               email: firebaseUser.email || '',
               photoURL: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
@@ -248,14 +330,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               totalFocusMinutes: 0,
               longestStreak: 0,
             };
+            setProfile(fallbackProfile);
           }
-        }
-        setProfile(initialProfile);
+        });
 
-        // Realtime sync collections
+        // 3. Setup real-time listeners for data collections (will update UI asynchronously as they arrive)
         const tasksPath = `users/${firebaseUser.uid}/tasks`;
         const tasksQuery = query(collection(db, 'users', firebaseUser.uid, 'tasks'), orderBy('createdAt', 'desc'));
-        const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
+        unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
           const loadedTasks: Task[] = [];
           snapshot.forEach((docSnap) => {
             loadedTasks.push({ id: docSnap.id, ...docSnap.data() } as Task);
@@ -266,15 +348,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           console.warn(`Firestore tasks subscription error (${tasksPath}), loading cached:`, error);
           const cached = localStorage.getItem(`deadlineai_tasks_${firebaseUser.uid}`);
           if (cached) {
-            try {
-              setTasks(JSON.parse(cached));
-            } catch (e) {}
+            try { setTasks(JSON.parse(cached)); } catch (e) {}
           }
         });
 
         const habitsPath = `users/${firebaseUser.uid}/habits`;
         const habitsQuery = query(collection(db, 'users', firebaseUser.uid, 'habits'), orderBy('createdAt', 'desc'));
-        const unsubscribeHabits = onSnapshot(habitsQuery, (snapshot) => {
+        unsubscribeHabits = onSnapshot(habitsQuery, (snapshot) => {
           const loadedHabits: Habit[] = [];
           snapshot.forEach((docSnap) => {
             loadedHabits.push({ id: docSnap.id, ...docSnap.data() } as Habit);
@@ -285,15 +365,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           console.warn(`Firestore habits subscription error (${habitsPath}), loading cached:`, error);
           const cached = localStorage.getItem(`deadlineai_habits_${firebaseUser.uid}`);
           if (cached) {
-            try {
-              setHabits(JSON.parse(cached));
-            } catch (e) {}
+            try { setHabits(JSON.parse(cached)); } catch (e) {}
           }
         });
 
         const sessionsPath = `users/${firebaseUser.uid}/sessions`;
         const sessionsQuery = query(collection(db, 'users', firebaseUser.uid, 'sessions'), orderBy('createdAt', 'desc'));
-        const unsubscribeSessions = onSnapshot(sessionsQuery, (snapshot) => {
+        unsubscribeSessions = onSnapshot(sessionsQuery, (snapshot) => {
           const loadedSessions: FocusSession[] = [];
           snapshot.forEach((docSnap) => {
             loadedSessions.push({ id: docSnap.id, ...docSnap.data() } as FocusSession);
@@ -304,30 +382,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           console.warn(`Firestore sessions subscription error (${sessionsPath}), loading cached:`, error);
           const cached = localStorage.getItem(`deadlineai_sessions_${firebaseUser.uid}`);
           if (cached) {
-            try {
-              setSessions(JSON.parse(cached));
-            } catch (e) {}
+            try { setSessions(JSON.parse(cached)); } catch (e) {}
           }
         });
 
-        setLoading(false);
-
-        return () => {
-          unsubscribeTasks();
-          unsubscribeHabits();
-          unsubscribeSessions();
-        };
       } else {
         setUser(null);
         setProfile(null);
         setTasks([]);
         setHabits([]);
         setSessions([]);
+        localStorage.removeItem('deadlineai_has_authenticated');
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeTasks) unsubscribeTasks();
+      if (unsubscribeHabits) unsubscribeHabits();
+      if (unsubscribeSessions) unsubscribeSessions();
+    };
   }, [isDemo]);
 
   // Synchronize Demo state to localStorage
@@ -352,11 +427,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res && res.token) {
         setGoogleAccessToken(res.token);
       }
+      localStorage.setItem('deadlineai_has_authenticated', 'true');
       showToast('Successfully logged in with Google!', 'success');
     } catch (err) {
-      setLoading(false);
+      console.error('Login failed:', err);
       showToast('Sign in failed. Loading Guest Demo Mode.', 'info');
       loginAsGuest();
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -369,6 +447,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = async () => {
     try {
       setGoogleAccessToken(null);
+      localStorage.removeItem('deadlineai_has_authenticated');
+      localStorage.removeItem('deadlineai_is_guest');
       if (isDemo) {
         setIsDemo(false);
         localStorage.setItem('deadlineai_is_guest', 'false');
@@ -561,6 +641,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       streak: 0,
       lastCompleted: '',
       createdAt: new Date().toISOString(),
+      completedDates: [],
     };
 
     if (isDemo) {
@@ -578,37 +659,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const toggleHabit = async (habitId: string) => {
+  const toggleHabit = async (habitId: string, customDateStr?: string) => {
     const habit = habits.find((h) => h.id === habitId);
     if (!habit) return;
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const isCompletedToday = habit.lastCompleted === todayStr;
+    const targetDateStr = customDateStr || todayStr;
 
-    let newStreak = habit.streak;
-    let newLastCompleted = '';
+    // Ensure completedDates exists
+    const completedDates = habit.completedDates ? [...habit.completedDates] : (habit.lastCompleted ? [habit.lastCompleted] : []);
+    const isCompletedOnDate = completedDates.includes(targetDateStr);
 
-    if (isCompletedToday) {
-      // Toggle off
-      newStreak = Math.max(0, habit.streak - 1);
-      newLastCompleted = '';
-      showToast('Habit un-checked.', 'info');
-    } else {
-      // Toggle on
-      const yesterdayStr = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      if (habit.lastCompleted === yesterdayStr || habit.lastCompleted === '') {
-        newStreak = habit.streak + 1;
-      } else {
-        // Streak reset if missed a day
-        newStreak = 1;
+    let newCompletedDates = [...completedDates];
+    let newLastCompleted = habit.lastCompleted;
+
+    if (isCompletedOnDate) {
+      newCompletedDates = newCompletedDates.filter((d) => d !== targetDateStr);
+      if (newLastCompleted === targetDateStr) {
+        const remainingDates = newCompletedDates.filter((d) => d !== targetDateStr);
+        if (remainingDates.length > 0) {
+          newLastCompleted = remainingDates.sort().reverse()[0];
+        } else {
+          newLastCompleted = '';
+        }
       }
-      newLastCompleted = todayStr;
-      showToast('Habit done today! 🔥 Streak increased.', 'success');
+      showToast('Habit un-checked for this date.', 'info');
+    } else {
+      if (!newCompletedDates.includes(targetDateStr)) {
+        newCompletedDates.push(targetDateStr);
+      }
+      newCompletedDates.sort();
+      newLastCompleted = newCompletedDates[newCompletedDates.length - 1];
+      showToast(`Habit completed! Streak refreshed.`, 'success');
+    }
+
+    // Dynamic streak calculation based on backward continuous completion from today or the latest completed date
+    let newStreak = 0;
+    if (newCompletedDates.length > 0) {
+      const sortedUniqueDates = Array.from(new Set(newCompletedDates)).sort();
+      
+      // Let's check yesterday and today.
+      const yesterdayStr = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const hasToday = sortedUniqueDates.includes(todayStr);
+      const hasYesterday = sortedUniqueDates.includes(yesterdayStr);
+
+      if (hasToday || hasYesterday) {
+        let currentDay = hasToday ? new Date(todayStr) : new Date(yesterdayStr);
+        while (true) {
+          const currentDayStr = currentDay.toISOString().split('T')[0];
+          if (sortedUniqueDates.includes(currentDayStr)) {
+            newStreak++;
+            currentDay.setDate(currentDay.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+      } else {
+        // If they did not do it today or yesterday, find the streak starting from the latest completed day backwards
+        const latestCompleted = sortedUniqueDates[sortedUniqueDates.length - 1];
+        let currentDay = new Date(latestCompleted);
+        while (true) {
+          const currentDayStr = currentDay.toISOString().split('T')[0];
+          if (sortedUniqueDates.includes(currentDayStr)) {
+            newStreak++;
+            currentDay.setDate(currentDay.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+      }
     }
 
     if (isDemo) {
       setHabits((prev) =>
-        prev.map((h) => (h.id === habitId ? { ...h, streak: newStreak, lastCompleted: newLastCompleted } : h))
+        prev.map((h) => (h.id === habitId ? { ...h, streak: newStreak, lastCompleted: newLastCompleted, completedDates: newCompletedDates } : h))
       );
       if (newStreak > (profile?.longestStreak || 0)) {
         setProfile((prev) => prev ? { ...prev, longestStreak: newStreak } : null);
@@ -617,7 +741,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const habitPath = `users/${user.uid}/habits/${habitId}`;
       const docRef = doc(db, 'users', user.uid, 'habits', habitId);
       try {
-        await updateDoc(docRef, { streak: newStreak, lastCompleted: newLastCompleted });
+        await updateDoc(docRef, { 
+          streak: newStreak, 
+          lastCompleted: newLastCompleted,
+          completedDates: newCompletedDates
+        });
+        
+        // Also update local habits state
+        setHabits((prev) =>
+          prev.map((h) => (h.id === habitId ? { ...h, streak: newStreak, lastCompleted: newLastCompleted, completedDates: newCompletedDates } : h))
+        );
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, habitPath);
       }
@@ -648,6 +781,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         handleFirestoreError(error, OperationType.DELETE, docPath);
       }
       showToast('Habit removed.', 'success');
+    }
+  };
+
+  const updateHabit = async (habitId: string, updates: Partial<Habit>) => {
+    if (isDemo) {
+      setHabits((prev) =>
+        prev.map((h) => (h.id === habitId ? { ...h, ...updates } : h))
+      );
+      showToast('Habit updated.', 'success');
+    } else if (user) {
+      const habitPath = `users/${user.uid}/habits/${habitId}`;
+      const docRef = doc(db, 'users', user.uid, 'habits', habitId);
+      try {
+        await updateDoc(docRef, updates);
+        setHabits((prev) =>
+          prev.map((h) => (h.id === habitId ? { ...h, ...updates } : h))
+        );
+        showToast('Habit updated.', 'success');
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, habitPath);
+      }
     }
   };
 
@@ -735,6 +889,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         completeTask,
         addHabit,
         toggleHabit,
+        updateHabit,
         deleteHabit,
         addFocusSession,
         updateProfile,

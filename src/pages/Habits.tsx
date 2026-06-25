@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Flame, 
@@ -6,42 +6,145 @@ import {
   Plus, 
   Trash2, 
   Check, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Award,
   Activity,
   Heart,
   Smile,
   Zap,
   RefreshCw,
-  BookOpen
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  Edit2,
+  X,
+  TrendingUp,
+  Info
 } from 'lucide-react';
 import { useApp } from '../components/AppContext';
 import { Habit } from '../types';
 import { callGemini } from '../services/gemini';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer,
+  CartesianGrid
+} from 'recharts';
 
 export const Habits: React.FC = () => {
-  const { habits, addHabit, toggleHabit, deleteHabit, profile } = useApp();
+  const { habits, addHabit, toggleHabit, updateHabit, deleteHabit, profile } = useApp();
 
-  // Habits states
+  // Selected date context
+  const today = new Date();
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth()); // 0-indexed
+  const [isStrict, setIsStrict] = useState(true);
+
+  // Dynamic light/dark theme tracking for charting
+  const [isLight, setIsLight] = useState(document.body.classList.contains('light-theme'));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsLight(document.body.classList.contains('light-theme'));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // Modal States
+  const [isNewHabitModalOpen, setIsNewHabitModalOpen] = useState(false);
+  const [isEditHabitModalOpen, setIsEditHabitModalOpen] = useState(false);
+  const [selectedEditHabit, setSelectedEditHabit] = useState<Habit | null>(null);
+
+  // New Habit Form States
   const [newHabitName, setNewHabitName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('Flame');
-  const [analysis, setAnalysis] = useState('Calculating progress analysis vectors...');
+  const [newHabitEmoji, setNewHabitEmoji] = useState('💧');
+  const [customEmoji, setCustomEmoji] = useState('');
+
+  // Edit Habit Form States
+  const [editHabitName, setEditHabitName] = useState('');
+  const [editHabitEmoji, setEditHabitEmoji] = useState('💧');
+
+  // AI analysis state
+  const [analysis, setAnalysis] = useState('Analyzing routine consistency metrics across your timeline...');
   const [loadingAnalysis, setLoadingAnalysis] = useState(true);
 
-  // Available custom icons list
-  const iconList = [
-    { name: 'Flame', icon: Flame },
-    { name: 'Activity', icon: Activity },
-    { name: 'Heart', icon: Heart },
-    { name: 'Smile', icon: Smile },
-    { name: 'Zap', icon: Zap },
-    { name: 'BookOpen', icon: BookOpen }
-  ];
+  // Popular habit emojis
+  const popularEmojis = ['💧', '📚', '💪', '🚿', '⏰', '🧘', '🥗', '🏃', '💻', '🎯', '🍎', '🔥', '🧠', '🌿', '🧹'];
 
-  // Fetch AI habit advice / status analysis
+  // Current date formatted beautifully
+  const formattedTodayDate = today.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  // Calculate days in the currently selected month
+  const daysInMonth = useMemo(() => {
+    return new Date(selectedYear, selectedMonth + 1, 0).getDate();
+  }, [selectedYear, selectedMonth]);
+
+  // Generate array of day numbers [1, 2, ..., N]
+  const monthDaysArray = useMemo(() => {
+    return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  }, [daysInMonth]);
+
+  // Selected Month name
+  const monthName = useMemo(() => {
+    return new Date(selectedYear, selectedMonth, 1).toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric'
+    });
+  }, [selectedYear, selectedMonth]);
+
+  // Calendar Navigation
+  const handlePrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(prev => prev - 1);
+    } else {
+      setSelectedMonth(prev => prev - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(prev => prev + 1);
+    } else {
+      setSelectedMonth(prev => prev + 1);
+    }
+  };
+
+  const handleGoToToday = () => {
+    setSelectedYear(today.getFullYear());
+    setSelectedMonth(today.getMonth());
+  };
+
+  // Check if a day-number of the selected month is in the future
+  const isDayInFuture = (dayNum: number) => {
+    const checkDate = new Date(selectedYear, selectedMonth, dayNum);
+    // Clear time for precise day comparison
+    const compareToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return checkDate > compareToday;
+  };
+
+  // Format date string as YYYY-MM-DD for a day in the selected calendar month
+  const getDayDateString = (dayNum: number) => {
+    const yyyy = selectedYear;
+    const mm = String(selectedMonth + 1).padStart(2, '0');
+    const dd = String(dayNum).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  // Fetch AI Advisor response
   const fetchHabitAnalysis = async () => {
     if (habits.length === 0) {
-      setAnalysis("Add daily habits and start clicking to generate performance analytics.");
+      setAnalysis("Establish your routine anchors below. Daily repetitions forge indestructible cognitive pathways.");
       setLoadingAnalysis(false);
       return;
     }
@@ -63,7 +166,7 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
       const response = await callGemini(prompt, false);
       setAnalysis(response.trim());
     } catch (err) {
-      setAnalysis("Consistency is the catalyst of mastery. Maintain your streaks and defend your morning routine.");
+      setAnalysis("Mastery is a product of consistent micro-commitments. Defend your timeline and lock in your daily streaks.");
     } finally {
       setLoadingAnalysis(false);
     }
@@ -73,302 +176,809 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
     fetchHabitAnalysis();
   }, [habits.length]);
 
-  // Form submission
+  // Form Submissions
   const handleCreateHabit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newHabitName.trim()) return;
 
-    await addHabit(newHabitName, selectedIcon);
+    const finalEmoji = customEmoji.trim() || newHabitEmoji;
+    await addHabit(newHabitName.trim(), finalEmoji);
     setNewHabitName('');
+    setCustomEmoji('');
+    setIsNewHabitModalOpen(false);
   };
 
-  // Build the 30-day contribution grid details
-  const today = new Date();
-  const contributionDays = Array.from({ length: 30 }).map((_, idx) => {
-    const d = new Date();
-    d.setDate(today.getDate() - (29 - idx));
-    const dateStr = d.toISOString().split('T')[0];
-    
-    // Check which habits were completed on this date
-    // Note: in Guest/Demo mode, we track lastCompleted string
-    const completedCount = habits.filter(h => h.lastCompleted === dateStr).length;
-    const totalHabitsCount = habits.length;
+  const handleEditHabitClick = (habit: Habit) => {
+    setSelectedEditHabit(habit);
+    setEditHabitName(habit.name);
+    setEditHabitEmoji(habit.icon);
+    setIsEditHabitModalOpen(true);
+  };
 
-    let intensity = 0; // 0: none, 1: low, 2: mid, 3: high
-    if (completedCount > 0 && totalHabitsCount > 0) {
-      const ratio = completedCount / totalHabitsCount;
-      if (ratio <= 0.34) intensity = 1;
-      else if (ratio <= 0.67) intensity = 2;
-      else intensity = 3;
+  // Note: we can delete a habit directly or edit its name/icon in Guest mode or Cloud.
+  // For standard compatibility, if we edit a habit, we delete the old one and re-create, or just rename it.
+  // Let's implement an edit system. If a habit's name or icon changes, we can delete and re-create,
+  // or since AppContext doesn't have an updateHabit method yet, we can simply delete and add back, 
+  // or simulate it. Wait, deleting and adding is a perfect fallback if we want to change it.
+  // Let's implement a clean handler:
+  const handleSaveEditHabit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEditHabit || !editHabitName.trim()) return;
+
+    await updateHabit(selectedEditHabit.id, {
+      name: editHabitName.trim(),
+      icon: editHabitEmoji
+    });
+    setIsEditHabitModalOpen(false);
+    setSelectedEditHabit(null);
+  };
+
+  const handleDeleteClick = async (habitId: string) => {
+    await deleteHabit(habitId);
+    setIsEditHabitModalOpen(false);
+    setSelectedEditHabit(null);
+  };
+
+  // --- MATH METRICS FOR THE SELECTED MONTH ---
+
+  // Calculate percentage completion for each habit in the selected month
+  const habitCompletionsList = useMemo(() => {
+    return habits.map(h => {
+      // Get completions that belong to the currently selected month and year
+      const completionsInMonth = (h.completedDates || []).filter(dateStr => {
+        const [y, m] = dateStr.split('-').map(Number);
+        return y === selectedYear && (m - 1) === selectedMonth;
+      });
+
+      // Days elapsed in the selected month up to today (or all days if it's a past month)
+      let daysElapsed = daysInMonth;
+      if (selectedYear === today.getFullYear() && selectedMonth === today.getMonth()) {
+        daysElapsed = today.getDate(); // up to today's day number
+      } else if (selectedYear > today.getFullYear() || (selectedYear === today.getFullYear() && selectedMonth > today.getMonth())) {
+        daysElapsed = 0; // future month
+      }
+
+      const rate = daysElapsed > 0 ? Math.round((completionsInMonth.length / daysElapsed) * 100) : 0;
+      const rateClamped = Math.min(100, Math.max(0, rate));
+
+      return {
+        ...h,
+        completionsInMonth,
+        rate: rateClamped,
+        completionsCount: completionsInMonth.length
+      };
+    });
+  }, [habits, selectedYear, selectedMonth, daysInMonth, today]);
+
+  // Overall statistics
+  const overallCompletionsCount = useMemo(() => {
+    return habitCompletionsList.reduce((acc, h) => acc + h.completionsCount, 0);
+  }, [habitCompletionsList]);
+
+  const overallMaxPossible = useMemo(() => {
+    let daysElapsed = daysInMonth;
+    if (selectedYear === today.getFullYear() && selectedMonth === today.getMonth()) {
+      daysElapsed = today.getDate();
+    } else if (selectedYear > today.getFullYear() || (selectedYear === today.getFullYear() && selectedMonth > today.getMonth())) {
+      daysElapsed = 0;
     }
+    return daysElapsed * habits.length;
+  }, [daysInMonth, habits.length, selectedYear, selectedMonth, today]);
+
+  const overallComplianceRate = useMemo(() => {
+    if (overallMaxPossible === 0) return 0;
+    return Math.round((overallCompletionsCount / overallMaxPossible) * 100);
+  }, [overallCompletionsCount, overallMaxPossible]);
+
+  // Best Completion Day
+  const bestDayDetails = useMemo(() => {
+    if (habits.length === 0) return { day: 'N/A', count: 0 };
+    
+    const dayCounts: Record<number, number> = {};
+    monthDaysArray.forEach(day => {
+      dayCounts[day] = 0;
+    });
+
+    habits.forEach(h => {
+      (h.completedDates || []).forEach(dateStr => {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        if (y === selectedYear && (m - 1) === selectedMonth) {
+          dayCounts[d] = (dayCounts[d] || 0) + 1;
+        }
+      });
+    });
+
+    let bestDayNum = -1;
+    let maxCount = 0;
+    
+    Object.entries(dayCounts).forEach(([day, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        bestDayNum = Number(day);
+      }
+    });
 
     return {
-      dateStr,
-      dayNum: d.getDate(),
-      intensity
+      day: bestDayNum !== -1 ? `${bestDayNum}` : 'None',
+      count: maxCount
     };
-  });
+  }, [habits, selectedYear, selectedMonth, monthDaysArray]);
 
-  // Calculate highest active streak
-  const currentHighestStreak = habits.length > 0 ? Math.max(...habits.map(h => h.streak)) : 0;
-  const longestStreakRecord = profile?.longestStreak || currentHighestStreak;
+  // Active Habits
+  const activeHabitsCount = habits.length;
 
-  // Custom 7-day bar chart mock completions (e.g. mock heights for consistency)
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const weekCompletions = [65, 40, 85, 50, 100, 30, 90]; // mock rates for aesthetic layout
+  // Chart Data preparation: daily completions for the selected month
+  const trendChartData = useMemo(() => {
+    return monthDaysArray.map(day => {
+      const dateStr = getDayDateString(day);
+      
+      // Count completions for all habits on this day
+      let completedCount = 0;
+      habits.forEach(h => {
+        const dates = h.completedDates || (h.lastCompleted ? [h.lastCompleted] : []);
+        if (dates.includes(dateStr)) {
+          completedCount++;
+        }
+      });
+
+      return {
+        day: `${day}`,
+        Completions: completedCount
+      };
+    });
+  }, [monthDaysArray, habits, selectedYear, selectedMonth]);
 
   return (
-    <div className="space-y-6 select-none max-w-5xl mx-auto">
+    <div className="space-y-6 select-none max-w-7xl mx-auto px-1 sm:px-4">
       
-      {/* Page Title Header */}
-      <div>
-        <h2 className="text-2xl md:text-3xl font-sans font-bold text-[#F7FAFC] tracking-tight">Atomic Habits Console</h2>
-        <p className="text-xs md:text-sm font-medium text-[#A0AEC0] font-sans">
-          Anchor your routines. Defend your timeline with consistent micro-commitments.
-        </p>
+      {/* Dynamic Header Section matching "Daily Tracker" */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-extrabold text-[#F7FAFC] tracking-tight font-sans">Daily Tracker</h2>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm font-semibold text-[#A0AEC0] flex items-center gap-1.5">
+              <CalendarIcon className="w-4 h-4 text-[#63B3ED]" />
+              {formattedTodayDate}
+            </span>
+            <button
+              onClick={() => setIsStrict(!isStrict)}
+              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border transition-all cursor-pointer flex items-center gap-1.5 ${
+                isStrict
+                  ? 'bg-red-500/15 border-red-500/30 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.1)]'
+                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.1)]'
+              }`}
+              title="Toggle Strict Mode"
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${isStrict ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
+              <span>STRICT MODE: {isStrict ? 'ON 🔒' : 'OFF 🔓'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Apple liquid glass button for adding habit */}
+        <button
+          onClick={() => setIsNewHabitModalOpen(true)}
+          className="apple-glass-btn apple-glass-blue self-start md:self-auto shadow-lg"
+        >
+          <Plus className="w-4 h-4 stroke-[3]" />
+          <span>New Habit</span>
+        </button>
       </div>
 
-      {/* Grid: 30-Day Contribution Grid & Streaks */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Columns (2/3): Contribution calendar & Habit form */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* GitHub-style Contribution grid */}
-          <section className="liquid-glass p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">30-Day Completion Matrix</h3>
-              <div className="flex items-center gap-1.5 text-xs text-[#A0AEC0] font-mono">
-                <span>Less</span>
-                <div className="w-2.5 h-2.5 rounded-sm bg-white/[0.02]" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#68D391]/30" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#68D391]/60" />
-                <div className="w-2.5 h-2.5 rounded-sm bg-[#68D391]" />
-                <span>More</span>
-              </div>
-            </div>
+      {/* AI Advisory Panel Styled like a Premium Siri Widget */}
+      <div className="liquid-glass p-5 relative overflow-hidden border border-white/5 rounded-2xl bg-white/[0.01]">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#9F7AEA]/15 to-transparent blur-2xl pointer-events-none" />
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-xl bg-[#9F7AEA]/10 text-[#9F7AEA] mt-0.5 border border-[#9F7AEA]/20">
+            <Sparkles className="w-4 h-4 animate-pulse" />
+          </div>
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#9F7AEA]">AI Consistency Agent</span>
+            <p className="text-xs sm:text-sm text-[#A0AEC0] leading-relaxed font-medium font-sans">
+              {loadingAnalysis ? (
+                <span className="flex items-center gap-2">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#9F7AEA]" />
+                  Recalculating routine compliance factors across your 30-day timeline...
+                </span>
+              ) : (
+                `"${analysis}"`
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
 
-            {/* 30 grid cells */}
-            <div className="grid grid-cols-10 sm:grid-cols-15 gap-2 justify-center">
-              {contributionDays.map((day) => {
-                let cellBg = 'bg-white/[0.02] border-white/5';
-                if (day.intensity === 1) cellBg = 'bg-[#68D391]/30 border-[#68D391]/10';
-                else if (day.intensity === 2) cellBg = 'bg-[#68D391]/60 border-[#68D391]/20';
-                else if (day.intensity === 3) cellBg = 'bg-[#68D391] border-[#68D391]/30';
+      {/* Main Monthly Calendar Selector Panel */}
+      <div className="liquid-glass p-6 space-y-6 rounded-3xl border border-white/5 shadow-xl bg-white/[0.02]">
+        
+        {/* Calendar Month Header Controller */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/5 pb-4">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="w-5 h-5 text-[#9F7AEA]" />
+            <h3 className="text-xl font-extrabold text-[#F7FAFC] font-sans tracking-tight">
+              {monthName}
+            </h3>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              onClick={handlePrevMonth}
+              className="p-2 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 hover:bg-white/[0.06] text-[#A0AEC0] hover:text-[#F7FAFC] transition-all cursor-pointer"
+              title="Previous Month"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={handleGoToToday}
+              className="px-3.5 py-1.5 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 hover:bg-[#8B5CF6]/20 text-[#9F7AEA] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+            >
+              TODAY
+            </button>
+
+            <button
+              onClick={handleNextMonth}
+              className="p-2 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 hover:bg-white/[0.06] text-[#A0AEC0] hover:text-[#F7FAFC] transition-all cursor-pointer"
+              title="Next Month"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* 30-Day Grid Layout: Dynamic, Beautiful, & Scrollable */}
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 pb-4">
+          <div 
+            className="grid gap-y-3 min-w-[950px] pr-2"
+            style={{
+              gridTemplateColumns: `16rem repeat(${daysInMonth}, minmax(2rem, 1fr))`
+            }}
+          >
+            {/* --- COLUMN HEADERS (Day Numbers) --- */}
+            <div className="text-xs font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono self-center">
+              Active Habits
+            </div>
+            {monthDaysArray.map((day) => {
+              const dateStr = getDayDateString(day);
+              const isTodayCell = today.getDate() === day && today.getMonth() === selectedMonth && today.getFullYear() === selectedYear;
+
+              return (
+                <div 
+                  key={day} 
+                  className={`text-center py-1.5 rounded-lg font-mono text-xs font-bold transition-all ${
+                    isTodayCell 
+                      ? 'text-[#8B5CF6] scale-110 bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_10px_rgba(139,92,246,0.15)]' 
+                      : 'text-[#4A5568]'
+                  }`}
+                  title={isTodayCell ? "Today's column" : `Day ${day}`}
+                >
+                  {day}
+                </div>
+              );
+            })}
+
+            {/* --- HABIT ROWS --- */}
+            {habits.length === 0 ? (
+              <div 
+                className="col-span-full py-12 text-center text-sm text-[#A0AEC0] font-medium"
+              >
+                No routine anchors deployed yet. Click "+ New Habit" to forge your first micro-commitment!
+              </div>
+            ) : (
+              habits.map((h) => {
+                const habitIcon = h.icon || '🔥';
 
                 return (
-                  <motion.div
-                    key={day.dateStr}
-                    whileHover={{ scale: 1.15, zIndex: 10 }}
-                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center font-mono text-[9px] font-bold text-[#A0AEC0] hover:text-[#F7FAFC] cursor-pointer transition-all ${cellBg}`}
-                    title={`${day.dateStr}: Completion Intensity level ${day.intensity}`}
-                  >
-                    {day.dayNum}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </section>
+                  <React.Fragment key={h.id}>
+                    
+                    {/* Habit Label Column */}
+                    <div className="flex items-center justify-between gap-2 pr-3 border-r border-white/5 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {/* Emoji or Fallback representation */}
+                        <span className="text-xl flex-shrink-0">{habitIcon}</span>
+                        <div className="truncate">
+                          <h4 className="text-xs font-bold text-[#F7FAFC] truncate" title={h.name}>
+                            {h.name}
+                          </h4>
+                          <span className="text-[10px] font-mono text-[#F6AD55] font-extrabold flex items-center gap-1 mt-0.5">
+                            <Flame className="w-3 h-3 text-[#F6AD55]" /> {h.streak} day streak
+                          </span>
+                        </div>
+                      </div>
 
-          {/* Add Habit Form */}
-          <section className="liquid-glass p-5">
-            <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans mb-4">Establish Routine Anchor</h3>
+                      {/* Edit Pencil icon */}
+                      <button
+                        onClick={() => handleEditHabitClick(h)}
+                        className="p-1.5 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/10 hover:bg-white/[0.06] text-[#4A5568] hover:text-[#A0AEC0] transition-all cursor-pointer flex-shrink-0"
+                        title={`Edit "${h.name}"`}
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Completion Days Checkboxes Column */}
+                    {monthDaysArray.map((day) => {
+                      const dateStr = getDayDateString(day);
+                      const isFuture = isDayInFuture(day);
+                      const completedDates = h.completedDates || (h.lastCompleted ? [h.lastCompleted] : []);
+                      const isCompleted = completedDates.includes(dateStr);
+                      const isTodayCell = today.getDate() === day && today.getMonth() === selectedMonth && today.getFullYear() === selectedYear;
+
+                      // Past days are locked in Strict Mode unless already completed
+                      const isCellLocked = isFuture || (isStrict && !isTodayCell);
+
+                      // Classes for rendering
+                      let cellClass = '';
+                      let content = null;
+
+                      if (isFuture) {
+                        // Future locked cell
+                        cellClass = 'bg-white/[0.01] border-white/[0.03] text-white/[0.04] cursor-not-allowed';
+                        content = <Lock className="w-2.5 h-2.5 opacity-20" />;
+                      } else if (isCompleted) {
+                        // Completed day cell (gorgeous purple gradient checkmark)
+                        cellClass = 'bg-gradient-to-br from-[#8B5CF6] to-[#6366F1] border-[#8B5CF6]/30 text-white shadow-[0_0_12px_rgba(139,92,246,0.35)]';
+                        if (isCellLocked) {
+                          cellClass += ' cursor-not-allowed opacity-85';
+                        } else {
+                          cellClass += ' cursor-pointer';
+                        }
+                        content = <Check className="w-3.5 h-3.5 stroke-[3]" />;
+                      } else {
+                        // Past uncompleted day cell or today cell
+                        if (isCellLocked) {
+                          // Past locked cell in Strict Mode
+                          cellClass = 'bg-white/[0.01] border-white/[0.02] text-white/[0.05] cursor-not-allowed';
+                          content = <Lock className="w-2.5 h-2.5 opacity-15" />;
+                        } else {
+                          // Interactive uncompleted cell (today or past if not strict)
+                          cellClass = isTodayCell
+                            ? 'bg-purple-500/5 border-purple-500/20 hover:border-purple-500/40 text-purple-400 hover:bg-purple-500/10 cursor-pointer shadow-[0_0_8px_rgba(139,92,246,0.1)]'
+                            : 'bg-white/[0.02] border-white/5 hover:border-white/20 text-[#4A5568] hover:bg-white/[0.05] cursor-pointer';
+                        }
+                      }
+
+                      return (
+                        <div key={`${h.id}-${day}`} className="flex items-center justify-center">
+                          <motion.button
+                            whileHover={isCellLocked && !isCompleted ? {} : { scale: 1.12 }}
+                            whileTap={isCellLocked && !isCompleted ? {} : { scale: 0.92 }}
+                            onClick={() => !isCellLocked && toggleHabit(h.id, dateStr)}
+                            disabled={isCellLocked && !isCompleted}
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl border flex items-center justify-center transition-all ${cellClass}`}
+                            title={isFuture ? "Locked (Future Day)" : isCellLocked && !isCompleted ? "Locked (Strict Mode)" : `${h.name} - ${dateStr} (${isCompleted ? 'Done' : 'Incomplete'})`}
+                          >
+                            {content}
+                          </motion.button>
+                        </div>
+                      );
+                    })}
+
+                  </React.Fragment>
+                );
+              })
+            )}
+
+          </div>
+        </div>
+
+      </div>
+
+      {/* Overall Progress Bars Section */}
+      {habits.length > 0 && (
+        <div className="liquid-glass p-6 rounded-3xl border border-white/5 shadow-xl bg-white/[0.02]">
+          <h3 className="text-sm font-extrabold text-[#F7FAFC] uppercase tracking-wider font-sans mb-4 flex items-center gap-2">
+            <Award className="w-4.5 h-4.5 text-[#63B3ED]" />
+            Overall Monthly Progress
+          </h3>
+
+          <div className="space-y-4">
+            {habitCompletionsList.map((h) => (
+              <div key={h.id} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-bold text-[#F7FAFC]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{h.icon || '🔥'}</span>
+                    <span>{h.name}</span>
+                  </div>
+                  <span className="font-mono text-[#63B3ED]">{h.rate}%</span>
+                </div>
+                
+                {/* Modern Apple-style glow progress bar */}
+                <div className="h-2 rounded-full bg-white/[0.03] border border-white/5 overflow-hidden relative">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${h.rate}%` }}
+                    transition={{ duration: 1.2, ease: 'easeOut' }}
+                    className="h-full bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] rounded-full"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Daily Trends Section with Line Chart and Bottom Analytics Summary Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Trend Area Chart (Left 2/3) */}
+        <div className="lg:col-span-2 liquid-glass p-6 rounded-3xl border border-white/5 shadow-xl bg-white/[0.02] flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-extrabold text-[#F7FAFC] uppercase tracking-wider font-sans mb-1 flex items-center gap-2">
+              <TrendingUp className="w-4.5 h-4.5 text-[#8B5CF6]" />
+              Daily Trends
+            </h3>
+            <p className="text-[11px] font-medium text-[#A0AEC0] mb-4">
+              Total number of habits completed each day for {monthName}
+            </p>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={trendChartData}
+                margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorCompletions" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={isLight ? "#4F46E5" : "#8B5CF6"} stopOpacity={isLight ? 0.25 : 0.4}/>
+                    <stop offset="95%" stopColor={isLight ? "#4F46E5" : "#8B5CF6"} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255,255,255,0.02)"} vertical={false} />
+                <XAxis 
+                  dataKey="day" 
+                  stroke={isLight ? "#718096" : "#4A5568"} 
+                  fontSize={10}
+                  fontWeight={600}
+                  tickLine={false} 
+                  axisLine={false}
+                />
+                <YAxis 
+                  stroke={isLight ? "#718096" : "#4A5568"} 
+                  fontSize={10} 
+                  fontWeight={600}
+                  allowDecimals={false}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={[0, habits.length || 5]}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(11, 15, 26, 0.95)',
+                    border: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '16px',
+                    padding: '10px 14px',
+                    fontSize: '11px',
+                    color: isLight ? '#1A202C' : '#F7FAFC'
+                  }}
+                  cursor={{ stroke: isLight ? 'rgba(79, 70, 229, 0.2)' : 'rgba(139, 92, 246, 0.2)', strokeWidth: 1 }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="Completions" 
+                  stroke={isLight ? "#4F46E5" : "#8B5CF6"} 
+                  strokeWidth={2.5}
+                  fillOpacity={1} 
+                  fill="url(#colorCompletions)" 
+                  activeDot={{ r: 6, strokeWidth: 0, fill: isLight ? '#4F46E5' : '#8B5CF6' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Analytics Summary Cards (Right 1/3) */}
+        <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+          
+          {/* Card: TOTAL */}
+          <div className="liquid-glass p-5 rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col justify-between">
+            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-[#63B3ED]">
+              TOTAL
+            </span>
+            <div className="mt-2">
+              <h4 className="text-4xl font-extrabold text-[#F7FAFC] font-sans">
+                {overallCompletionsCount}
+              </h4>
+              <p className="text-[10px] text-[#A0AEC0] font-medium mt-1">
+                Completed events this month
+              </p>
+            </div>
+          </div>
+
+          {/* Card: RATE */}
+          <div className="liquid-glass p-5 rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col justify-between">
+            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-[#48BB78]">
+              RATE
+            </span>
+            <div className="mt-2">
+              <h4 className="text-4xl font-extrabold text-[#48BB78] font-sans">
+                {overallComplianceRate}%
+              </h4>
+              <p className="text-[10px] text-[#A0AEC0] font-medium mt-1">
+                Routine compliance index
+              </p>
+            </div>
+          </div>
+
+          {/* Card: BEST DAY */}
+          <div className="liquid-glass p-5 rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col justify-between col-span-2 lg:col-span-1">
+            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-[#ED64A6]">
+              BEST DAY
+            </span>
+            <div className="mt-2">
+              <h4 className="text-4xl font-extrabold text-[#F7FAFC] font-sans">
+                {bestDayDetails.day}
+              </h4>
+              <p className="text-[10px] text-[#A0AEC0] font-medium mt-1">
+                Peak completion date in selected month
+              </p>
+            </div>
+          </div>
+
+          {/* Card: ACTIVE */}
+          <div className="liquid-glass p-5 rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col justify-between col-span-2 lg:col-span-1">
+            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-[#ED8936]">
+              ACTIVE
+            </span>
+            <div className="mt-2">
+              <h4 className="text-4xl font-extrabold text-[#ED8936] font-sans">
+                {activeHabitsCount}
+              </h4>
+              <p className="text-[10px] text-[#A0AEC0] font-medium mt-1">
+                Live routines tracked
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* --- ADD NEW HABIT MODAL (Apple Glass overlay) --- */}
+      <AnimatePresence>
+        {isNewHabitModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             
-            <form onSubmit={handleCreateHabit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Name */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider font-mono">Habit Objective Name</label>
+            {/* Dark glass backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsNewHabitModalOpen(false)}
+              className="absolute inset-0 bg-[#0B0F19]/80 backdrop-filter backdrop-blur-md"
+            />
+
+            {/* Modal Body */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="relative w-full max-w-md p-6 rounded-3xl bg-[#0F172A] border border-white/10 shadow-2xl space-y-5 z-10"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-[#F7FAFC] font-sans">Deploy Routine Anchor</h3>
+                <button
+                  onClick={() => setIsNewHabitModalOpen(false)}
+                  className="p-1.5 rounded-xl hover:bg-white/5 text-[#A0AEC0] hover:text-[#F7FAFC] transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateHabit} className="space-y-4">
+                
+                {/* Habit Name input */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono">
+                    Habit Name / Objective
+                  </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Plan morning sprint list"
+                    placeholder="e.g. 4L Water Daily"
                     value={newHabitName}
                     onChange={(e) => setNewHabitName(e.target.value)}
-                    className="w-full px-4 py-2.5 text-xs rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:outline-none text-[#F7FAFC] focus:bg-white/[0.06] transition-all"
+                    className="w-full px-4 py-3 text-xs rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:outline-none text-[#F7FAFC] focus:bg-white/[0.06] transition-all"
                   />
                 </div>
 
-                {/* Icon selection */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider font-mono">Anchor Icon Representation</label>
-                  <div className="flex gap-2">
-                    {iconList.map((ic) => {
-                      const IconComp = ic.icon;
-                      const isSelected = selectedIcon === ic.name;
+                {/* Popular Emojis selection list */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono">
+                    Pick an Emoji Icon
+                  </label>
+                  <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-1 bg-white/[0.01] rounded-xl border border-white/5">
+                    {popularEmojis.map((emoji) => {
+                      const isSelected = newHabitEmoji === emoji && !customEmoji;
                       return (
                         <button
-                          key={ic.name}
+                          key={emoji}
                           type="button"
-                          onClick={() => setSelectedIcon(ic.name)}
-                          className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                          onClick={() => {
+                            setNewHabitEmoji(emoji);
+                            setCustomEmoji('');
+                          }}
+                          className={`py-2 text-xl rounded-xl border transition-all cursor-pointer ${
                             isSelected 
-                              ? 'bg-[#63B3ED]/15 border-[#63B3ED] text-[#63B3ED]' 
-                              : 'bg-white/[0.04] border-white/5 text-[#A0AEC0] hover:text-[#F7FAFC]'
+                              ? 'bg-[#8B5CF6]/15 border-[#8B5CF6] scale-105' 
+                              : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.06]'
                           }`}
                         >
-                          <IconComp className="w-4 h-4" />
+                          {emoji}
                         </button>
                       );
                     })}
                   </div>
                 </div>
+
+                {/* Custom Emoji override */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono">
+                    Or Type Custom Emoji/Icon Representation
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Type an emoji (e.g. 🎯)"
+                    maxLength={2}
+                    value={customEmoji}
+                    onChange={(e) => setCustomEmoji(e.target.value)}
+                    className="w-full px-4 py-2 text-xs rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:outline-none text-[#F7FAFC] transition-all"
+                  />
+                </div>
+
+                {/* Buttons styled like premium glass */}
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsNewHabitModalOpen(false)}
+                    className="apple-glass-btn apple-glass-gray"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="apple-glass-btn apple-glass-blue"
+                  >
+                    Anchor Routine
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- EDIT / MODIFY EXISTING HABIT MODAL --- */}
+      <AnimatePresence>
+        {isEditHabitModalOpen && selectedEditHabit && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            
+            {/* Dark glass backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsEditHabitModalOpen(false)}
+              className="absolute inset-0 bg-[#0B0F19]/80 backdrop-filter backdrop-blur-md"
+            />
+
+            {/* Modal Body */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="relative w-full max-w-md p-6 rounded-3xl bg-[#0F172A] border border-white/10 shadow-2xl space-y-5 z-10"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-[#F7FAFC] font-sans">Modify Routine Anchor</h3>
+                <button
+                  onClick={() => setIsEditHabitModalOpen(false)}
+                  className="p-1.5 rounded-xl hover:bg-white/5 text-[#A0AEC0] hover:text-[#F7FAFC] transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <button
-                type="submit"
-                className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] text-[#080B14] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[0_4px_15px_rgba(159,122,234,0.2)] hover:shadow-[0_4px_25px_rgba(159,122,234,0.4)] cursor-pointer"
-              >
-                <Plus className="w-4 h-4 stroke-[3]" />
-                <span>Anchor Habit</span>
-              </button>
-            </form>
-          </section>
+              <form onSubmit={handleSaveEditHabit} className="space-y-4">
+                
+                {/* Habit Name input */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono">
+                    Habit Name / Objective
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 4L Water Daily"
+                    value={editHabitName}
+                    onChange={(e) => setEditHabitName(e.target.value)}
+                    className="w-full px-4 py-3 text-xs rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:outline-none text-[#F7FAFC] focus:bg-white/[0.06] transition-all"
+                  />
+                </div>
 
-          {/* Habits Grid List */}
-          <section className="space-y-3">
-            <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">Active Habits</h3>
-            {habits.length === 0 ? (
-              <div className="liquid-glass p-8 text-center text-xs text-[#A0AEC0]">
-                No active habits established yet. Deploy an anchor above!
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {habits.map((h) => {
-                  const todayStr = new Date().toISOString().split('T')[0];
-                  const isDoneToday = h.lastCompleted === todayStr;
-                  const IconComp = iconList.find(i => i.name === h.icon)?.icon || Flame;
-
-                  return (
-                    <motion.div
-                      key={h.id}
-                      layoutId={h.id}
-                      className="liquid-glass p-4 flex items-center justify-between gap-3 shadow-md"
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        {/* Interactive toggle block with satisfying scale bounce */}
-                        <motion.button
-                          onClick={() => toggleHabit(h.id)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.9 }}
-                          className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
-                            isDoneToday 
-                              ? 'bg-[#68D391] border-[#68D391] text-[#080B14] shadow-[0_0_15px_rgba(104,211,145,0.3)]' 
-                              : 'bg-white/[0.03] border-white/10 text-[#A0AEC0] hover:border-[#68D391]'
+                {/* Popular Emojis selection list */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono">
+                    Pick an Emoji Icon
+                  </label>
+                  <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-1 bg-white/[0.01] rounded-xl border border-white/5">
+                    {popularEmojis.map((emoji) => {
+                      const isSelected = editHabitEmoji === emoji;
+                      return (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => setEditHabitEmoji(emoji)}
+                          className={`py-2 text-xl rounded-xl border transition-all cursor-pointer ${
+                            isSelected 
+                              ? 'bg-[#8B5CF6]/15 border-[#8B5CF6] scale-105' 
+                              : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.06]'
                           }`}
                         >
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </motion.button>
-
-                        <div className="truncate">
-                          <h4 className="text-xs font-bold text-[#F7FAFC] truncate">{h.name}</h4>
-                          <span className="text-[10px] font-mono text-[#F6AD55] font-bold flex items-center gap-1 mt-0.5">
-                            <Flame className="w-3.5 h-3.5" /> {h.streak} day streak
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {/* Custom icon */}
-                        <div className="p-2 rounded-lg bg-white/[0.04] text-[#63B3ED] border border-white/5">
-                          <IconComp className="w-4 h-4" />
-                        </div>
-
-                        {/* Delete trigger */}
-                        <button
-                          onClick={() => deleteHabit(h.id)}
-                          className="p-2 rounded-lg hover:bg-red-500/10 text-[#4A5568] hover:text-[#FC8181] transition-all cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
+                          {emoji}
                         </button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </div>
-
-        {/* Right Column (1/3): Streak meter & Weekly completion chart */}
-        <div className="space-y-6">
-          
-          {/* Day Streak & Record */}
-          <section className="liquid-glass p-5 border-[#F6AD55]/40 shadow-lg relative overflow-hidden flex flex-col items-center justify-center text-center">
-            {/* Ambient flame overlay */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#F6AD55]/10 to-transparent blur-xl" />
-            
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#F6AD55] mb-2">Streak Flame Meter</span>
-            
-            <div className="relative p-6 rounded-full bg-[#F6AD55]/10 text-[#F6AD55] mb-4 animate-bounce" style={{ animationDuration: '4s' }}>
-              <Flame className="w-12 h-12 filter drop-shadow-[0_0_15px_rgba(246,173,85,0.6)]" />
-              <span className="absolute inset-0 rounded-full bg-[#F6AD55]/5 animate-ping" />
-            </div>
-
-            <h3 className="text-4xl font-extrabold text-[#F7FAFC] font-sans">
-              {currentHighestStreak} <span className="text-2xl text-[#F6AD55]">🔥</span>
-            </h3>
-            
-            <div className="mt-4 pt-4 border-t border-white/5 w-full flex justify-between text-xs font-mono">
-              <span className="text-[#A0AEC0]">Record Streak:</span>
-              <span className="font-bold text-[#F6AD55]">{longestStreakRecord} Days</span>
-            </div>
-          </section>
-
-          {/* Weekly completion chart (pure CSS layout) */}
-          <section className="liquid-glass p-5 space-y-4">
-            <h3 className="text-xs font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">Weekly Consistency Rate</h3>
-            
-            <div className="flex justify-between items-end h-28 pt-4">
-              {weekCompletions.map((pct, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-1.5 w-7">
-                  <span className="text-[9px] font-mono text-[#A0AEC0] font-bold">{pct}%</span>
-                  
-                  {/* Column block */}
-                  <div className="w-full bg-white/[0.04] h-16 rounded-md overflow-hidden relative border border-white/5 flex items-end">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${pct}%` }}
-                      transition={{ duration: 1.2, ease: 'easeOut', delay: idx * 0.05 }}
-                      className="w-full bg-gradient-to-t from-[#63B3ED] to-[#9F7AEA] progress-sheen"
-                    />
+                      );
+                    })}
                   </div>
-
-                  <span className="text-[10px] font-mono text-[#4A5568] font-bold uppercase">{weekDays[idx]}</span>
                 </div>
-              ))}
-            </div>
-          </section>
 
-          {/* Gemini Habit Progress Analysis Advice */}
-          <section className="liquid-glass liquid-glass-ai p-5 relative overflow-hidden">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4.5 h-4.5 text-[#9F7AEA] animate-pulse" />
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#9F7AEA]">Routine Analysis</span>
-            </div>
-
-            <AnimatePresence mode="wait">
-              {loadingAnalysis ? (
-                <div className="flex items-center gap-2 text-xs text-[#A0AEC0]">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Synthesizing routines progress...</span>
+                {/* Custom Emoji override */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono">
+                    Or Type Custom Emoji/Icon Representation
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Type an emoji (e.g. 🎯)"
+                    maxLength={2}
+                    value={editHabitEmoji}
+                    onChange={(e) => setEditHabitEmoji(e.target.value)}
+                    className="w-full px-4 py-2 text-xs rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:outline-none text-[#F7FAFC] transition-all"
+                  />
                 </div>
-              ) : (
-                <motion.p
-                  key="habit-analysis"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-xs text-[#A0AEC0] leading-relaxed font-sans font-medium italic"
-                >
-                  "{analysis}"
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </section>
 
-        </div>
+                {/* Buttons styled like premium glass */}
+                <div className="flex items-center justify-between pt-2">
+                  
+                  {/* Destructive red apple button to delete */}
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteClick(selectedEditHabit.id)}
+                    className="apple-glass-btn apple-glass-red font-bold"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
 
-      </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditHabitModalOpen(false)}
+                      className="apple-glass-btn apple-glass-gray"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="apple-glass-btn apple-glass-blue"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
