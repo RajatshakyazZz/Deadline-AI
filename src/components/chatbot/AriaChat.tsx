@@ -16,6 +16,98 @@ interface GeminiResponse {
   }[];
 }
 
+// Coded Cybernetic/Robotic Waving Hand Component
+interface RoboticHandProps {
+  isWaving: boolean;
+}
+
+const RoboticHand: React.FC<RoboticHandProps> = ({ isWaving }) => {
+  return (
+    <motion.div
+      id="aria-wave-hand-robotic"
+      className="absolute -top-7 -right-2 w-10 h-10 select-none pointer-events-none drop-shadow-[0_2px_8px_rgba(99,179,237,0.5)] flex items-center justify-center z-10"
+      style={{ transformOrigin: 'bottom center' }}
+      animate={isWaving ? { 
+        rotate: [-18, 18, -18, 18, -18, 18, -18, 0],
+        x: [0, -1.5, 1.5, -1.5, 1.5, -1.5, 1.5, 0],
+        y: [0, -1, 0, -1, 0, -1, 0, 0]
+      } : { rotate: 0, x: 0, y: 0 }}
+      transition={{ 
+        duration: 1.8, 
+        ease: "easeInOut" 
+      }}
+    >
+      <svg
+        width="34"
+        height="34"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full"
+      >
+        <defs>
+          <linearGradient id="metal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#E2E8F0" />
+            <stop offset="50%" stopColor="#cbd5e0" />
+            <stop offset="100%" stopColor="#4A5568" />
+          </linearGradient>
+          <linearGradient id="dark-metal" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#4A5568" />
+            <stop offset="100%" stopColor="#1A202C" />
+          </linearGradient>
+          <radialGradient id="core-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#63B3ED" />
+            <stop offset="100%" stopColor="transparent" />
+          </radialGradient>
+        </defs>
+
+        {/* Wrist Connector */}
+        <path d="M10 20H14V23H10V20Z" fill="#718096" />
+        <rect x="9" y="17" width="6" height="3" rx="1.5" fill="url(#dark-metal)" stroke="#cbd5e0" strokeWidth="0.75" />
+        {/* Wrist neon status bar */}
+        <line x1="10.5" y1="18.5" x2="13.5" y2="18.5" stroke="#63B3ED" strokeWidth="1" strokeLinecap="round" />
+
+        {/* Outer Palm Plate */}
+        <path d="M8 11.5C8 9.5 9 9 10 9H14C15 9 16 9.5 16 11.5V17H8V11.5Z" fill="url(#metal-grad)" stroke="#2D3748" strokeWidth="0.75" />
+        
+        {/* Inner Palm Cybernetic Chamber */}
+        <path d="M9.5 12C9.5 11 10 10.5 11 10.5H13C14 10.5 14.5 11 14.5 12V15.5H9.5V12Z" fill="#1A202C" stroke="#4A5568" strokeWidth="0.5" />
+        
+        {/* Core Reactor Indicator */}
+        <circle cx="12" cy="13" r="2" fill="url(#core-glow)" />
+        <circle cx="12" cy="13" r="0.8" fill="#EBF8FF" />
+
+        {/* Cybernetic wiring track */}
+        <path d="M12 14.5V16" stroke="#63B3ED" strokeWidth="0.5" strokeLinecap="round" />
+
+        {/* Articulated Thumb */}
+        <path d="M8 13.5L5.5 12L4.5 12.5L7 14.5L8 14.2" fill="url(#dark-metal)" stroke="#2D3748" strokeWidth="0.5" />
+        <circle cx="4.5" cy="12.5" r="0.8" fill="#9F7AEA" />
+
+        {/* Articulated Index Finger */}
+        <path d="M9.5 9V5.5" stroke="#718096" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M9.5 5.5V3.5" stroke="#cbd5e0" strokeWidth="1" strokeLinecap="round" />
+        <circle cx="9.5" cy="5.5" r="0.7" fill="#9F7AEA" />
+
+        {/* Articulated Middle Finger */}
+        <path d="M11.1 9V4.5" stroke="#718096" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M11.1 4.5V2.3" stroke="#cbd5e0" strokeWidth="1" strokeLinecap="round" />
+        <circle cx="11.1" cy="4.5" r="0.7" fill="#9F7AEA" />
+
+        {/* Articulated Ring Finger */}
+        <path d="M12.8 9V5" stroke="#718096" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M12.8 5V2.8" stroke="#cbd5e0" strokeWidth="1" strokeLinecap="round" />
+        <circle cx="12.8" cy="5" r="0.7" fill="#9F7AEA" />
+
+        {/* Articulated Pinky Finger */}
+        <path d="M14.5 9V6" stroke="#718096" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M14.5 6V4.2" stroke="#cbd5e0" strokeWidth="1" strokeLinecap="round" />
+        <circle cx="14.5" cy="6" r="0.7" fill="#9F7AEA" />
+      </svg>
+    </motion.div>
+  );
+};
+
 export const AriaChat: React.FC = () => {
   const { profile, tasks, habits, sessions, showToast } = useApp();
   
@@ -427,17 +519,10 @@ export const AriaChat: React.FC = () => {
             : '0 8px 32px rgba(99, 179, 237, 0.4), 0 0 0 1px rgba(255,255,255,0.2) inset, 0 1px 0 rgba(255,255,255,0.3) inset',
         }}
       >
-        {/* Waving Hand 👋 above button */}
+        {/* Coded Robotic Waving Hand above button */}
         {!isOpen && (
           <AnimatePresence>
-            <motion.div
-              id="aria-wave-emoji"
-              className="absolute -top-5 -right-1 text-xl select-none pointer-events-none"
-              animate={isWaving ? { rotate: [-20, 20, -20, 20, -20] } : { rotate: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              👋
-            </motion.div>
+            <RoboticHand isWaving={isWaving} />
           </AnimatePresence>
         )}
 
