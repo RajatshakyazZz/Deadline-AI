@@ -5,6 +5,7 @@ import { useApp } from './AppContext';
 import { useSpeechToText } from '../hooks/useSpeechToText';
 import { callGemini } from '../services/gemini';
 import { CategoryType } from '../types';
+import { sanitizeClipboardInput, LIMITS } from '../utils/security';
 
 interface AddTaskModalProps {
   onClose: () => void;
@@ -239,9 +240,16 @@ Return EXACTLY this JSON structure:
             <input
               type="text"
               required
+              maxLength={LIMITS.taskTitle}
               placeholder="e.g. Finish chemistry assignment, Prep quarterly taxes"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onPaste={(e) => {
+                e.preventDefault();
+                const pasted = e.clipboardData.getData('text');
+                const safe = sanitizeClipboardInput(pasted);
+                setTitle(prev => (prev + safe).slice(0, LIMITS.taskTitle));
+              }}
               className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:bg-white/[0.06] focus:outline-none text-sm text-[#F7FAFC] placeholder-[#4A5568] transition-all font-sans font-medium"
             />
           </div>
@@ -286,9 +294,16 @@ Return EXACTLY this JSON structure:
             <div className="relative">
               <textarea
                 rows={4}
+                maxLength={LIMITS.taskContext}
                 placeholder="List key elements, criteria, or click the mic to speak your mind..."
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pasted = e.clipboardData.getData('text');
+                  const safe = sanitizeClipboardInput(pasted);
+                  setContext(prev => (prev + safe).slice(0, LIMITS.taskContext));
+                }}
                 className="w-full pl-4 pr-12 py-3 rounded-xl bg-white/[0.03] border border-white/10 focus:border-[#63B3ED]/40 focus:bg-white/[0.06] focus:outline-none text-sm text-[#F7FAFC] placeholder-[#4A5568] transition-all resize-none font-sans font-medium"
               />
 

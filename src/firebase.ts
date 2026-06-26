@@ -1,10 +1,100 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut as fbSignOut, getRedirectResult } from 'firebase/auth';
+import { 
+  getAuth, 
+  initializeAuth, 
+  browserLocalPersistence, 
+  browserSessionPersistence, 
+  inMemoryPersistence, 
+  browserPopupRedirectResolver,
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  signOut as fbSignOut, 
+  getRedirectResult 
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import firebaseAppletConfig from '../firebase-applet-config.json';
+import { safeStorage } from './utils/storage';
 
-const app = initializeApp(firebaseAppletConfig);
-export const auth = getAuth(app);
+export const app = initializeApp(firebaseAppletConfig);
+
+// Initialize Firebase Auth safely with robust persistence fallbacks to prevent "SecurityError: The operation is insecure" in sandboxed environments
+const getSafePersistence = () => {
+  const persistences = [];
+  
+  // Test localStorage
+  let isLocalStorageAvailable = false;
+  try {
+    if (typeof window !== 'undefined' && 'localStorage' in window) {
+      const testKey = '__auth_storage_test__';
+      window.localStorage.setItem(testKey, testKey);
+      window.localStorage.removeItem(testKey);
+      isLocalStorageAvailable = true;
+    }
+  } catch (e) {
+    console.warn('localStorage is not accessible for Firebase Auth persistence:', e);
+  }
+
+  // Test indexedDB - accessing or referencing indexedDB inside sandboxed iframes can throw a SecurityError
+  let isIndexedDBAvailable = false;
+  try {
+    if (typeof window !== 'undefined' && 'indexedDB' in window) {
+      const db = window.indexedDB;
+      if (db) {
+        isIndexedDBAvailable = true;
+      }
+    }
+  } catch (e) {
+    console.warn('indexedDB is not accessible for Firebase Auth persistence:', e);
+  }
+
+  // browserLocalPersistence requires both localStorage and indexedDB to function without throwing SecurityErrors
+  if (isLocalStorageAvailable && isIndexedDBAvailable) {
+    persistences.push(browserLocalPersistence);
+  }
+
+  // Test sessionStorage
+  let isSessionStorageAvailable = false;
+  try {
+    if (typeof window !== 'undefined' && 'sessionStorage' in window) {
+      const testKey = '__auth_session_test__';
+      window.sessionStorage.setItem(testKey, testKey);
+      window.sessionStorage.removeItem(testKey);
+      isSessionStorageAvailable = true;
+    }
+  } catch (e) {
+    console.warn('sessionStorage is not accessible for Firebase Auth persistence:', e);
+  }
+
+  if (isSessionStorageAvailable) {
+    persistences.push(browserSessionPersistence);
+  }
+
+  // Always include inMemoryPersistence as the fallback
+  persistences.push(inMemoryPersistence);
+  
+  return persistences;
+};
+
+const initializeSafeAuth = () => {
+  try {
+    const persistence = getSafePersistence();
+    return initializeAuth(app, { 
+      persistence,
+      popupRedirectResolver: browserPopupRedirectResolver
+    });
+  } catch (err) {
+    console.warn('Firebase initializeAuth failed with safe persistences, falling back to standard getAuth:', err);
+    try {
+      return getAuth(app);
+    } catch (getAuthErr) {
+      console.error('getAuth fallback also failed:', getAuthErr);
+      throw getAuthErr;
+    }
+  }
+};
+
+export const auth = initializeSafeAuth();
 export const db = getFirestore(app, (firebaseAppletConfig as any).firestoreDatabaseId);
 
 export const googleProvider = new GoogleAuthProvider();
@@ -21,7 +111,7 @@ export const signInWithGoogle = async () => {
   } catch (error: any) {
     console.error('Popup blocked or failed, attempting redirect:', error);
     try {
-      localStorage.setItem('deadlineai_pending_redirect', 'true');
+      safeStorage.setItem('deadlineai_pending_redirect', 'true');
       await signInWithRedirect(auth, googleProvider);
     } catch (redirectError) {
       console.error('Redirect sign in also failed:', redirectError);
@@ -32,19 +122,19 @@ export const signInWithGoogle = async () => {
 
 export const getGoogleRedirectToken = async () => {
   try {
-    const isPending = localStorage.getItem('deadlineai_pending_redirect') === 'true';
+    const isPending = safeStorage.getItem('deadlineai_pending_redirect') === 'true';
     if (!isPending) {
       return null;
     }
     const result = await getRedirectResult(auth);
-    localStorage.removeItem('deadlineai_pending_redirect');
+    safeStorage.removeItem('deadlineai_pending_redirect');
     if (result) {
       const credential = GoogleAuthProvider.credentialFromResult(result);
       return credential?.accessToken || null;
     }
   } catch (error) {
     console.error('Error getting redirect result:', error);
-    localStorage.removeItem('deadlineai_pending_redirect');
+    safeStorage.removeItem('deadlineai_pending_redirect');
   }
   return null;
 };

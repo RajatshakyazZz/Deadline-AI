@@ -12,10 +12,16 @@ import {
   ShieldAlert,
   HelpCircle,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  Bell,
+  BellRing,
+  BellOff,
+  Laptop,
+  Send
 } from 'lucide-react';
 import { useApp } from './AppContext';
 import { LogoIcon } from './Logo';
+import { requestNotificationPermission, getSafeNotificationPermission } from '../services/messaging';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -29,7 +35,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
     connectGoogleCalendar, 
     syncTaskToGoogleCalendar,
     tasks,
-    isDemo
+    isDemo,
+    notificationPreferences,
+    updateNotificationPrefs,
+    testPushNotification,
+    notificationSupport
   } = useApp();
 
   const [isSyncingAll, setIsSyncingAll] = useState(false);
@@ -258,6 +268,162 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Push Notification Settings Card */}
+              <div className="liquid-glass p-5 rounded-2xl border border-white/5 space-y-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Bell className="w-5 h-5 text-[#9F7AEA]" />
+                    <h4 className="text-xs font-mono font-bold uppercase text-[#9F7AEA] tracking-wider">
+                      Web Push Notifications (FCM)
+                    </h4>
+                  </div>
+                  {notificationSupport ? (
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-red-500/10 border border-red-500/20 text-red-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Disabled
+                    </span>
+                  )}
+                </div>
+
+                {notificationSupport ? (
+                  <div className="space-y-4">
+                    {/* Permission Status */}
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <div className="space-y-0.5 pr-4">
+                        <p className="text-xs font-bold text-white font-sans flex items-center gap-1.5">
+                          Browser Permission
+                        </p>
+                        <p className="text-[10px] font-medium text-gray-400 font-sans leading-normal">
+                          {getSafeNotificationPermission() === 'granted' 
+                            ? 'Successfully allowed. Your device will receive real-time push alerts.'
+                            : 'Enable browser alerts to stay updated on critical task deadlines.'}
+                        </p>
+                      </div>
+
+                      {getSafeNotificationPermission() === 'granted' ? (
+                        <div className="flex items-center gap-1 text-emerald-400 text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">
+                          <Check className="w-3.5 h-3.5" /> Allowed
+                        </div>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            if (profile) {
+                              const token = await requestNotificationPermission(profile.email);
+                              if (token) {
+                                window.location.reload(); // Refresh to register listeners
+                              }
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#8B5CF6] to-[#EC4899] text-white font-sans font-bold text-xs shadow-md hover:opacity-90 active:scale-95 transition-all cursor-pointer flex-shrink-0"
+                        >
+                          Enable Alerts
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Preference categories */}
+                    {notificationPreferences && (
+                      <div className="space-y-3">
+                        <h5 className="text-[10px] font-mono font-bold uppercase text-gray-400 tracking-wider">
+                          Categories Preferences
+                        </h5>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Deadlines Toggle */}
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.01] border border-white/5">
+                            <span className="text-xs font-medium text-gray-300">Task Deadlines</span>
+                            <button
+                              onClick={() => updateNotificationPrefs({ deadlines: !notificationPreferences.deadlines })}
+                              className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer relative flex items-center ${
+                                notificationPreferences.deadlines ? 'bg-[#9F7AEA]' : 'bg-white/10'
+                              }`}
+                            >
+                              <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transition-all ${
+                                notificationPreferences.deadlines ? 'translate-x-4' : 'translate-x-0'
+                              }`} />
+                            </button>
+                          </div>
+
+                          {/* Habits Toggle */}
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.01] border border-white/5">
+                            <span className="text-xs font-medium text-gray-300">Daily Habits</span>
+                            <button
+                              onClick={() => updateNotificationPrefs({ habits: !notificationPreferences.habits })}
+                              className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer relative flex items-center ${
+                                notificationPreferences.habits ? 'bg-[#9F7AEA]' : 'bg-white/10'
+                              }`}
+                            >
+                              <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transition-all ${
+                                notificationPreferences.habits ? 'translate-x-4' : 'translate-x-0'
+                              }`} />
+                            </button>
+                          </div>
+
+                          {/* AI Briefings Toggle */}
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.01] border border-white/5">
+                            <span className="text-xs font-medium text-gray-300">AI Briefings</span>
+                            <button
+                              onClick={() => updateNotificationPrefs({ briefings: !notificationPreferences.briefings })}
+                              className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer relative flex items-center ${
+                                notificationPreferences.briefings ? 'bg-[#9F7AEA]' : 'bg-white/10'
+                              }`}
+                            >
+                              <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transition-all ${
+                                notificationPreferences.briefings ? 'translate-x-4' : 'translate-x-0'
+                              }`} />
+                            </button>
+                          </div>
+
+                          {/* System Alerts Toggle */}
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.01] border border-white/5">
+                            <span className="text-xs font-medium text-gray-300">System Alerts</span>
+                            <button
+                              onClick={() => updateNotificationPrefs({ system: !notificationPreferences.system })}
+                              className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer relative flex items-center ${
+                                notificationPreferences.system ? 'bg-[#9F7AEA]' : 'bg-white/10'
+                              }`}
+                            >
+                              <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transition-all ${
+                                notificationPreferences.system ? 'translate-x-4' : 'translate-x-0'
+                              }`} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Test notifications dispatcher */}
+                    <div className="border-t border-white/5 pt-4 space-y-3">
+                      <h5 className="text-[10px] font-mono font-bold uppercase text-gray-400 tracking-wider">
+                        Diagnostics & Test Dispatcher
+                      </h5>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => testPushNotification('Deadline AI Alert!', 'This is a test notification for task deadlines.', 'deadlines')}
+                          className="flex-1 py-2 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border border-[#9F7AEA]/20 bg-[#9F7AEA]/10 hover:bg-[#9F7AEA]/20 text-[#D6BCFA] transition-all cursor-pointer"
+                        >
+                          <Send className="w-3 h-3" /> Test Deadline Push
+                        </button>
+                        <button
+                          onClick={() => testPushNotification('Habit Streak Alert!', 'Time to complete your custom daily habits!', 'habits')}
+                          className="flex-1 py-2 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 hover:bg-[#8B5CF6]/20 text-[#C4B5FD] transition-all cursor-pointer"
+                        >
+                          <Send className="w-3 h-3" /> Test Habit Push
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-yellow-950/10 border border-yellow-500/10 text-yellow-400 text-[11px] leading-normal font-sans">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>Push Notifications are not supported in your browser or iframe context. Open the app in a new tab to authorize native push alerts.</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

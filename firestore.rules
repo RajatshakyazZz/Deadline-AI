@@ -1,13 +1,73 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write their own data, including the user profile document and all subcollections
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+  
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+    
+    function isValidTask() {
+      return request.resource.data.keys().hasAll([
+        'title', 'deadline', 'createdAt'
+      ]) &&
+      request.resource.data.title is string &&
+      request.resource.data.title.size() <= 200 &&
+      request.resource.data.deadline is string;
+    }
+    
+    function isValidHabit() {
+      return request.resource.data.keys().hasAll(['name']) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() <= 50;
+    }
+    
+    // USER PROFILE — only owner can read/write
+    match /users/{uid} {
+      allow read, write: if isAuthenticated() && isOwner(uid);
       
-      match /{allPaths=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      // TASKS — only owner, with validation
+      match /tasks/{taskId} {
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow create: if isAuthenticated() && 
+                         isOwner(uid) && 
+                         isValidTask();
+        allow update: if isAuthenticated() && 
+                         isOwner(uid) && 
+                         isValidTask();
+        allow delete: if isAuthenticated() && isOwner(uid);
       }
+      
+      // HABITS
+      match /habits/{habitId} {
+        allow read, write: if isAuthenticated() && 
+                              isOwner(uid) && 
+                              isValidHabit();
+      }
+      
+      // SESSIONS
+      match /sessions/{sessionId} {
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+      
+      // DAILY LOGS
+      match /dailyLogs/{date} {
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+      
+      // Catch-all for other subcollections under users to prevent breaking existing code
+      match /{allPaths=**} {
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+    }
+    
+    // DENY EVERYTHING ELSE
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

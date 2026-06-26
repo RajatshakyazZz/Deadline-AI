@@ -15,6 +15,16 @@ import { auth, db, signInWithGoogle, signOutUser, OperationType, handleFirestore
 import { Task, Habit, FocusSession, UserProfile, Subtask, ScheduleBlock, ComplexityType, CategoryType } from '../types';
 import { useToast } from './Toast';
 import { createCalendarEvent } from '../services/googleCalendar';
+import { safeStorage } from '../utils/storage';
+import { 
+  NotificationPreferences, 
+  requestNotificationPermission, 
+  setupForegroundListener, 
+  getNotificationPreferences, 
+  updateNotificationPreferences,
+  checkNotificationSupport,
+  getSafeNotificationPermission
+} from '../services/messaging';
 
 interface AppContextType {
   user: any | null;
@@ -44,6 +54,12 @@ interface AppContextType {
   importGoogleCalendarEvent: (event: any) => Promise<void>;
   isAddTaskOpen: boolean;
   setIsAddTaskOpen: (open: boolean) => void;
+  
+  // Web Push Notifications
+  notificationPreferences: NotificationPreferences | null;
+  updateNotificationPrefs: (prefs: Partial<NotificationPreferences>) => Promise<void>;
+  testPushNotification: (title: string, body: string, category: string) => Promise<boolean>;
+  notificationSupport: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -198,16 +214,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAddTaskOpen, setIsAddTaskOpen] = useState<boolean>(false);
   
   const [isDemo, setIsDemo] = useState<boolean>(() => {
-    return localStorage.getItem('deadlineai_is_guest') === 'true';
+    return safeStorage.getItem('deadlineai_is_guest') === 'true';
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
+
+  // Push Notifications States
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(null);
+  const [notificationSupport, setNotificationSupport] = useState<boolean>(false);
 
   // Authentication observer
   useEffect(() => {
     let unsubscribeTasks: (() => void) | null = null;
     let unsubscribeHabits: (() => void) | null = null;
     let unsubscribeSessions: (() => void) | null = null;
+    let unsubscribeForeground: (() => void) | null = null;
 
     if (isDemo) {
       // Demo authentication mock
@@ -228,9 +249,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       // Load mock items from localStorage if available, else load default mocks
-      const localTasks = localStorage.getItem('deadlineai_demo_tasks');
-      const localHabits = localStorage.getItem('deadlineai_demo_habits');
-      const localSessions = localStorage.getItem('deadlineai_demo_sessions');
+      const localTasks = safeStorage.getItem('deadlineai_demo_tasks');
+      const localHabits = safeStorage.getItem('deadlineai_demo_habits');
+      const localSessions = safeStorage.getItem('deadlineai_demo_sessions');
 
       if (localTasks) setTasks(JSON.parse(localTasks));
       else setTasks(MOCK_TASKS);
@@ -253,7 +274,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (firebaseUser) {
         setUser(firebaseUser);
-        localStorage.setItem('deadlineai_has_authenticated', 'true');
+        safeStorage.setItem('deadlineai_has_authenticated', 'true');
         
         // Retrieve redirect access token for Google Workspace/Calendar if present
         getGoogleRedirectToken().then((token) => {
@@ -261,12 +282,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setGoogleAccessToken(token);
           }
         });
+
+        // Initialize Push Notifications
+        checkNotificationSupport().then((supported) => {
+          setNotificationSupport(supported);
+          if (supported) {
+            // Fetch/Sync preferences
+            getNotificationPreferences(firebaseUser.uid).then((prefs) => {
+              setNotificationPreferences(prefs);
+            });
+            // Request permission & generate token
+            requestNotificationPermission(firebaseUser.uid);
+
+            // Register Foreground notification listener
+            setupForegroundListener((payload) => {
+              const title = payload.notification?.title || payload.data?.title || 'Notification';
+              const body = payload.notification?.body || payload.data?.body || '';
+              showToast(`${title}: ${body}`, 'info');
+              
+              if (getSafeNotificationPermission() === 'granted' && document.hidden) {
+                try {
+                  new Notification(title, {
+                    body,
+                    icon: '/favicon.svg'
+                  });
+                } catch (e) {
+                  console.warn('Failed to display native Notification in iframe:', e);
+                }
+              }
+            }).then((unsub) => {
+              if (unsub) {
+                unsubscribeForeground = unsub;
+              }
+            });
+          }
+        });
         
         // 1. Instantly load cached offline data from localStorage for near-zero loading times!
-        const cachedProfile = localStorage.getItem(`deadlineai_profile_${firebaseUser.uid}`);
-        const cachedTasks = localStorage.getItem(`deadlineai_tasks_${firebaseUser.uid}`);
-        const cachedHabits = localStorage.getItem(`deadlineai_habits_${firebaseUser.uid}`);
-        const cachedSessions = localStorage.getItem(`deadlineai_sessions_${firebaseUser.uid}`);
+        const cachedProfile = safeStorage.getItem(`deadlineai_profile_${firebaseUser.uid}`);
+        const cachedTasks = safeStorage.getItem(`deadlineai_tasks_${firebaseUser.uid}`);
+        const cachedHabits = safeStorage.getItem(`deadlineai_habits_${firebaseUser.uid}`);
+        const cachedSessions = safeStorage.getItem(`deadlineai_sessions_${firebaseUser.uid}`);
 
         const fallbackProfile: UserProfile = {
           name: firebaseUser.displayName || 'Developer',
@@ -317,7 +373,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
           if (initialProfile) {
             setProfile(initialProfile);
-            localStorage.setItem(`deadlineai_profile_${firebaseUser.uid}`, JSON.stringify(initialProfile));
+            safeStorage.setItem(`deadlineai_profile_${firebaseUser.uid}`, JSON.stringify(initialProfile));
           }
         }).catch((error) => {
           console.warn("Failed to get profile from Firestore, using cache or fallback:", error);
@@ -343,10 +399,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedTasks.push({ id: docSnap.id, ...docSnap.data() } as Task);
           });
           setTasks(loadedTasks);
-          localStorage.setItem(`deadlineai_tasks_${firebaseUser.uid}`, JSON.stringify(loadedTasks));
+          safeStorage.setItem(`deadlineai_tasks_${firebaseUser.uid}`, JSON.stringify(loadedTasks));
         }, (error) => {
           console.warn(`Firestore tasks subscription error (${tasksPath}), loading cached:`, error);
-          const cached = localStorage.getItem(`deadlineai_tasks_${firebaseUser.uid}`);
+          const cached = safeStorage.getItem(`deadlineai_tasks_${firebaseUser.uid}`);
           if (cached) {
             try { setTasks(JSON.parse(cached)); } catch (e) {}
           }
@@ -360,10 +416,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedHabits.push({ id: docSnap.id, ...docSnap.data() } as Habit);
           });
           setHabits(loadedHabits);
-          localStorage.setItem(`deadlineai_habits_${firebaseUser.uid}`, JSON.stringify(loadedHabits));
+          safeStorage.setItem(`deadlineai_habits_${firebaseUser.uid}`, JSON.stringify(loadedHabits));
         }, (error) => {
           console.warn(`Firestore habits subscription error (${habitsPath}), loading cached:`, error);
-          const cached = localStorage.getItem(`deadlineai_habits_${firebaseUser.uid}`);
+          const cached = safeStorage.getItem(`deadlineai_habits_${firebaseUser.uid}`);
           if (cached) {
             try { setHabits(JSON.parse(cached)); } catch (e) {}
           }
@@ -377,10 +433,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loadedSessions.push({ id: docSnap.id, ...docSnap.data() } as FocusSession);
           });
           setSessions(loadedSessions);
-          localStorage.setItem(`deadlineai_sessions_${firebaseUser.uid}`, JSON.stringify(loadedSessions));
+          safeStorage.setItem(`deadlineai_sessions_${firebaseUser.uid}`, JSON.stringify(loadedSessions));
         }, (error) => {
           console.warn(`Firestore sessions subscription error (${sessionsPath}), loading cached:`, error);
-          const cached = localStorage.getItem(`deadlineai_sessions_${firebaseUser.uid}`);
+          const cached = safeStorage.getItem(`deadlineai_sessions_${firebaseUser.uid}`);
           if (cached) {
             try { setSessions(JSON.parse(cached)); } catch (e) {}
           }
@@ -392,7 +448,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setTasks([]);
         setHabits([]);
         setSessions([]);
-        localStorage.removeItem('deadlineai_has_authenticated');
+        setNotificationPreferences(null);
+        if (unsubscribeForeground) {
+          unsubscribeForeground();
+          unsubscribeForeground = null;
+        }
+        safeStorage.removeItem('deadlineai_has_authenticated');
         setLoading(false);
       }
     });
@@ -402,17 +463,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (unsubscribeTasks) unsubscribeTasks();
       if (unsubscribeHabits) unsubscribeHabits();
       if (unsubscribeSessions) unsubscribeSessions();
+      if (unsubscribeForeground) unsubscribeForeground();
     };
   }, [isDemo]);
 
   // Synchronize Demo state to localStorage
   useEffect(() => {
     if (isDemo && !loading) {
-      localStorage.setItem('deadlineai_demo_tasks', JSON.stringify(tasks));
-      localStorage.setItem('deadlineai_demo_habits', JSON.stringify(habits));
-      localStorage.setItem('deadlineai_demo_sessions', JSON.stringify(sessions));
+      safeStorage.setItem('deadlineai_demo_tasks', JSON.stringify(tasks));
+      safeStorage.setItem('deadlineai_demo_habits', JSON.stringify(habits));
+      safeStorage.setItem('deadlineai_demo_sessions', JSON.stringify(sessions));
       if (profile) {
-        localStorage.setItem('deadlineai_demo_profile', JSON.stringify(profile));
+        safeStorage.setItem('deadlineai_demo_profile', JSON.stringify(profile));
       }
     }
   }, [tasks, habits, sessions, profile, isDemo, loading]);
@@ -422,12 +484,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       setLoading(true);
       setIsDemo(false);
-      localStorage.setItem('deadlineai_is_guest', 'false');
+      safeStorage.setItem('deadlineai_is_guest', 'false');
       const res = await signInWithGoogle();
       if (res && res.token) {
         setGoogleAccessToken(res.token);
       }
-      localStorage.setItem('deadlineai_has_authenticated', 'true');
+      safeStorage.setItem('deadlineai_has_authenticated', 'true');
       showToast('Successfully logged in with Google!', 'success');
     } catch (err) {
       console.error('Login failed:', err);
@@ -441,17 +503,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loginAsGuest = () => {
     setLoading(true);
     setIsDemo(true);
-    localStorage.setItem('deadlineai_is_guest', 'true');
+    safeStorage.setItem('deadlineai_is_guest', 'true');
   };
 
   const logout = async () => {
     try {
       setGoogleAccessToken(null);
-      localStorage.removeItem('deadlineai_has_authenticated');
-      localStorage.removeItem('deadlineai_is_guest');
+      safeStorage.removeItem('deadlineai_has_authenticated');
+      safeStorage.removeItem('deadlineai_is_guest');
       if (isDemo) {
         setIsDemo(false);
-        localStorage.setItem('deadlineai_is_guest', 'false');
+        safeStorage.setItem('deadlineai_is_guest', 'false');
         setUser(null);
         setProfile(null);
         showToast('Successfully exited Guest Mode.', 'success');
@@ -852,7 +914,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setProfile((prev) => {
         if (!prev) return null;
         const newProfile = { ...prev, ...updates };
-        localStorage.setItem('deadlineai_demo_profile', JSON.stringify(newProfile));
+        safeStorage.setItem('deadlineai_demo_profile', JSON.stringify(newProfile));
         return newProfile;
       });
       showToast('Profile updated!', 'success');
@@ -866,6 +928,84 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, docPath);
       }
+    }
+  };
+
+  // Push Notifications Operations
+  const updateNotificationPrefs = async (prefs: Partial<NotificationPreferences>) => {
+    if (!user) return;
+    if (isDemo) {
+      setNotificationPreferences((prev) => prev ? { ...prev, ...prefs } : null);
+      showToast('Notification settings updated (Demo Mode)!', 'success');
+      return;
+    }
+    try {
+      await updateNotificationPreferences(user.uid, prefs);
+      setNotificationPreferences((prev) => prev ? { ...prev, ...prefs } : null);
+      showToast('Notification settings updated!', 'success');
+    } catch (err) {
+      console.error('Failed to update notification prefs:', err);
+      showToast('Failed to update notification settings', 'error');
+    }
+  };
+
+  const testPushNotification = async (title: string, body: string, category: string): Promise<boolean> => {
+    if (!user) {
+      showToast('You must be logged in to test notifications', 'error');
+      return false;
+    }
+
+    if (isDemo) {
+      showToast('[Demo Mode] Simulated push notification sent in-app!', 'success');
+      showToast(`${title}: ${body}`, 'info');
+      if (getSafeNotificationPermission() === 'granted') {
+        try {
+          new Notification(title, { body, icon: '/favicon.svg' });
+        } catch (e) {
+          console.warn('Failed to display native Notification in iframe:', e);
+        }
+      }
+      return true;
+    }
+
+    try {
+      const response = await fetch('/api/notifications/send-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          title,
+          body,
+          category
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        if (data.simulated) {
+          showToast('FCM Key not configured on server. Simulating in-app...', 'info');
+          showToast(`${title}: ${body}`, 'info');
+          if (getSafeNotificationPermission() === 'granted') {
+            try {
+              new Notification(title, { body, icon: '/favicon.svg' });
+            } catch (e) {
+              console.warn('Failed to display native Notification in iframe:', e);
+            }
+          }
+        } else if (data.skipped) {
+          showToast('Notification skipped: category is disabled in settings', 'info');
+        } else {
+          showToast('Test notification sent successfully!', 'success');
+        }
+        return true;
+      } else {
+        showToast(`Failed to dispatch push: ${data.error || 'Unknown error'}`, 'error');
+        return false;
+      }
+    } catch (err: any) {
+      console.error('Failed to send test push notification:', err);
+      showToast('Failed to dispatch test notification', 'error');
+      return false;
     }
   };
 
@@ -899,6 +1039,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         importGoogleCalendarEvent,
         isAddTaskOpen,
         setIsAddTaskOpen,
+        notificationPreferences,
+        updateNotificationPrefs,
+        testPushNotification,
+        notificationSupport,
       }}
     >
       {children}

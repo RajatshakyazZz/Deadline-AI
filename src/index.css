@@ -13,6 +13,23 @@
     color: #F7FAFC;
     font-family: var(--font-sans);
     overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Cyber Grid Background only for Dark Mode (does not show in light-theme) */
+  body:not(.light-theme)::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(99, 179, 237, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99, 179, 237, 0.035) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center center;
+    mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 85%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 85%);
+    pointer-events: none;
+    z-index: -1;
   }
 }
 
@@ -61,19 +78,32 @@
   z-index: 1;
 }
 
-/* Lens distortion edge glow */
+@keyframes liquid-glass-shimmer {
+  0% {
+    background-position: -200% 0, 50% 0%;
+  }
+  25% {
+    background-position: 200% 0, 50% 0%;
+  }
+  100% {
+    background-position: 200% 0, 50% 0%;
+  }
+}
+
+/* Lens distortion edge glow + Flashy sweeping shimmer animation */
 .liquid-glass::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 20px;
-  background: radial-gradient(
-    ellipse at 50% 0%,
-    rgba(255,255,255,0.06) 0%,
-    transparent 60%
-  );
+  border-radius: inherit;
+  background: 
+    linear-gradient(115deg, transparent, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0) 70%, transparent 100%) no-repeat,
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.06) 0%, transparent 60%);
+  background-size: 200% 100%, 100% 100%;
+  background-position: -200% 0, 50% 0%;
   pointer-events: none;
   z-index: 1;
+  animation: liquid-glass-shimmer 4s infinite linear;
 }
 
 /* Hover state — glass catches more light */

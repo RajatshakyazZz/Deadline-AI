@@ -19,6 +19,21 @@ export const FocusMode: React.FC = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string>('');
   const [ambientMode, setAmbientMode] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundPreset, setSoundPreset] = useState<'chime' | 'zen-bell' | 'digital-harmony' | 'gong'>(() => {
+    try {
+      const saved = localStorage.getItem('deadlineai_sound_preset');
+      return (saved === 'chime' || saved === 'zen-bell' || saved === 'digital-harmony' || saved === 'gong') ? saved : 'chime';
+    } catch {
+      return 'chime';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('deadlineai_sound_preset', soundPreset);
+    } catch {}
+  }, [soundPreset]);
+
   const [encouragement, setEncouragement] = useState('Select a task, initiate the timer, and let’s get focused.');
 
   // Confetti canvas ref
@@ -200,36 +215,113 @@ export const FocusMode: React.FC = () => {
   const activeTasks = tasks.filter(t => !t.completed);
 
   // Sound effect synthesizer (Web Audio API)
-  const playAlertSound = () => {
+  const playAlertSound = (overridePreset?: 'chime' | 'zen-bell' | 'digital-harmony' | 'gong') => {
     if (!soundEnabled) return;
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
-      
-      // Chime sequence
       const now = ctx.currentTime;
-      const playTone = (freq: number, start: number, dur: number) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.setValueAtTime(freq, start);
-        gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.15, start + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
-        osc.start(start);
-        osc.stop(start + dur);
-      };
+      const preset = overridePreset || soundPreset;
 
-      if (!isBreak) {
-        // High double chime on work complete
-        playTone(523.25, now, 0.4); // C5
-        playTone(659.25, now + 0.15, 0.5); // E5
-      } else {
-        // Soft calming double tone on break complete
-        playTone(349.23, now, 0.4); // F4
-        playTone(440.00, now + 0.15, 0.5); // A4
+      if (preset === 'chime') {
+        const playTone = (freq: number, start: number, dur: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(0.12, start + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+          osc.start(start);
+          osc.stop(start + dur);
+        };
+        if (!isBreak) {
+          playTone(523.25, now, 0.5); // C5
+          playTone(659.25, now + 0.15, 0.6); // E5
+        } else {
+          playTone(349.23, now, 0.5); // F4
+          playTone(440.00, now + 0.15, 0.6); // A4
+        }
+      } else if (preset === 'zen-bell') {
+        // Multi-oscillator harmonic Singing Bowl
+        const baseFreq = !isBreak ? 293.66 : 220.00; // D4 or A3
+        const harmonics = [1, 1.5, 2, 2.61, 3]; // Overtones
+        harmonics.forEach((harmonic, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.frequency.setValueAtTime(baseFreq * harmonic, now);
+          gain.gain.setValueAtTime(0, now);
+          // Overtones fade faster than base frequency
+          const volume = 0.05 / (idx + 1);
+          const duration = 2.5 / (idx * 0.4 + 1);
+          
+          gain.gain.linearRampToValueAtTime(volume, now + 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+          
+          osc.start(now);
+          osc.stop(now + duration + 0.1);
+        });
+      } else if (preset === 'gong') {
+        // Deep warm ambient gong
+        const baseFreq = !isBreak ? 130.81 : 110.00; // C3 or A2
+        const harmonics = [1, 1.48, 2.02, 2.51];
+        harmonics.forEach((harmonic, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          // Mix triangle and sine for rich warm tone
+          osc.type = idx === 0 ? 'triangle' : 'sine';
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.frequency.setValueAtTime(baseFreq * harmonic, now);
+          // slight detune over time for chorus effect
+          osc.frequency.linearRampToValueAtTime(baseFreq * harmonic * 0.99, now + 3);
+          
+          gain.gain.setValueAtTime(0, now);
+          const volume = idx === 0 ? 0.08 : 0.03;
+          gain.gain.linearRampToValueAtTime(volume, now + 0.2);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
+          
+          osc.start(now);
+          osc.stop(now + 3.2);
+        });
+      } else if (preset === 'digital-harmony') {
+        // Dreamy quick melodic arpeggio running up a major chord
+        const notes = !isBreak 
+          ? [523.25, 659.25, 783.99, 1046.50] // C5, E5, G5, C6 (work complete)
+          : [349.23, 440.00, 523.25, 698.46]; // F4, A4, C5, F5 (break complete)
+        
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.connect(gain);
+          
+          // Lowpass filter for warm digital feel
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(1500, now);
+          
+          gain.connect(filter);
+          filter.connect(ctx.destination);
+          
+          const startOffset = idx * 0.1;
+          const duration = 0.8;
+          
+          osc.frequency.setValueAtTime(freq, now + startOffset);
+          gain.gain.setValueAtTime(0, now + startOffset);
+          gain.gain.linearRampToValueAtTime(0.06, now + startOffset + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + startOffset + duration);
+          
+          osc.start(now + startOffset);
+          osc.stop(now + startOffset + duration + 0.1);
+        });
       }
     } catch (err) {
       console.warn('AudioContext sound blocked or unsupported until interaction:', err);
@@ -546,6 +638,46 @@ export const FocusMode: React.FC = () => {
                       ? 'bg-[#63B3ED]/15 border border-[#63B3ED]/30 text-[#63B3ED]'
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Completion Alarm Sound Selector */}
+        <div className="w-full space-y-2 flex flex-col items-center">
+          <span className="text-[10px] font-mono font-bold text-[#A0AEC0] uppercase tracking-wider flex items-center gap-1">
+            <Volume2 className="w-3 h-3 text-[#9F7AEA]" /> Completion Alarm Sound
+          </span>
+          <div className="flex gap-1.5 p-1 bg-white/[0.02] border border-white/5 rounded-xl">
+            {(['chime', 'zen-bell', 'gong', 'digital-harmony'] as const).map((preset) => {
+              const isActive = soundPreset === preset;
+              let label = 'Chime';
+              if (preset === 'zen-bell') label = 'Zen Bell 🔔';
+              if (preset === 'gong') label = 'Gong 🪐';
+              if (preset === 'digital-harmony') label = 'Synth Run 🎹';
+              
+              return (
+                <button
+                  key={preset}
+                  onClick={() => {
+                    setSoundPreset(preset);
+                    if (!soundEnabled) {
+                      setSoundEnabled(true);
+                    }
+                    // Play a quick preview sound of the selected preset
+                    setTimeout(() => {
+                      playAlertSound(preset);
+                    }, 50);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#9F7AEA]/15 border border-[#9F7AEA]/30 text-[#9F7AEA]'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                  title={`Select and preview ${label}`}
                 >
                   {label}
                 </button>

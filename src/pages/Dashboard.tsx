@@ -538,9 +538,10 @@ export const Dashboard: React.FC = () => {
             <button
               id="open-habits-console-btn"
               onClick={() => navigate('/habits')}
-              className="apple-glass-btn apple-glass-gray w-full mt-2 text-xs font-bold uppercase tracking-wider"
+              className="w-full mt-3 py-2.5 px-4 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all duration-300 bg-gradient-to-r from-[#63B3ED] via-[#8B5CF6] to-[#EC4899] text-white shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:shadow-[0_0_22px_rgba(139,92,246,0.65)] hover:scale-[1.01] active:scale-[0.98] border border-white/20 flex items-center justify-center gap-2 cursor-pointer"
             >
-              Open Habits Console
+              <Flame className="w-4 h-4 animate-pulse text-white" />
+              <span>Open Habits Console</span>
             </button>
           </section>
         </div>

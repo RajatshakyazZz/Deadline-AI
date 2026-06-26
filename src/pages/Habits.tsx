@@ -42,7 +42,23 @@ export const Habits: React.FC = () => {
   const today = new Date();
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth()); // 0-indexed
-  const [isStrict, setIsStrict] = useState(true);
+  const isStrict = true;
+  const [missedStreakModalOpen, setMissedStreakModalOpen] = useState(false);
+  const [selectedSarcasticMessage, setSelectedSarcasticMessage] = useState('');
+
+  const sarcasticMessages = [
+    "Nice try, but you cannot bring back the time that is gone forever.",
+    "Trying to rewrite history? Sadly, you cannot bring back lost time, buddy.",
+    "Ah, trying to cheat the universe? You cannot bring back the time that is already gone.",
+    "Cute attempt, but you can't bring back the time that has slipped away.",
+    "Lost time is like a popped balloon – you can't bring it back, no matter how hard you click!"
+  ];
+
+  const handleMissedDayClick = () => {
+    const randomMsg = sarcasticMessages[Math.floor(Math.random() * sarcasticMessages.length)];
+    setSelectedSarcasticMessage(randomMsg);
+    setMissedStreakModalOpen(true);
+  };
 
   // Dynamic light/dark theme tracking for charting
   const [isLight, setIsLight] = useState(document.body.classList.contains('light-theme'));
@@ -182,10 +198,18 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
     if (!newHabitName.trim()) return;
 
     const finalEmoji = customEmoji.trim() || newHabitEmoji;
-    await addHabit(newHabitName.trim(), finalEmoji);
+    const nameToCreate = newHabitName.trim();
+    
+    // Reset and close modal immediately for a snappy user experience
     setNewHabitName('');
     setCustomEmoji('');
     setIsNewHabitModalOpen(false);
+
+    try {
+      await addHabit(nameToCreate, finalEmoji);
+    } catch (err) {
+      console.error("Failed to add habit:", err);
+    }
   };
 
   const handleEditHabitClick = (habit: Habit) => {
@@ -340,18 +364,13 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
               <CalendarIcon className="w-4 h-4 text-[#63B3ED]" />
               {formattedTodayDate}
             </span>
-            <button
-              onClick={() => setIsStrict(!isStrict)}
-              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border transition-all cursor-pointer flex items-center gap-1.5 ${
-                isStrict
-                  ? 'bg-red-500/15 border-red-500/30 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.1)]'
-                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.1)]'
-              }`}
-              title="Toggle Strict Mode"
+            <div
+              className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border transition-all flex items-center gap-1.5 bg-red-500/15 border-red-500/30 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.1)]"
+              title="Strict Mode is permanently locked ON"
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${isStrict ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
-              <span>STRICT MODE: {isStrict ? 'ON 🔒' : 'OFF 🔓'}</span>
-            </button>
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span>STRICT MODE: ON 🔒</span>
+            </div>
           </div>
         </div>
 
@@ -512,6 +531,8 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                       // Past days are locked in Strict Mode unless already completed
                       const isCellLocked = isFuture || (isStrict && !isTodayCell);
 
+                      const isMissedDay = !isFuture && !isCompleted && !isTodayCell;
+
                       // Classes for rendering
                       let cellClass = '';
                       let content = null;
@@ -532,13 +553,13 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                       } else {
                         // Past uncompleted day cell or today cell
                         if (isCellLocked) {
-                          // Past locked cell in Strict Mode
-                          cellClass = 'bg-white/[0.01] border-white/[0.02] text-white/[0.05] cursor-not-allowed';
-                          content = <Lock className="w-2.5 h-2.5 opacity-15" />;
+                          // Past locked cell in Strict Mode (a missed day box)
+                          cellClass = 'bg-white/[0.01] border-white/[0.02] text-white/[0.05] cursor-pointer hover:border-red-500/20 hover:bg-red-500/5';
+                          content = <Lock className="w-2.5 h-2.5 opacity-25 text-red-400" />;
                         } else {
                           // Interactive uncompleted cell (today or past if not strict)
                           cellClass = isTodayCell
-                            ? 'bg-purple-500/5 border-purple-500/20 hover:border-purple-500/40 text-purple-400 hover:bg-purple-500/10 cursor-pointer shadow-[0_0_8px_rgba(139,92,246,0.1)]'
+                            ? 'bg-purple-500/5 border-purple-500/20 hover:border-purple-500/40 text-purple-400 hover:bg-purple-500/10 cursor-pointer shadow-[0_0_8px_rgba(139,92,246,0.15)]'
                             : 'bg-white/[0.02] border-white/5 hover:border-white/20 text-[#4A5568] hover:bg-white/[0.05] cursor-pointer';
                         }
                       }
@@ -546,12 +567,18 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                       return (
                         <div key={`${h.id}-${day}`} className="flex items-center justify-center">
                           <motion.button
-                            whileHover={isCellLocked && !isCompleted ? {} : { scale: 1.12 }}
-                            whileTap={isCellLocked && !isCompleted ? {} : { scale: 0.92 }}
-                            onClick={() => !isCellLocked && toggleHabit(h.id, dateStr)}
-                            disabled={isCellLocked && !isCompleted}
+                            whileHover={isFuture ? {} : { scale: 1.12 }}
+                            whileTap={isFuture ? {} : { scale: 0.92 }}
+                            onClick={() => {
+                              if (isMissedDay) {
+                                handleMissedDayClick();
+                              } else if (!isCellLocked) {
+                                toggleHabit(h.id, dateStr);
+                              }
+                            }}
+                            disabled={isFuture}
                             className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl border flex items-center justify-center transition-all ${cellClass}`}
-                            title={isFuture ? "Locked (Future Day)" : isCellLocked && !isCompleted ? "Locked (Strict Mode)" : `${h.name} - ${dateStr} (${isCompleted ? 'Done' : 'Incomplete'})`}
+                            title={isFuture ? "Locked (Future Day)" : isMissedDay ? "Missed Day - Nice try but you cannot change history!" : `${h.name} - ${dateStr} (${isCompleted ? 'Done' : 'Incomplete'})`}
                           >
                             {content}
                           </motion.button>
@@ -979,6 +1006,60 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                 </div>
 
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- MISSED STREAK SARCASTIC WARNING MODAL --- */}
+      <AnimatePresence>
+        {missedStreakModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            
+            {/* Dark glass backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMissedStreakModalOpen(false)}
+              className="absolute inset-0 bg-[#0B0F19]/80 backdrop-filter backdrop-blur-md"
+            />
+
+            {/* Modal Body */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="relative w-full max-w-sm p-6 rounded-3xl bg-[#0F172A] border border-red-500/20 shadow-[0_0_25px_rgba(239,68,68,0.1)] text-center space-y-4 z-10"
+            >
+              <div className="flex justify-center">
+                <div className="p-3.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 animate-bounce">
+                  <Lock className="w-6 h-6" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="text-base font-extrabold text-[#F7FAFC] font-sans tracking-tight">
+                  Strict Mode Warning
+                </h3>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-400">
+                  TEMPORAL RECONCILIATION DENIED
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-sm text-[#A0AEC0] leading-relaxed px-1 font-medium font-sans italic">
+                "{selectedSarcasticMessage}"
+              </p>
+
+              <div className="pt-2 flex justify-center">
+                <button
+                  onClick={() => setMissedStreakModalOpen(false)}
+                  className="px-6 py-2.5 rounded-xl bg-red-500/15 border border-red-500/30 hover:bg-red-500/25 text-red-400 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(239,68,68,0.1)] hover:scale-105 active:scale-95"
+                >
+                  Accept Regret & Move On
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

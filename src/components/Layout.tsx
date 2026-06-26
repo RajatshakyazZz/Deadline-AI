@@ -21,6 +21,7 @@ import { useApp } from './AppContext';
 import { AddTaskModal } from './AddTaskModal';
 import { SettingsModal } from './SettingsModal';
 import { LogoIcon, LogoFull } from './Logo';
+import { safeStorage } from '../utils/storage';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, logout, isDemo, isAddTaskOpen, setIsAddTaskOpen } = useApp();
@@ -34,7 +35,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   // Active theme tracking
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    const saved = localStorage.getItem('deadlineai_theme');
+    const saved = safeStorage.getItem('deadlineai_theme');
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
   });
 
@@ -45,7 +46,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     } else {
       body.classList.remove('light-theme');
     }
-    localStorage.setItem('deadlineai_theme', theme);
+    safeStorage.setItem('deadlineai_theme', theme);
   }, [theme]);
 
   // Active navigation mapping
@@ -54,7 +55,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { name: 'My Tasks', path: '/tasks', icon: CheckSquare },
     { name: 'Focus Mode', path: '/focus', icon: Timer },
     { name: 'AI Briefing', path: '/briefing', icon: Sparkles },
-    { name: 'Habits', path: '/habits', icon: Flame },
+    { name: 'Habit Tracker', path: '/habits', icon: Flame },
   ];
 
   // Map path to friendly breadcrumb name
@@ -63,7 +64,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     return item ? item.name : 'DeadlineAI';
   };
 
-  // Keyboard Shortcuts implementation (N = new task modal, F = focus mode)
+  // Keyboard Shortcuts implementation (Navigation, Actions, Theme & Settings)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is writing in any input field
@@ -77,24 +78,48 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         return;
       }
 
-      if (e.key.toLowerCase() === 'n') {
+      const key = e.key.toLowerCase();
+
+      if (key === 'n') {
         e.preventDefault();
         setIsAddTaskOpen(true);
-      } else if (e.key.toLowerCase() === 'f') {
+      } else if (key === 'f') {
         e.preventDefault();
         navigate('/focus');
+      } else if (key === 'd') {
+        e.preventDefault();
+        navigate('/dashboard');
+      } else if (key === 't') {
+        e.preventDefault();
+        navigate('/tasks');
+      } else if (key === 'b') {
+        e.preventDefault();
+        navigate('/briefing');
+      } else if (key === 'h') {
+        e.preventDefault();
+        navigate('/habits');
+      } else if (key === 's') {
+        e.preventDefault();
+        setIsSettingsOpen(prev => !prev);
+      } else if (key === 'm') {
+        e.preventDefault();
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
       } else if (e.key === '?') {
         e.preventDefault();
         setShowShortcutsHelp(prev => !prev);
+      } else if (e.key === 'Escape') {
+        setIsAddTaskOpen(false);
+        setIsSettingsOpen(false);
+        setShowShortcutsHelp(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate]);
+  }, [navigate, setIsAddTaskOpen, setTheme, setIsSettingsOpen]);
 
   return (
-    <div className="min-h-screen bg-transparent text-[#F7FAFC] flex relative w-full">
+    <div className="h-screen overflow-hidden bg-transparent text-[#F7FAFC] flex relative w-full">
       
       {/* Sidebar - Desktop & Tablet */}
       <aside 
@@ -452,18 +477,46 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <Keyboard className="w-5 h-5" /> Keyboard Shortcuts
               </h3>
 
-              <div className="space-y-3 font-sans">
+              <div className="space-y-2 font-sans max-h-60 overflow-y-auto pr-1">
                 <div className="flex justify-between items-center py-1.5 border-b border-white/5">
                   <span className="text-sm font-semibold text-[#A0AEC0]">New Task Modal</span>
                   <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">N</kbd>
                 </div>
                 <div className="flex justify-between items-center py-1.5 border-b border-white/5">
-                  <span className="text-sm font-semibold text-[#A0AEC0]">Switch to Focus Mode</span>
+                  <span className="text-sm font-semibold text-[#A0AEC0]">Dashboard View</span>
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">D</kbd>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                  <span className="text-sm font-semibold text-[#A0AEC0]">My Tasks View</span>
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">T</kbd>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                  <span className="text-sm font-semibold text-[#A0AEC0]">Focus Mode View</span>
                   <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">F</kbd>
                 </div>
-                <div className="flex justify-between items-center py-1.5">
-                  <span className="text-sm font-semibold text-[#A0AEC0]">Show this help</span>
+                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                  <span className="text-sm font-semibold text-[#A0AEC0]">AI Briefing View</span>
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">B</kbd>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                  <span className="text-sm font-semibold text-[#A0AEC0]">Habits View</span>
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">H</kbd>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                  <span className="text-sm font-semibold text-[#A0AEC0]">Toggle Settings</span>
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">S</kbd>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                  <span className="text-sm font-semibold text-[#A0AEC0]">Toggle Theme</span>
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">M</kbd>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                  <span className="text-sm font-semibold text-[#A0AEC0]">Show/Hide Help</span>
                   <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">?</kbd>
+                </div>
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-sm font-semibold text-[#A0AEC0]">Dismiss Popups</span>
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-[#0E1320] border border-white/10 rounded-lg text-[#F6AD55]">ESC</kbd>
                 </div>
               </div>
 

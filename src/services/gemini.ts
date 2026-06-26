@@ -1,11 +1,37 @@
+import { createSecureRequest, validateRequest } from '../utils/secureRequest';
+import { RATE_LIMITS } from '../utils/rateLimiter';
+import { sanitizeForPrompt } from '../utils/promptSecurity';
+import { truncateForGemini } from '../utils/payloadLimits';
+import { safeStorage } from '../utils/storage';
+
 // Direct client-side REST call to Gemini 3.5 Flash API to avoid Vite Node-polyfill compile errors.
 export async function callGemini(prompt: string, jsonMode: boolean = false): Promise<string> {
+  // 1. Rate Limiting Check
+  const { allowed, retryAfter } = RATE_LIMITS.geminiCall();
+  if (!allowed) {
+    console.warn(`Rate limit triggered for callGemini. Cooldown: ${retryAfter}s`);
+    return getMockFallbackResponse(prompt, jsonMode);
+  }
+
+  // 2. Prompt Sanitization & Injection / SSTI Prevention
+  const sanitizedPrompt = sanitizeForPrompt(prompt);
+
+  // 3. LPDoS Prevention: Truncate large payloads before passing to model
+  const finalPrompt = truncateForGemini(sanitizedPrompt, 2000);
+
+  // 4. Replay Attack Protection via Secure Request wrappers
+  const secureReq = createSecureRequest({ prompt: finalPrompt, jsonMode });
+  if (!validateRequest(secureReq._meta)) {
+    console.warn('Replay attack or invalid signature blocked in callGemini');
+    return getMockFallbackResponse(prompt, jsonMode);
+  }
+
   // First read from import.meta.env
   let apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
 
   // Fallback check if it wasn't prefixed but exists in the raw dev environment or localStorage
   if (!apiKey) {
-    apiKey = localStorage.getItem('deadlineai_user_gemini_key') || '';
+    apiKey = safeStorage.getItem('deadlineai_user_gemini_key') || '';
   }
 
   // If still empty, we will use a demo key or throw a clean error
@@ -13,7 +39,7 @@ export async function callGemini(prompt: string, jsonMode: boolean = false): Pro
     console.warn('VITE_GEMINI_API_KEY is not defined. Using public mock AI fallback for smooth demonstration if offline.');
     // Let's implement a high-fidelity mock fallback so that the application is fully functional
     // even if the user hasn't added their API key in AI Studio Secrets yet!
-    return getMockFallbackResponse(prompt, jsonMode);
+    return getMockFallbackResponse(finalPrompt, jsonMode);
   }
 
   try {
@@ -29,7 +55,7 @@ export async function callGemini(prompt: string, jsonMode: boolean = false): Pro
           {
             parts: [
               {
-                text: prompt
+                text: secureReq.payload.prompt
               }
             ]
           }
@@ -51,7 +77,7 @@ export async function callGemini(prompt: string, jsonMode: boolean = false): Pro
     return text;
   } catch (err) {
     console.error('Gemini API call failed, falling back to mock response:', err);
-    return getMockFallbackResponse(prompt, jsonMode);
+    return getMockFallbackResponse(finalPrompt, jsonMode);
   }
 }
 

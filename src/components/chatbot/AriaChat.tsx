@@ -6,6 +6,11 @@ import { AriaFace, AriaExpression } from './AriaFace';
 import { ChatMessage, Message } from './ChatMessage';
 import { QuickReplies } from './QuickReplies';
 import { buildAriaSystemPrompt, getMinutesUntil, isToday } from '../../utils/ariaPrompt';
+import { createSecureRequest, validateRequest } from '../../utils/secureRequest';
+import { RATE_LIMITS, isRapidFireGeminiCall } from '../../utils/rateLimiter';
+import { sanitizeForPrompt } from '../../utils/promptSecurity';
+import { truncateForGemini } from '../../utils/payloadLimits';
+import { safeStorage } from '../../utils/storage';
 
 // Interface for Gemini response format
 interface GeminiResponse {
@@ -330,6 +335,13 @@ export const AriaChat: React.FC = () => {
     const messageText = textToSend || inputValue;
     if (!messageText.trim()) return;
 
+    // Prevent rapid-fire or double-submissions
+    if (isAriaTyping) return;
+    if (isRapidFireGeminiCall(1500)) {
+      console.warn('Rapid-fire message submission blocked');
+      return;
+    }
+
     if (!textToSend) {
       setInputValue('');
     }
@@ -406,16 +418,42 @@ export const AriaChat: React.FC = () => {
     }
 
     try {
+      // 1. Rate Limiting Check
+      const { allowed, retryAfter } = RATE_LIMITS.chatMessage();
+      if (!allowed) {
+        console.warn(`Rate limit triggered for AriaChat. Cooldown: ${retryAfter}s`);
+        setTimeout(() => {
+          typeOutAriaResponse(`I am receiving too many requests right now. Please take a deep breath and retry in ${retryAfter} seconds! 🤖⚡`);
+        }, 800);
+        return;
+      }
+
+      // 2. Prompt Injection / SSTI Filtering
+      const sanitizedMessage = sanitizeForPrompt(messageText);
+
+      // 3. LPDoS Truncation limit
+      const finalMessage = truncateForGemini(sanitizedMessage, 500);
+
+      // 4. Replay Attack Protection
+      const secureReq = createSecureRequest({ messageText: finalMessage });
+      if (!validateRequest(secureReq._meta)) {
+        console.warn('Replay attack or invalid signature blocked in AriaChat');
+        setTimeout(() => {
+          typeOutAriaResponse(getAriaMockResponse(messageText, historyPayload));
+        }, 800);
+        return;
+      }
+
       // Call Gemini API
       let apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || '';
       if (!apiKey) {
-        apiKey = localStorage.getItem('deadlineai_user_gemini_key') || '';
+        apiKey = safeStorage.getItem('deadlineai_user_gemini_key') || '';
       }
 
       if (!apiKey) {
         // High fidelity fallback response
         setTimeout(() => {
-          const fallbackResponse = getAriaMockResponse(messageText, historyPayload);
+          const fallbackResponse = getAriaMockResponse(secureReq.payload.messageText, historyPayload);
           typeOutAriaResponse(fallbackResponse);
         }, 1000);
         return;
@@ -429,7 +467,7 @@ export const AriaChat: React.FC = () => {
         })),
         {
           role: 'user',
-          parts: [{ text: messageText }]
+          parts: [{ text: secureReq.payload.messageText }]
         }
       ];
 
@@ -593,7 +631,7 @@ export const AriaChat: React.FC = () => {
           <motion.div
             id="aria-notification-badge"
             initial={{ scale: 0 }}
-            animate={{ scale: [0, 1.2, 1] }}
+            animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 15 }}
             className="absolute -top-1 -left-1.5 bg-red-500 border border-white/20 text-white font-bold text-[10px] h-6 px-2 rounded-full flex items-center justify-center shadow-md animate-pulse"
           >
