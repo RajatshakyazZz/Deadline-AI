@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Play, Pause, RotateCcw, Volume2, VolumeX, Sparkles, AlertCircle, EyeOff, Eye, Moon, Sun } from 'lucide-react';
 import { useApp } from '../components/AppContext';
 import { callGemini } from '../services/gemini';
+import { safeStorage } from '../utils/storage';
 
 export const FocusMode: React.FC = () => {
   const { tasks, addFocusSession } = useApp();
@@ -21,7 +22,7 @@ export const FocusMode: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundPreset, setSoundPreset] = useState<'chime' | 'zen-bell' | 'digital-harmony' | 'gong'>(() => {
     try {
-      const saved = localStorage.getItem('deadlineai_sound_preset');
+      const saved = safeStorage.getItem('deadlineai_sound_preset');
       return (saved === 'chime' || saved === 'zen-bell' || saved === 'digital-harmony' || saved === 'gong') ? saved : 'chime';
     } catch {
       return 'chime';
@@ -30,7 +31,7 @@ export const FocusMode: React.FC = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('deadlineai_sound_preset', soundPreset);
+      safeStorage.setItem('deadlineai_sound_preset', soundPreset);
     } catch {}
   }, [soundPreset]);
 

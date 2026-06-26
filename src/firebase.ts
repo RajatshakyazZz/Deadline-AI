@@ -16,7 +16,18 @@ import { getFirestore } from 'firebase/firestore';
 import firebaseAppletConfig from '../firebase-applet-config.json';
 import { safeStorage } from './utils/storage';
 
-export const app = initializeApp(firebaseAppletConfig);
+// Prioritize environment variables from Vite, falling back to firebase-applet-config.json
+const firebaseConfig = {
+  apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
+  authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain,
+  projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
+  storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket,
+  messagingSenderId: (import.meta as any).env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
+  appId: (import.meta as any).env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
+  measurementId: (import.meta as any).env.VITE_FIREBASE_MEASUREMENT_ID || (firebaseAppletConfig as any).measurementId || ""
+};
+
+export const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Auth safely with robust persistence fallbacks to prevent "SecurityError: The operation is insecure" in sandboxed environments
 const getSafePersistence = () => {
@@ -38,9 +49,10 @@ const getSafePersistence = () => {
   // Test indexedDB - accessing or referencing indexedDB inside sandboxed iframes can throw a SecurityError
   let isIndexedDBAvailable = false;
   try {
-    if (typeof window !== 'undefined' && 'indexedDB' in window) {
-      const db = window.indexedDB;
-      if (db) {
+    if (typeof window !== 'undefined' && 'indexedDB' in window && window.indexedDB) {
+      // Actually try to open a test database to trigger any potential SecurityError synchronously or asynchronously
+      const request = window.indexedDB.open('__firebase_auth_test_db__');
+      if (request) {
         isIndexedDBAvailable = true;
       }
     }
@@ -84,18 +96,40 @@ const initializeSafeAuth = () => {
       popupRedirectResolver: browserPopupRedirectResolver
     });
   } catch (err) {
-    console.warn('Firebase initializeAuth failed with safe persistences, falling back to standard getAuth:', err);
+    console.warn('Firebase initializeAuth failed with safe persistences, falling back to in-memory persistence:', err);
     try {
-      return getAuth(app);
-    } catch (getAuthErr) {
-      console.error('getAuth fallback also failed:', getAuthErr);
-      throw getAuthErr;
+      return initializeAuth(app, {
+        persistence: inMemoryPersistence,
+        popupRedirectResolver: browserPopupRedirectResolver
+      });
+    } catch (inMemErr) {
+      console.error('Even safe in-memory initializeAuth failed, falling back to standard getAuth:', inMemErr);
+      try {
+        return getAuth(app);
+      } catch (getAuthErr) {
+        console.error('getAuth fallback also failed:', getAuthErr);
+        throw getAuthErr;
+      }
     }
   }
 };
 
 export const auth = initializeSafeAuth();
-export const db = getFirestore(app, (firebaseAppletConfig as any).firestoreDatabaseId);
+
+const getSafeFirestore = () => {
+  const dbId = (import.meta as any).env.VITE_FIREBASE_DATABASE_ID || (firebaseAppletConfig as any).firestoreDatabaseId;
+  try {
+    if (dbId && dbId !== "(default)" && dbId !== "default") {
+      return getFirestore(app, dbId);
+    }
+    return getFirestore(app);
+  } catch (err) {
+    console.warn('Initializing Firestore with custom database ID failed, falling back to default:', err);
+    return getFirestore(app);
+  }
+};
+
+export const db = getSafeFirestore();
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('https://www.googleapis.com/auth/calendar');

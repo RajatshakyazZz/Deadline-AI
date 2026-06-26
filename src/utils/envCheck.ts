@@ -11,10 +11,14 @@ export function validateEnvironment() {
     missing.push('VITE_GEMINI_API_KEY');
   }
 
-  // Check essential Firebase credentials from the config file
-  if (!firebaseAppletConfig.apiKey) missing.push('firebaseAppletConfig.apiKey');
-  if (!firebaseAppletConfig.projectId) missing.push('firebaseAppletConfig.projectId');
-  if (!firebaseAppletConfig.appId) missing.push('firebaseAppletConfig.appId');
+  // Check essential Firebase credentials from environment variables or the config file
+  const apiKey = (import.meta as any).env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey;
+  const projectId = (import.meta as any).env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId;
+  const appId = (import.meta as any).env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId;
+
+  if (!apiKey) missing.push('VITE_FIREBASE_API_KEY / apiKey');
+  if (!projectId) missing.push('VITE_FIREBASE_PROJECT_ID / projectId');
+  if (!appId) missing.push('VITE_FIREBASE_APP_ID / appId');
 
   if (missing.length > 0 && (import.meta as any).env.DEV) {
     console.warn(
