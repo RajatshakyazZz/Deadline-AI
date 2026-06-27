@@ -459,7 +459,7 @@ export const AriaChat: React.FC = () => {
         return;
       }
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const contents = [
         ...historyPayload.map(h => ({
           role: h.role === 'user' ? 'user' : 'model',

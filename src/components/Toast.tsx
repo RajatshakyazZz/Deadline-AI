@@ -1,85 +1,53 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
-import { ToastMessage } from '../types';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { ToastContainer } from './notifications/ToastContainer';
+import { ToastContext, ToastItem, ToastType, ToastOptions } from '../hooks/useToast';
 
-interface ToastContextType {
-  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
-}
+export { useToast } from '../hooks/useToast';
 
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
+export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-};
-
-export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
-
-    // Auto remove after 4 seconds
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  const addToast = useCallback((title: string, message: string, type: ToastType, options?: ToastOptions) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    const duration = options?.duration ?? 4000;
+    const persistent = options?.persistent ?? false;
+
+    const newToast: ToastItem = {
+      id,
+      type,
+      title,
+      message,
+      duration,
+      persistent,
+    };
+
+    setToasts((prev) => [...prev, newToast]);
+  }, []);
+
+  // Compat + chained methods wrapper
+  const showToastBase = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    // Legacy signature conversion
+    const title = type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info';
+    addToast(title, message, type as ToastType);
+  }, [addToast]);
+
+  // Construct showToast object with attached helper methods
+  const showToast = showToastBase as any;
+  showToast.success = (title: string, message = '', options?: ToastOptions) => addToast(title, message, 'success', options);
+  showToast.error = (title: string, message = '', options?: ToastOptions) => addToast(title, message, 'error', options);
+  showToast.warning = (title: string, message = '', options?: ToastOptions) => addToast(title, message, 'warning', options);
+  showToast.info = (title: string, message = '', options?: ToastOptions) => addToast(title, message, 'info', options);
+  showToast.ai = (title: string, message = '', options?: ToastOptions) => addToast(title, message, 'ai', options);
+  showToast.crisis = (title: string, message = '', options?: ToastOptions) => addToast(title, message, 'crisis', options);
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ toasts, addToast, removeToast, showToast }}>
       {children}
-      
-      {/* Toast container */}
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 w-full max-w-md px-4 pointer-events-none">
-        <AnimatePresence>
-          {toasts.map((toast) => {
-            let glassClass = 'liquid-glass shadow-[0_8px_32px_rgba(99,179,237,0.15)]';
-            let iconColor = 'text-[#63B3ED]';
-            let Icon = Info;
-
-            if (toast.type === 'success') {
-              glassClass = 'liquid-glass liquid-glass-safe shadow-[0_8px_32px_rgba(104,211,145,0.15)]';
-              iconColor = 'text-[#68D391]';
-              Icon = CheckCircle;
-            } else if (toast.type === 'error') {
-              glassClass = 'liquid-glass liquid-glass-crisis shadow-[0_8px_32px_rgba(252,129,129,0.15)]';
-              iconColor = 'text-[#FC8181]';
-              Icon = AlertTriangle;
-            }
-
-            return (
-              <motion.div
-                key={toast.id}
-                initial={{ opacity: 0, y: -50, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-                className={`flex items-center justify-between p-4 rounded-xl ${glassClass} pointer-events-auto`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-5 h-5 flex-shrink-0 ${iconColor}`} />
-                  <p className="text-sm font-medium text-[#F7FAFC]">{toast.message}</p>
-                </div>
-                <button
-                  onClick={() => removeToast(toast.id)}
-                  className="p-1 rounded-lg hover:bg-white/5 transition-colors text-[#A0AEC0] hover:text-[#F7FAFC] ml-4 flex-shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
+      <ToastContainer />
     </ToastContext.Provider>
   );
 };

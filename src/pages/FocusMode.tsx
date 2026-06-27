@@ -17,7 +17,19 @@ export const FocusMode: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [sessionsCompleted, setSessionsCompleted] = useState(3); // Mock initial of 3/4
-  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
+  const [selectedTaskId, setSelectedTaskId] = useState<string>(() => {
+    try {
+      return safeStorage.getItem('focus_task_id') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      safeStorage.removeItem('focus_task_id');
+    } catch {}
+  }, []);
   const [ambientMode, setAmbientMode] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundPreset, setSoundPreset] = useState<'chime' | 'zen-bell' | 'digital-harmony' | 'gong'>(() => {

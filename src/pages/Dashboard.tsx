@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { 
   AlertTriangle, 
   CheckCircle2, 
@@ -9,12 +10,16 @@ import {
   Sparkles, 
   ArrowRight, 
   Clock, 
-  Folder 
+  Folder,
+  Bell,
+  BellOff
 } from 'lucide-react';
 import { useApp } from '../components/AppContext';
+import { useToast } from '../components/Toast';
 import { Task, Habit } from '../types';
 import { CrisisModal } from '../components/CrisisModal';
 import { TaskDetailModal } from '../components/TaskDetailModal';
+import { requestNotificationPermission, getSafeNotificationPermission } from '../services/messaging';
 
 // Animated CountUp Helper Component
 const CountUpValue: React.FC<{ end: number; duration?: number; suffix?: string }> = ({ end, duration = 1000, suffix = '' }) => {
@@ -44,13 +49,273 @@ const CountUpValue: React.FC<{ end: number; duration?: number; suffix?: string }
   return <span>{count}{suffix}</span>;
 };
 
+const getCustomOnboardingTasks = (goal: string) => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().substring(0, 16);
+
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+  const nextWeekStr = nextWeek.toISOString().substring(0, 16);
+
+  if (goal === 'Pass an exam') {
+    return [
+      {
+        title: 'Compile Exam Core Syllabus Summary',
+        deadline: tomorrowStr,
+        category: 'assignment' as const,
+        context: 'Consolidate core curriculum chapters, compile definition flashcards, and schedule structured study hours.',
+        complexity: 'high' as const,
+        estimatedHours: 4.5,
+        urgencyScore: 8,
+        summary: 'Reviewing key exam objectives and creating a study matrix.',
+        subtasks: [
+          { id: 'ob-e1', title: 'Compile key textbook chapter summary points', completed: false, priority: 'must' as const, tip: 'Keep formulas separate.' },
+          { id: 'ob-e2', title: 'Complete 10 syllabus review practice problems', completed: false, priority: 'must' as const },
+          { id: 'ob-e3', title: 'Synthesize study block schedules', completed: false, priority: 'should' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Short review period', 'Complex algebraic formulas'],
+        aiRecommendation: 'Execute a dedicated 45-minute focus session today to clear flashcards early.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        title: 'Conduct Timed Past Paper Dry-Run',
+        deadline: nextWeekStr,
+        category: 'assignment' as const,
+        context: 'Simulate a live examination environment to check speed and performance metrics under time limits.',
+        complexity: 'medium' as const,
+        estimatedHours: 2.0,
+        urgencyScore: 6,
+        summary: 'Practice examination under actual grading guidelines.',
+        subtasks: [
+          { id: 'ob-e4', title: 'Download and print past papers with mark scheme', completed: false, priority: 'must' as const },
+          { id: 'ob-e5', title: 'Perform 90-minute strict time exam simulation', completed: false, priority: 'must' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Procrastination during review'],
+        aiRecommendation: 'Grade yourself honestly using the standard marking rubric.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  } else if (goal === 'Build a project') {
+    return [
+      {
+        title: 'Launch Core MVP Production Prototype',
+        deadline: tomorrowStr,
+        category: 'project' as const,
+        context: 'Draft structural code layers, configure system routing components, and execute live deployment scripts.',
+        complexity: 'high' as const,
+        estimatedHours: 5.5,
+        urgencyScore: 9,
+        summary: 'Deploying initial MVP code to verification environments.',
+        subtasks: [
+          { id: 'ob-b1', title: 'Define main database schema layers', completed: false, priority: 'must' as const },
+          { id: 'ob-b2', title: 'Verify credentials and config environment files', completed: false, priority: 'must' as const },
+          { id: 'ob-b3', title: 'Run local validation and lint test passes', completed: false, priority: 'should' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Vague scope requirements', 'Dependency compilation conflicts'],
+        aiRecommendation: 'Limit custom functions to basic features on day 1 to bypass speed bottlenecks.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        title: 'Conduct UI/UX Polish Audit Session',
+        deadline: nextWeekStr,
+        category: 'project' as const,
+        context: 'Verify spacing, audit text contrast ratios, adjust responsive grids, and embed micro-interactions.',
+        complexity: 'medium' as const,
+        estimatedHours: 1.5,
+        urgencyScore: 5,
+        summary: 'Refining client-side layers to meet Apple quality standards.',
+        subtasks: [
+          { id: 'ob-b4', title: 'Test layouts on both desktop and mobile views', completed: false, priority: 'must' as const },
+          { id: 'ob-b5', title: 'Add hover spring physics transitions to buttons', completed: false, priority: 'should' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Inconsistent spacing scales'],
+        aiRecommendation: 'Prefer standard system font stacks (Inter, SF Pro) for maximum interface clarity.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  } else if (goal === 'Prepare for interview') {
+    return [
+      {
+        title: 'Solve Top Technical Algorithmic Puzzles',
+        deadline: tomorrowStr,
+        category: 'interview' as const,
+        context: 'Revise foundational computer science algorithms and practice optimized solutions.',
+        complexity: 'high' as const,
+        estimatedHours: 3.0,
+        urgencyScore: 7,
+        summary: 'Mastering array, hash map, and sliding window templates.',
+        subtasks: [
+          { id: 'ob-i1', title: 'Master sliding window and string parsing templates', completed: false, priority: 'must' as const },
+          { id: 'ob-i2', title: 'Verify time/space complexity scales', completed: false, priority: 'should' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Unoptimized cubic time bottlenecks'],
+        aiRecommendation: 'Explain your reasoning steps out loud to practice real-time interviews.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        title: 'Optimize Interactive Whiteboard Resume Dry-Run',
+        deadline: nextWeekStr,
+        category: 'interview' as const,
+        context: 'Simulate discussing deep system architectures, past project achievements, and behavioral situations.',
+        complexity: 'medium' as const,
+        estimatedHours: 1.5,
+        urgencyScore: 5,
+        summary: 'Communicating professional expertise cleanly.',
+        subtasks: [
+          { id: 'ob-i3', title: 'Prepare 3 STAR-method accomplishment highlights', completed: false, priority: 'must' as const },
+          { id: 'ob-i4', title: 'Record a mock behavioral video walkthrough', completed: false, priority: 'should' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Vague verbal summaries'],
+        aiRecommendation: 'Connect architectural decisions directly to quantifiable user improvements.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  } else if (goal === 'Improve productivity') {
+    return [
+      {
+        title: 'Establish 3-Tier Focus Time-Blocks',
+        deadline: tomorrowStr,
+        category: 'other' as const,
+        context: 'Structure deep focus intervals and block multi-tasking distractions.',
+        complexity: 'medium' as const,
+        estimatedHours: 1.0,
+        urgencyScore: 6,
+        summary: 'Optimizing calendar blocks for maximum deep execution.',
+        subtasks: [
+          { id: 'ob-p1', title: 'Reserve 90 minutes of distraction-free morning block', completed: false, priority: 'must' as const },
+          { id: 'ob-p2', title: 'Set automatic focus mode settings on devices', completed: false, priority: 'should' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Intrusive notification popups'],
+        aiRecommendation: 'Log focus hours daily to analyze consistency metrics.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        title: 'Workspace Notification Audit',
+        deadline: nextWeekStr,
+        category: 'personal' as const,
+        context: 'Silence unnecessary alerts, configure system focus filters, and clean desktop clutter.',
+        complexity: 'low' as const,
+        estimatedHours: 0.5,
+        urgencyScore: 4,
+        summary: 'Eliminating environmental distractions.',
+        subtasks: [
+          { id: 'ob-p3', title: 'Tidy up physical workstation files and folders', completed: false, priority: 'must' as const },
+          { id: 'ob-p4', title: 'Mute non-essential social notifications during work', completed: false, priority: 'must' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Digital clutter distraction'],
+        aiRecommendation: 'Keep the phone out of sight during core study or development blocks.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  } else {
+    // Stay consistent
+    return [
+      {
+        title: 'Configure Consistency Streak Routine',
+        deadline: tomorrowStr,
+        category: 'other' as const,
+        context: 'Integrate active habits into physical environment anchors.',
+        complexity: 'medium' as const,
+        estimatedHours: 1.0,
+        urgencyScore: 5,
+        summary: 'Structuring trigger mechanisms for atomic habits.',
+        subtasks: [
+          { id: 'ob-s1', title: 'Anchor habit to morning coffee check-in trigger', completed: false, priority: 'must' as const },
+          { id: 'ob-s2', title: 'Define custom reward points for consistency milestones', completed: false, priority: 'should' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Ambitious starting scope'],
+        aiRecommendation: 'Start with 5-minute atomic habits first to lock in streaks.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        title: 'Complete First Daily Consistency Streak',
+        deadline: nextWeekStr,
+        category: 'personal' as const,
+        context: 'Log and complete initial micro-actions to verify haptic updates and streak score metrics.',
+        complexity: 'low' as const,
+        estimatedHours: 0.5,
+        urgencyScore: 3,
+        summary: 'Locking in day 1 streak milestones.',
+        subtasks: [
+          { id: 'ob-s3', title: 'Complete water intake and log on dashboard', completed: false, priority: 'must' as const },
+          { id: 'ob-s4', title: 'Track current completion rating metric', completed: false, priority: 'must' as const }
+        ],
+        schedule: [],
+        riskFactors: ['Forgetting daily completion'],
+        aiRecommendation: 'Log completions immediately on your phone to build muscle memory.',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  }
+};
+
 export const Dashboard: React.FC = () => {
-  const { profile, tasks, habits, sessions } = useApp();
+  const { profile, tasks, habits, sessions, updateProfile, addTask, user, testPushNotification } = useApp();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const [greeting, setGreeting] = useState('');
   const [selectedCrisisTask, setSelectedCrisisTask] = useState<Task | null>(null);
   const [selectedDetailTask, setSelectedDetailTask] = useState<Task | null>(null);
+
+  // Notifications State & Handlers
+  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [dispatchStatus, setDispatchStatus] = useState<'idle' | 'sending' | 'success' | 'failed'>('idle');
+
+  useEffect(() => {
+    setPermission(getSafeNotificationPermission());
+  }, []);
+
+  const handleRequestPermission = async () => {
+    const granted = await requestNotificationPermission(user?.uid || 'guest');
+    setPermission(getSafeNotificationPermission());
+  };
+
+  const handleQuickTest = async () => {
+    setDispatchStatus('sending');
+    try {
+      const res = await testPushNotification('Daily Routine Check', 'Your daily schedule is ready. Tap to focus!', 'habit_reminder');
+      if (res) {
+        setDispatchStatus('success');
+        setTimeout(() => setDispatchStatus('idle'), 3000);
+      } else {
+        setDispatchStatus('failed');
+      }
+    } catch (e) {
+      console.error(e);
+      setDispatchStatus('failed');
+    }
+  };
 
   // Set greeting according to system time
   useEffect(() => {
@@ -118,6 +383,111 @@ export const Dashboard: React.FC = () => {
     };
   });
 
+  if (profile && !profile.onboardingGoal) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center py-12 px-4 select-none">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 150 }}
+          className="liquid-glass max-w-2xl w-full p-8 md:p-12 text-center flex flex-col items-center relative overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA]" />
+          
+          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[#63B3ED]/10 to-[#9F7AEA]/10 border border-[#63B3ED]/20 text-[#63B3ED] mb-6 animate-pulse">
+            <Sparkles className="w-8 h-8 text-[#9F7AEA]" />
+          </div>
+
+          <h2 className="text-3xl md:text-4xl font-sans font-extrabold tracking-tight text-white mb-2">
+            What are you trying to achieve?
+          </h2>
+          <p className="text-sm font-medium text-[#A0AEC0] max-w-md mb-8 leading-relaxed">
+            Welcome, <strong className="text-white font-semibold">{profile.name}</strong>. We'll automatically synthesize dynamic deadlines, tailor study planners, and configure your focus channels.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            {[
+              {
+                id: 'Pass an exam',
+                title: '🎓 Pass an Exam',
+                description: 'Academic tests, syllabus reviews, and timed paper practice.',
+                color: 'hover:border-[#63B3ED]/30 hover:bg-[#63B3ED]/5'
+              },
+              {
+                id: 'Build a project',
+                title: '🚀 Build a Project',
+                description: 'Codebase construction, shipping MVPs, and performance audits.',
+                color: 'hover:border-[#9F7AEA]/30 hover:bg-[#9F7AEA]/5'
+              },
+              {
+                id: 'Prepare for interview',
+                title: '💼 Prepare for Interview',
+                description: 'Coding algorithms, resume polishing, and mock dry-runs.',
+                color: 'hover:border-[#68D391]/30 hover:bg-[#68D391]/5'
+              },
+              {
+                id: 'Improve productivity',
+                title: '📈 Improve Productivity',
+                description: 'Manage time-blocking, establish routines, and beat timelines.',
+                color: 'hover:border-[#F6AD55]/30 hover:bg-[#F6AD55]/5'
+              },
+              {
+                id: 'Stay consistent',
+                title: '🔥 Stay Consistent',
+                description: 'Establish powerful atomic habits, maintain streaks, and log.',
+                color: 'hover:border-pink-500/30 hover:bg-pink-500/5 md:col-span-2'
+              }
+            ].map((option) => (
+              <motion.button
+                key={option.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={async () => {
+                  try {
+                    // Update profile onboardingGoal, starting levels/XP
+                    await updateProfile({
+                      onboardingGoal: option.id,
+                      level: 1,
+                      xp: 50
+                    });
+
+                    // Synthesize tasks based on selected goal
+                    const tasksToCreate = getCustomOnboardingTasks(option.id);
+                    for (const t of tasksToCreate) {
+                      await addTask(t);
+                    }
+
+                    // Celebratory confetti explosion
+                    confetti({
+                      particleCount: 180,
+                      spread: 100,
+                      origin: { y: 0.6 }
+                    });
+
+                    showToast(`✨ Plan synthesized! +50 XP Starting Bonus awarded.`, 'success');
+                  } catch (err) {
+                    console.error('Onboarding failed:', err);
+                    showToast('Oops, had an issue compiling onboarding config.', 'error');
+                  }
+                }}
+                className={`p-5 rounded-2xl border border-white/5 bg-white/[0.02] text-left transition-all duration-300 flex flex-col gap-1 cursor-pointer ${option.color}`}
+              >
+                <h4 className="text-base font-bold text-white tracking-tight">{option.title}</h4>
+                <p className="text-xs text-gray-400 leading-normal font-sans font-medium">{option.description}</p>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Suggest Pomodoro Focus Block if there is free time (no focus session today)
+  const todaySessionMinutes = sessions
+    .filter(s => s.date === todayStr)
+    .reduce((acc, s) => acc + s.focusMinutes, 0);
+  const showEmptyTimeSuggestion = todaySessionMinutes === 0 && tasks.filter(t => !t.completed).length > 0;
+
   return (
     <div className="space-y-8 select-none">
       
@@ -131,10 +501,67 @@ export const Dashboard: React.FC = () => {
         <h2 className="text-3xl md:text-4xl font-sans font-bold tracking-tight text-[#F7FAFC]">
           {greeting}, <span className="text-[#63B3ED] font-extrabold">{profile?.name || 'Developer'}</span>
         </h2>
-        <p className="text-sm font-medium text-[#A0AEC0] font-sans">
-          Welcome back to the command center. Let's crush these timelines today.
+
+        {/* Real-time gamified level progression progress bar */}
+        <div className="flex flex-wrap items-center gap-3 mt-1.5 select-none">
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase tracking-wider bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] text-white">
+            Level {profile?.level || 1}
+          </span>
+          <div className="flex items-center gap-2">
+            <div className="w-32 h-1.5 rounded-full bg-white/5 border border-white/10 overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${profile?.xp || 0}%` }}
+                className="h-full bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA]"
+              />
+            </div>
+            <span className="text-[10px] font-mono font-bold text-gray-500">
+              {profile?.xp || 0}/100 XP
+            </span>
+          </div>
+          {profile?.onboardingGoal && (
+            <span className="text-[10px] font-sans font-bold text-gray-400 border border-white/10 px-2 py-0.5 rounded-lg bg-white/[0.02]">
+              🎯 {profile.onboardingGoal}
+            </span>
+          )}
+        </div>
+
+        <p className="text-sm font-medium text-[#A0AEC0] font-sans mt-3">
+          {profile?.onboardingGoal === 'Pass an exam' ? "Ready to master your core exam subjects and beat the ticking clock today?" :
+           profile?.onboardingGoal === 'Build a project' ? "Let's build outstanding code layers and ship pristine prototypes today." :
+           profile?.onboardingGoal === 'Prepare for interview' ? "Ready to solve high-impact interview puzzles and show your expertise today?" :
+           profile?.onboardingGoal === 'Improve productivity' ? "Ready to allocate tactical deep focus blocks and beat timelines today?" :
+           profile?.onboardingGoal === 'Stay consistent' ? "Let's refresh habit chains and lock in consecutive milestone streaks today!" :
+           "Welcome back to the command center. Let's crush these timelines today."}
         </p>
       </motion.div>
+
+      {/* Empty Time Slot Detected Suggestion Card */}
+      {showEmptyTimeSuggestion && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-5 rounded-2xl border border-[#9F7AEA]/30 bg-[#9F7AEA]/5 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md backdrop-blur-sm"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[#9F7AEA]/10 text-[#9F7AEA]">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-white tracking-tight">💡 Empty Time Slot Detected</h4>
+              <p className="text-xs text-gray-400 mt-0.5 leading-normal font-sans font-medium">
+                No focus activity has been logged today. Would you like to launch a 25-minute Pomodoro Focus session now?
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/focus')}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#63B3ED] to-[#9F7AEA] text-[#080B14] font-extrabold text-xs uppercase tracking-wider hover:scale-[1.03] active:scale-[0.98] shadow-md cursor-pointer flex-shrink-0"
+          >
+            Launch Focus Block
+          </button>
+        </motion.div>
+      )}
 
       {/* Auto-Triggered Emergency Crisis Banner */}
       {isAutoCrisisModeActivated && (
@@ -142,7 +569,7 @@ export const Dashboard: React.FC = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="p-5 rounded-2xl border border-[#FC8181]/40 bg-[#FC8181]/10 text-[#FC8181] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg shadow-[#FC8181]/10 animate-pulse"
-          style={{ animationDuration: '4s' }}
+          style={{ animationDuration: '8s' }}
         >
           <div className="flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-[#FC8181]/20 border border-[#FC8181]/30 flex items-center justify-center animate-bounce" style={{ animationDuration: '2s' }}>
@@ -543,6 +970,64 @@ export const Dashboard: React.FC = () => {
               <Flame className="w-4 h-4 animate-pulse text-white" />
               <span>Open Habits Console</span>
             </button>
+          </section>
+
+          {/* Dashboard Notifications Card */}
+          <section className="liquid-glass p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">Push Gateway</h3>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping animate-duration-1000" />
+                <span className="text-[10px] font-mono text-indigo-400 font-extrabold uppercase tracking-widest">FCM SOCKET</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div className={`p-2.5 rounded-xl flex-shrink-0 ${
+                permission === 'granted' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+              }`}>
+                {permission === 'granted' ? <Bell className="w-5 h-5 animate-bounce animate-duration-[3s]" /> : <BellOff className="w-5 h-5" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-[#F7FAFC] truncate">
+                  {permission === 'granted' ? 'Notifications Fully Armed' : 'Reminders Deauthorized'}
+                </div>
+                <div className="text-[10px] text-gray-500 truncate mt-0.5">
+                  {permission === 'granted' ? 'Listening on live telemetry stream' : 'Grant authorization for push reminders'}
+                </div>
+              </div>
+            </div>
+
+            {permission !== 'granted' ? (
+              <button
+                onClick={handleRequestPermission}
+                className="w-full py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all bg-indigo-500 text-white hover:bg-indigo-600 shadow-md cursor-pointer text-center"
+              >
+                Enable Reminders
+              </button>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => navigate('/notifications')}
+                  className="py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-wider transition-all border border-white/10 hover:border-white/20 text-[#A0AEC0] cursor-pointer text-center"
+                >
+                  Configure Hub
+                </button>
+                <button
+                  onClick={handleQuickTest}
+                  disabled={dispatchStatus === 'sending'}
+                  className={`py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-wider transition-all cursor-pointer text-center ${
+                    dispatchStatus === 'sending' 
+                      ? 'bg-amber-500 text-white animate-pulse' 
+                      : dispatchStatus === 'success' 
+                        ? 'bg-emerald-500 text-white' 
+                        : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                  }`}
+                >
+                  {dispatchStatus === 'sending' ? 'Sending...' : dispatchStatus === 'success' ? 'Dispatched!' : 'Quick Dispatch'}
+                </button>
+              </div>
+            )}
           </section>
         </div>
       </div>

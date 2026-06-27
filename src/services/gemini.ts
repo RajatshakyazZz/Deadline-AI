@@ -43,7 +43,7 @@ export async function callGemini(prompt: string, jsonMode: boolean = false): Pro
   }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -119,34 +119,78 @@ function getMockFallbackResponse(prompt: string, jsonMode: boolean): string {
     });
   }
 
-  if (prompt.includes('morning tactical roadmap') || prompt.includes('briefing') || prompt.includes('DeadlineAI')) {
-    let firstTaskTitle = "Tackle core assignment tasks";
+  if (prompt.includes('daily briefing') || prompt.includes('morning tactical roadmap') || prompt.includes('briefing') || prompt.includes('DeadlineAI')) {
+    let tasksList: any[] = [];
+    let name = "Rajat";
+    
+    // Attempt to extract name
+    const nameMatch = prompt.match(/daily briefing for ([^\.]+)/i);
+    if (nameMatch) {
+      name = nameMatch[1].trim();
+    }
+
     try {
-      const match = prompt.match(/Tasks:\s*(\[[\s\S]*?\])/);
+      const match = prompt.match(/Pending tasks:\s*(\[[\s\S]*?\])/i) || prompt.match(/Tasks:\s*(\[[\s\S]*?\])/i);
       if (match && match[1]) {
-        const parsedTasks = JSON.parse(match[1]);
-        if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {
-          firstTaskTitle = parsedTasks[0].title || firstTaskTitle;
-        }
+        tasksList = JSON.parse(match[1]);
       }
     } catch (e) {
       // ignore
     }
 
+    if (!Array.isArray(tasksList) || tasksList.length === 0) {
+      tasksList = [
+        { id: 'demo-dsa', title: 'Submit DSA Assignment', deadline: new Date(Date.now() + 4 * 3600 * 1000 + 32 * 60 * 1000).toISOString(), estimatedHours: 2.5 },
+        { id: 'demo-env', title: 'Configure production environment keys', deadline: new Date(Date.now() + 24 * 3600 * 1000).toISOString(), estimatedHours: 1.5 }
+      ];
+    }
+
+    const firstTask = tasksList[0] || { id: 't1', title: 'Tactical objectives', deadline: new Date().toISOString(), estimatedHours: 1 };
+    const firstTaskTitle = firstTask.title || "Tackle core tasks";
+    const firstTaskId = firstTask.id || "task-1";
+
+    // Format deadline countdown string
+    const ranked = tasksList.map((t, idx) => {
+      const hours = t.estimatedHours || 1;
+      return {
+        taskId: t.id || `task-${idx}`,
+        title: t.title || `Task ${idx + 1}`,
+        rank: idx + 1,
+        aiReason: idx === 0 
+          ? "Soonest deadline with high critical importance." 
+          : "Essential milestone to maintain continuous progress.",
+        estimatedHours: hours,
+        deadline: t.deadline || new Date().toISOString(),
+        urgencyColor: idx === 0 ? "danger" : idx === 1 ? "warning" : "info"
+      };
+    });
+
+    const quickWinsList = [
+      { title: `⚡ Quick audit for "${firstTaskTitle.substring(0, 20)}"`, estimatedMinutes: 10, taskId: firstTaskId },
+      { title: "⚡ Review habit completion metrics", estimatedMinutes: 5, taskId: "qw-habits" }
+    ];
+
     return JSON.stringify({
-      greeting: "Welcome back, Commander. Time to assert dominance over your timeline.",
-      primaryPriority: {
-        title: firstTaskTitle,
-        reason: "This task holds the highest complexity quotient and soonest deadline. Frontloading this today will secure your week."
+      greeting: `Good morning ☀️\nHere's your plan, ${name}`,
+      topPriority: {
+        taskTitle: firstTaskTitle,
+        urgencyReason: "This objective currently holds the highest execution priority. Clearing this secures your schedule.",
+        taskId: firstTaskId
       },
-      quickWins: [
-        "Audit server credentials (5 mins)",
-        "Draft product sync design sliders (10 mins)",
-        "Review habit completion metrics (3 mins)"
-      ],
-      focusSuggestion: "Target 2 Focus blocks (50 mins total) for " + firstTaskTitle + " today. Break immediately after.",
-      weekOverview: "Your workload is heavily weighted toward high-complexity tasks. Focus strictly on executing milestones rather than multi-tasking.",
-      motivation: "Procrastination is the arrogant assumption that you will have the same amount of time tomorrow as you do today. Beat the ticking clock."
+      rankedTasks: ranked.slice(0, 5),
+      quickWins: quickWinsList,
+      focusSuggestion: {
+        taskTitle: firstTaskTitle,
+        durationMinutes: 45,
+        specificAdvice: "Focus on establishing the core skeleton flow first — avoid over-engineering styling initially."
+      },
+      motivationMessage: `You've completed several tasks this week. One more today and you'll hit your best streak!`,
+      weekStats: {
+        pendingCount: tasksList.length || 8,
+        dueTodayCount: Math.min(tasksList.length, 3) || 1,
+        onTrackPercent: 92,
+        weekAdvice: "Focus purely on executing milestones rather than multi-tasking."
+      }
     });
   }
 

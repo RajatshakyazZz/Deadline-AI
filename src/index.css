@@ -103,7 +103,7 @@
   background-position: -200% 0, 50% 0%;
   pointer-events: none;
   z-index: 1;
-  animation: liquid-glass-shimmer 4s infinite linear;
+  animation: liquid-glass-shimmer 8s infinite linear;
 }
 
 /* Hover state — glass catches more light */

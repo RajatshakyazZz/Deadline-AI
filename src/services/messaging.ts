@@ -29,16 +29,29 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   system: true,
 };
 
+// Pre-flight check to verify if browser messaging components are securely accessible
+export const isSafeToAccessMessaging = (): boolean => {
+  try {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return false;
+    }
+    // Accessing or checking properties like 'serviceWorker' or 'indexedDB' can throw a SecurityError inside sandboxed iframes
+    const hasServiceWorker = 'serviceWorker' in navigator && navigator.serviceWorker !== undefined;
+    const hasNotification = 'Notification' in window && window.Notification !== undefined;
+    const hasIndexedDB = 'indexedDB' in window && window.indexedDB !== undefined;
+    return !!(hasServiceWorker && hasNotification && hasIndexedDB);
+  } catch (err) {
+    console.warn('Browser messaging components are not securely accessible (iframe/sandbox restriction):', err);
+    return false;
+  }
+};
+
 // Check if browser supports push notifications
 export const checkNotificationSupport = async (): Promise<boolean> => {
+  if (!isSafeToAccessMessaging()) {
+    return false;
+  }
   try {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    // Accessing 'serviceWorker' or 'Notification' in restricted iframe can throw "The operation is insecure"
-    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-      return false;
-    }
     const supported = await isSupported();
     return supported;
   } catch (err) {
@@ -50,7 +63,7 @@ export const checkNotificationSupport = async (): Promise<boolean> => {
 // Safe helper to get notification permission without throwing security errors in iframes
 export const getSafeNotificationPermission = (): NotificationPermission => {
   try {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (typeof window !== 'undefined' && 'Notification' in window && window.Notification) {
       return Notification.permission;
     }
   } catch (err) {
@@ -67,8 +80,10 @@ export const getNotificationPreferences = async (userId: string): Promise<Notifi
     if (snap.exists()) {
       return { ...DEFAULT_PREFERENCES, ...snap.data() } as NotificationPreferences;
     }
-  } catch (err) {
-    console.error('Failed to load notification preferences:', err);
+  } catch (err: any) {
+    if (err?.code !== 'unavailable' && !err?.message?.includes('offline')) {
+      console.warn('Failed to load notification preferences:', err);
+    }
   }
   return DEFAULT_PREFERENCES;
 };
@@ -86,6 +101,9 @@ export const updateNotificationPreferences = async (userId: string, prefs: Parti
 
 // Request permission and register token
 export const requestNotificationPermission = async (userId: string): Promise<string | null> => {
+  if (!isSafeToAccessMessaging()) {
+    return null;
+  }
   const isSupportedBrowser = await checkNotificationSupport();
   if (!isSupportedBrowser) {
     console.log('Push notifications are not supported in this browser.');
@@ -95,7 +113,7 @@ export const requestNotificationPermission = async (userId: string): Promise<str
   try {
     // Request permission from user safely
     let permission: NotificationPermission = 'default';
-    if ('Notification' in window && typeof Notification.requestPermission === 'function') {
+    if ('Notification' in window && window.Notification && typeof Notification.requestPermission === 'function') {
       permission = await Notification.requestPermission();
     }
     if (permission !== 'granted') {

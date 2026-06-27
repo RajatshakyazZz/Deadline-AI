@@ -11,6 +11,9 @@ export interface UserProfile {
   longestStreak: number;
   googleCalendarSyncEnabled?: boolean;
   crisisModeAutoEnabled?: boolean;
+  onboardingGoal?: string;
+  xp?: number;
+  level?: number;
 }
 
 export interface Subtask {

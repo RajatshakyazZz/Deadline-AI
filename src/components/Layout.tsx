@@ -15,13 +15,15 @@ import {
   Keyboard,
   Settings,
   Sun,
-  Moon
+  Moon,
+  Bell
 } from 'lucide-react';
 import { useApp } from './AppContext';
 import { AddTaskModal } from './AddTaskModal';
 import { SettingsModal } from './SettingsModal';
 import { LogoIcon, LogoFull } from './Logo';
 import { safeStorage } from '../utils/storage';
+import { NotificationCenter } from './notifications/NotificationCenter';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, logout, isDemo, isAddTaskOpen, setIsAddTaskOpen } = useApp();
@@ -56,6 +58,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { name: 'Focus Mode', path: '/focus', icon: Timer },
     { name: 'AI Briefing', path: '/briefing', icon: Sparkles },
     { name: 'Habit Tracker', path: '/habits', icon: Flame },
+    { name: 'Notifications', path: '/notifications', icon: Bell },
   ];
 
   // Map path to friendly breadcrumb name
@@ -404,23 +407,32 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Quick light/dark theme switcher */}
+            {/* Intelligent Notification Center bell dropdown */}
+            <NotificationCenter />
+
+            {/* Quick light/dark theme switcher - Modern 3D Toggle */}
             <button
               onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-white/[0.04] text-[#63B3ED] hover:text-[#9F7AEA] border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer active:scale-95 shadow-inner"
+              className={`w-14 h-7 rounded-full p-1.5 transition-all duration-300 relative flex items-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] cursor-pointer select-none ${
+                theme === 'light' 
+                  ? 'bg-gradient-to-r from-amber-300 to-orange-400 shadow-[0_3px_8px_rgba(251,191,36,0.25)]' 
+                  : 'bg-slate-950 border border-white/10'
+              }`}
               title={theme === 'dark' ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙'}
             >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-yellow-400 animate-pulse" />
-                  <span className="text-[10px] uppercase font-mono tracking-wider">Light Mode</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="text-[10px] uppercase font-mono tracking-wider">Dark Mode</span>
-                </>
-              )}
+              <motion.div
+                layout
+                transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                className={`w-5 h-5 rounded-full flex items-center justify-center shadow-[0_3px_6px_rgba(0,0,0,0.45),_inset_0_-1.5px_2px_rgba(0,0,0,0.35)] bg-white border border-slate-200/40 ${
+                  theme === 'light' ? 'ml-6 rotate-180' : 'ml-0'
+                }`}
+              >
+                {theme === 'light' ? (
+                  <Sun className="w-3.5 h-3.5 text-amber-500 stroke-[2.5]" />
+                ) : (
+                  <Moon className="w-3 h-3 text-indigo-500 fill-indigo-100 stroke-[2.5]" />
+                )}
+              </motion.div>
             </button>
           </div>
         </header>

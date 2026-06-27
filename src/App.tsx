@@ -9,6 +9,8 @@ import { Layout } from './components/Layout';
 import { LandingPage } from './components/LandingPage';
 import { LogoIcon, LogoAnimated } from './components/Logo';
 import { AriaChat } from './components/chatbot/AriaChat';
+import { useDeadlineMonitor } from './hooks/useDeadlineMonitor';
+import { PermissionModal } from './components/notifications/PermissionModal';
 
 // Pages import
 import { Dashboard } from './pages/Dashboard';
@@ -16,6 +18,7 @@ import { MyTasks } from './pages/MyTasks';
 import { FocusMode } from './pages/FocusMode';
 import { AIBriefing } from './pages/AIBriefing';
 import { Habits } from './pages/Habits';
+import { Notifications } from './pages/Notifications';
 
 // Loading Intro Screen Component
 const AppLoader: React.FC = () => {
@@ -86,6 +89,11 @@ const PageNotFound: React.FC = () => {
   );
 };
 
+const NotificationController: React.FC = () => {
+  useDeadlineMonitor();
+  return <PermissionModal />;
+};
+
 // Main Routing and Auth Filter Controller
 const MainAppRoutes: React.FC = () => {
   const { user, loading } = useApp();
@@ -96,6 +104,7 @@ const MainAppRoutes: React.FC = () => {
 
   return (
     <BrowserRouter>
+      {user && <NotificationController />}
       <Routes>
         {/* Unauthenticated Home / Landing Page */}
         <Route 
@@ -113,16 +122,56 @@ const MainAppRoutes: React.FC = () => {
           element={user ? <Layout><MyTasks /></Layout> : <Navigate to="/" replace />} 
         />
         <Route 
+          path="/mytasks" 
+          element={<Navigate to="/tasks" replace />} 
+        />
+        <Route 
+          path="/mytaks" 
+          element={<Navigate to="/tasks" replace />} 
+        />
+        <Route 
           path="/focus" 
           element={user ? <Layout><FocusMode /></Layout> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/focusmode" 
+          element={<Navigate to="/focus" replace />} 
+        />
+        <Route 
+          path="/focus-mode" 
+          element={<Navigate to="/focus" replace />} 
         />
         <Route 
           path="/briefing" 
           element={user ? <Layout><AIBriefing /></Layout> : <Navigate to="/" replace />} 
         />
         <Route 
+          path="/breifing" 
+          element={<Navigate to="/briefing" replace />} 
+        />
+        <Route 
           path="/habits" 
           element={user ? <Layout><Habits /></Layout> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/habbit" 
+          element={<Navigate to="/habits" replace />} 
+        />
+        <Route 
+          path="/habit" 
+          element={<Navigate to="/habits" replace />} 
+        />
+        <Route 
+          path="/notifications" 
+          element={user ? <Layout><Notifications /></Layout> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/notification" 
+          element={<Navigate to="/notifications" replace />} 
+        />
+        <Route 
+          path="/notiification" 
+          element={<Navigate to="/notifications" replace />} 
         />
 
         {/* Fallback 404 Route */}

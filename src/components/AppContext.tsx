@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { 
   onSnapshot, 
   collection, 
@@ -239,14 +240,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
       };
       setUser(mockUser);
-      setProfile({
-        name: mockUser.displayName,
-        email: mockUser.email,
-        photoURL: mockUser.photoURL,
-        createdAt: new Date().toISOString(),
-        totalFocusMinutes: 125,
-        longestStreak: 12,
-      });
+      const localProfile = safeStorage.getItem('deadlineai_demo_profile');
+      if (localProfile) {
+        try {
+          setProfile(JSON.parse(localProfile));
+        } catch (e) {
+          setProfile({
+            name: mockUser.displayName,
+            email: mockUser.email,
+            photoURL: mockUser.photoURL,
+            createdAt: new Date().toISOString(),
+            totalFocusMinutes: 125,
+            longestStreak: 12,
+          });
+        }
+      } else {
+        setProfile({
+          name: mockUser.displayName,
+          email: mockUser.email,
+          photoURL: mockUser.photoURL,
+          createdAt: new Date().toISOString(),
+          totalFocusMinutes: 125,
+          longestStreak: 12,
+        });
+      }
 
       // Load mock items from localStorage if available, else load default mocks
       const localTasks = safeStorage.getItem('deadlineai_demo_tasks');
@@ -261,6 +278,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (localSessions) setSessions(JSON.parse(localSessions));
       else setSessions([]);
+
+      // Load mock notification preferences
+      const localNotifPrefs = safeStorage.getItem('deadlineai_demo_notif_prefs');
+      if (localNotifPrefs) {
+        try {
+          setNotificationPreferences(JSON.parse(localNotifPrefs));
+        } catch (_) {
+          setNotificationPreferences({ deadlines: true, habits: true, briefings: true, system: true });
+        }
+      } else {
+        setNotificationPreferences({ deadlines: true, habits: true, briefings: true, system: true });
+      }
 
       setLoading(false);
       return;
@@ -365,7 +394,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               totalFocusMinutes: 0,
               longestStreak: 0,
             };
-            setDoc(profileRef, initialProfile).catch((error) => {
+            setDoc(profileRef, initialProfile).then(() => {
+              // Add 4 default habits for the new registered user in Firestore
+              const defaultHabits = [
+                { name: '4L Water Daily', icon: '💧', streak: 0, lastCompleted: '', completedDates: [], createdAt: new Date().toISOString() },
+                { name: '5 Hrs Study Daily', icon: '📚', streak: 0, lastCompleted: '', completedDates: [], createdAt: new Date().toISOString() },
+                { name: '1 Hr Workout Daily', icon: '💪', streak: 0, lastCompleted: '', completedDates: [], createdAt: new Date().toISOString() },
+                { name: 'Take Bath Daily', icon: '🚿', streak: 0, lastCompleted: '', completedDates: [], createdAt: new Date().toISOString() }
+              ];
+              
+              defaultHabits.forEach(async (h) => {
+                try {
+                  const habitDocRef = doc(collection(db, 'users', firebaseUser.uid, 'habits'));
+                  await setDoc(habitDocRef, h);
+                } catch (e) {
+                  console.warn('Failed to insert default habit in Firestore:', e);
+                }
+              });
+            }).catch((error) => {
               console.warn("Failed to set new profile in Firestore (offline?):", error);
             });
           } else {
@@ -607,6 +653,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (isDemo) {
       setTasks((prev) => [newTask, ...prev]);
       showToast('Task added in Guest Mode!', 'success');
+
+      // Add "task created" notification
+      const notifItem = {
+        type: 'system',
+        title: '📋 Tactical Task Created',
+        message: `"${newTask.title}" has been added to your command board.`,
+        read: false,
+        createdAt: nowStr,
+        actionUrl: '/tasks',
+        taskId: newId
+      };
+      if (user) {
+        const cachedNotifs = safeStorage.getItem(`deadlineai_demo_notifications_${user.uid}`);
+        const parsed = cachedNotifs ? JSON.parse(cachedNotifs) : [];
+        parsed.unshift({ id: Math.random().toString(36).substring(2, 9), ...notifItem });
+        safeStorage.setItem(`deadlineai_demo_notifications_${user.uid}`, JSON.stringify(parsed.slice(0, 50)));
+      }
+
       return newId;
     } else if (user) {
       const docPath = `users/${user.uid}/tasks/${newId}`;
@@ -614,6 +678,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         await setDoc(docRef, newTask);
         showToast('Task synchronized to Cloud Firestore!', 'success');
+
+        // Add "task created" notification
+        const notifId = Math.random().toString(36).substring(2, 9);
+        const notifRef = doc(db, 'users', user.uid, 'notifications', notifId);
+        await setDoc(notifRef, {
+          type: 'system',
+          title: '📋 Tactical Task Created',
+          message: `"${newTask.title}" has been added to your command board.`,
+          read: false,
+          createdAt: nowStr,
+          actionUrl: '/tasks',
+          taskId: newId
+        });
 
         // Auto-sync to Google Calendar if enabled
         if (profile?.googleCalendarSyncEnabled && googleAccessToken) {
@@ -690,7 +767,79 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     if (completed) {
-      showToast('Task completed! Excellent work.', 'success');
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 70,
+          origin: { y: 0.7 }
+        });
+      } catch (err) {
+        console.warn('Confetti failed to play:', err);
+      }
+
+      // Calculate XP and Levels
+      let xpGained = 25;
+      if (task.complexity === 'critical') xpGained = 50;
+      else if (task.complexity === 'high') xpGained = 40;
+      else if (task.complexity === 'low') xpGained = 15;
+
+      const currentXp = profile?.xp || 0;
+      const currentLevel = profile?.level || 1;
+      let newXp = currentXp + xpGained;
+      let newLevel = currentLevel;
+      let didLevelUp = false;
+
+      if (newXp >= 100) {
+        newLevel += Math.floor(newXp / 100);
+        newXp = newXp % 100;
+        didLevelUp = true;
+      }
+
+      await updateProfile({
+        xp: newXp,
+        level: newLevel
+      });
+
+      if (didLevelUp) {
+        setTimeout(() => {
+          try {
+            confetti({
+              particleCount: 250,
+              spread: 100,
+              origin: { y: 0.5 }
+            });
+          } catch (e) {}
+        }, 500);
+        showToast(`🏆 LEVEL UP! You reached Level ${newLevel}!`, 'success');
+      } else {
+        showToast(`Task completed! +${xpGained} XP Earned.`, 'success');
+      }
+
+      // Add "task completed" notification
+      if (user) {
+        const compNotif = {
+          type: 'complete',
+          title: '✅ Task Completed Successfully',
+          message: `Congratulations on completing "${task.title}" and beating your timeline goals!`,
+          read: false,
+          createdAt: new Date().toISOString(),
+          actionUrl: '/tasks',
+          taskId: taskId
+        };
+        if (isDemo) {
+          const cachedNotifs = safeStorage.getItem(`deadlineai_demo_notifications_${user.uid}`);
+          const parsed = cachedNotifs ? JSON.parse(cachedNotifs) : [];
+          parsed.unshift({ id: Math.random().toString(36).substring(2, 9), ...compNotif });
+          safeStorage.setItem(`deadlineai_demo_notifications_${user.uid}`, JSON.stringify(parsed.slice(0, 50)));
+        } else {
+          try {
+            const notifId = Math.random().toString(36).substring(2, 9);
+            await setDoc(doc(db, 'users', user.uid, 'notifications', notifId), compNotif);
+          } catch (notifErr) {
+            console.warn('Failed to add completed notification to Firestore:', notifErr);
+          }
+        }
+      }
     }
   };
 
@@ -752,7 +901,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       newCompletedDates.sort();
       newLastCompleted = newCompletedDates[newCompletedDates.length - 1];
-      showToast(`Habit completed! Streak refreshed.`, 'success');
+
+      try {
+        confetti({
+          particleCount: 40,
+          spread: 45,
+          origin: { y: 0.85 }
+        });
+      } catch (err) {}
+
+      // Calculate XP and Levels
+      const xpGained = 10;
+      const currentXp = profile?.xp || 0;
+      const currentLevel = profile?.level || 1;
+      let newXp = currentXp + xpGained;
+      let newLevel = currentLevel;
+      let didLevelUp = false;
+
+      if (newXp >= 100) {
+        newLevel += Math.floor(newXp / 100);
+        newXp = newXp % 100;
+        didLevelUp = true;
+      }
+
+      updateProfile({
+        xp: newXp,
+        level: newLevel
+      });
+
+      if (didLevelUp) {
+        setTimeout(() => {
+          try {
+            confetti({
+              particleCount: 200,
+              spread: 80,
+              origin: { y: 0.6 }
+            });
+          } catch (e) {}
+        }, 500);
+        showToast(`🏆 LEVEL UP! You reached Level ${newLevel}!`, 'success');
+      } else {
+        showToast(`Habit completed! +${xpGained} XP.`, 'success');
+      }
     }
 
     // Dynamic streak calculation based on backward continuous completion from today or the latest completed date
@@ -933,15 +1123,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Push Notifications Operations
   const updateNotificationPrefs = async (prefs: Partial<NotificationPreferences>) => {
-    if (!user) return;
+    if (!user && !isDemo) return;
+    const mergePrefs = (prev: NotificationPreferences | null): NotificationPreferences => {
+      const base = prev || { deadlines: true, habits: true, briefings: true, system: true };
+      return { ...base, ...prefs };
+    };
     if (isDemo) {
-      setNotificationPreferences((prev) => prev ? { ...prev, ...prefs } : null);
+      const updated = mergePrefs(notificationPreferences);
+      setNotificationPreferences(updated);
+      safeStorage.setItem('deadlineai_demo_notif_prefs', JSON.stringify(updated));
       showToast('Notification settings updated (Demo Mode)!', 'success');
       return;
     }
     try {
       await updateNotificationPreferences(user.uid, prefs);
-      setNotificationPreferences((prev) => prev ? { ...prev, ...prefs } : null);
+      setNotificationPreferences((prev) => mergePrefs(prev));
       showToast('Notification settings updated!', 'success');
     } catch (err) {
       console.error('Failed to update notification prefs:', err);

@@ -36,7 +36,14 @@ import {
 } from 'recharts';
 
 export const Habits: React.FC = () => {
-  const { habits, addHabit, toggleHabit, updateHabit, deleteHabit, profile } = useApp();
+  const { 
+    habits, 
+    addHabit, 
+    toggleHabit, 
+    updateHabit, 
+    deleteHabit, 
+    profile
+  } = useApp();
 
   // Selected date context
   const today = new Date();
@@ -455,8 +462,10 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
             }}
           >
             {/* --- COLUMN HEADERS (Day Numbers) --- */}
-            <div className={`text-xs font-extrabold text-[#A0AEC0] uppercase tracking-wider font-mono self-center sticky left-0 z-20 ${isLight ? 'bg-[#f7fafc]' : 'bg-[#0a0e17]'} pr-3 border-r border-white/5 h-full flex items-center shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)]`}>
-              Active Habits
+            <div className={`text-xs font-black uppercase tracking-widest font-mono self-center sticky left-0 z-20 ${
+              isLight ? 'bg-slate-50/95 text-slate-400 border-r border-slate-100' : 'bg-[#0a0e17]/95 text-[#A0AEC0] border-r border-white/5'
+            } px-3 py-2.5 h-full flex items-center shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)] mr-2`}>
+              🚀 Routines
             </div>
             {monthDaysArray.map((day) => {
               const dateStr = getDayDateString(day);
@@ -491,17 +500,27 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                 return (
                   <React.Fragment key={h.id}>
                     
-                    {/* Habit Label Column - Sticky left frozen */}
-                    <div className={`flex items-center justify-between gap-2 pr-3 border-r border-white/5 min-w-0 sticky left-0 z-10 ${isLight ? 'bg-[#f7fafc]' : 'bg-[#0a0e17]'} py-1 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)]`}>
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Emoji or Fallback representation */}
-                        <span className="text-xl flex-shrink-0">{habitIcon}</span>
+                    {/* Habit Label Column - Sticky left frozen with custom premium 3D design */}
+                    <div className={`flex items-center justify-between gap-3 px-3 py-2 rounded-2xl border sticky left-0 z-10 transition-all ${
+                      isLight 
+                        ? 'bg-white border-slate-200 shadow-sm text-slate-800' 
+                        : 'bg-[#0b101f] border-white/5 shadow-[4px_0_16px_rgba(0,0,0,0.2)] text-white backdrop-blur-md'
+                    } min-w-0 mr-2`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {/* Emoji with bubble container */}
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0 ${
+                          isLight ? 'bg-slate-100' : 'bg-white/[0.03] border border-white/5'
+                        }`}>
+                          {habitIcon}
+                        </div>
                         <div className="truncate">
-                          <h4 className="text-xs font-bold text-[#F7FAFC] truncate" title={h.name}>
+                          <h4 className={`text-xs font-extrabold tracking-tight truncate ${
+                            isLight ? 'text-slate-800' : 'text-slate-100'
+                          }`} title={h.name}>
                             {h.name}
                           </h4>
-                          <span className="text-[10px] font-mono text-[#F6AD55] font-extrabold flex items-center gap-1 mt-0.5">
-                            <Flame className="w-3 h-3 text-[#F6AD55]" /> {h.streak} day streak
+                          <span className="text-[9px] font-mono text-[#F6AD55] font-extrabold flex items-center gap-1 mt-0.5 bg-[#F6AD55]/10 px-1.5 py-0.5 rounded-full w-max">
+                            <Flame className="w-2.5 h-2.5 text-[#F6AD55] fill-[#F6AD55]/10" /> {h.streak}d streak
                           </span>
                         </div>
                       </div>
@@ -509,10 +528,10 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                       {/* Edit Pencil icon */}
                       <button
                         onClick={() => handleEditHabitClick(h)}
-                        className={`p-1.5 rounded-lg border transition-all cursor-pointer flex-shrink-0 ${
+                        className={`p-1.5 rounded-xl border transition-all cursor-pointer flex-shrink-0 ${
                           isLight 
-                            ? 'bg-black/[0.02] border-black/5 hover:border-black/10 hover:bg-black/[0.04] text-slate-500 hover:text-slate-700' 
-                            : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.06] text-[#4A5568] hover:text-[#A0AEC0]'
+                            ? 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-500 hover:text-slate-700' 
+                            : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.06] text-gray-400 hover:text-gray-200'
                         }`}
                         title={`Edit "${h.name}"`}
                       >
