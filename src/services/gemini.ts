@@ -3,6 +3,7 @@ import { RATE_LIMITS } from '../utils/rateLimiter';
 import { sanitizeForPrompt } from '../utils/promptSecurity';
 import { truncateForGemini } from '../utils/payloadLimits';
 import { safeStorage } from '../utils/storage';
+import { getEnvValue } from '../utils/env';
 
 // Direct client-side REST call to Gemini 3.5 Flash API to avoid Vite Node-polyfill compile errors.
 export async function callGemini(prompt: string, jsonMode: boolean = false): Promise<string> {
@@ -26,8 +27,8 @@ export async function callGemini(prompt: string, jsonMode: boolean = false): Pro
     return getMockFallbackResponse(prompt, jsonMode);
   }
 
-  // First read from import.meta.env
-  let apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+  // First read from env helper
+  let apiKey = getEnvValue('VITE_GEMINI_API_KEY');
 
   // Fallback check if it wasn't prefixed but exists in the raw dev environment or localStorage
   if (!apiKey) {

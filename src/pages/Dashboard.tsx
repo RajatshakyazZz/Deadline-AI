@@ -972,63 +972,7 @@ export const Dashboard: React.FC = () => {
             </button>
           </section>
 
-          {/* Dashboard Notifications Card */}
-          <section className="liquid-glass p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-[#F7FAFC] uppercase tracking-wider font-sans">Push Gateway</h3>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping animate-duration-1000" />
-                <span className="text-[10px] font-mono text-indigo-400 font-extrabold uppercase tracking-widest">FCM SOCKET</span>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className={`p-2.5 rounded-xl flex-shrink-0 ${
-                permission === 'granted' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
-              }`}>
-                {permission === 'granted' ? <Bell className="w-5 h-5 animate-bounce animate-duration-[3s]" /> : <BellOff className="w-5 h-5" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-[#F7FAFC] truncate">
-                  {permission === 'granted' ? 'Notifications Fully Armed' : 'Reminders Deauthorized'}
-                </div>
-                <div className="text-[10px] text-gray-500 truncate mt-0.5">
-                  {permission === 'granted' ? 'Listening on live telemetry stream' : 'Grant authorization for push reminders'}
-                </div>
-              </div>
-            </div>
-
-            {permission !== 'granted' ? (
-              <button
-                onClick={handleRequestPermission}
-                className="w-full py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all bg-indigo-500 text-white hover:bg-indigo-600 shadow-md cursor-pointer text-center"
-              >
-                Enable Reminders
-              </button>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => navigate('/notifications')}
-                  className="py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-wider transition-all border border-white/10 hover:border-white/20 text-[#A0AEC0] cursor-pointer text-center"
-                >
-                  Configure Hub
-                </button>
-                <button
-                  onClick={handleQuickTest}
-                  disabled={dispatchStatus === 'sending'}
-                  className={`py-2.5 rounded-xl font-extrabold text-[10px] uppercase tracking-wider transition-all cursor-pointer text-center ${
-                    dispatchStatus === 'sending' 
-                      ? 'bg-amber-500 text-white animate-pulse' 
-                      : dispatchStatus === 'success' 
-                        ? 'bg-emerald-500 text-white' 
-                        : 'bg-indigo-500 text-white hover:bg-indigo-600'
-                  }`}
-                >
-                  {dispatchStatus === 'sending' ? 'Sending...' : dispatchStatus === 'success' ? 'Dispatched!' : 'Quick Dispatch'}
-                </button>
-              </div>
-            )}
-          </section>
         </div>
       </div>
 

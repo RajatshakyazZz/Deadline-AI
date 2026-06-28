@@ -321,7 +321,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               setNotificationPreferences(prefs);
             });
             // Request permission & generate token
-            requestNotificationPermission(firebaseUser.uid);
+            requestNotificationPermission(firebaseUser.uid, true);
 
             // Register Foreground notification listener
             setupForegroundListener((payload) => {

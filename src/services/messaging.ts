@@ -2,9 +2,10 @@ import { getMessaging, getToken, onMessage, isSupported, MessagePayload } from '
 import { doc, setDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from '../firebase'; // Initialize app
 import { db, auth } from '../firebase';
+import { getEnvValue } from '../utils/env';
 
-// Public VAPID key generated from Firebase Console (or fallback if not configured in .env)
-const VAPID_KEY = (import.meta as any).env?.VITE_FIREBASE_VAPID_KEY || 'BEl5N6-Sg6VfP8m_B-pG9qVfR8WfH7YgP8XqH7M7D8h_A7_N6jS6F7e8J9wX_H7fK8g9J6G7e8L9wH_W8g_T8Y8';
+// Public VAPID key generated from Firebase Console
+const VAPID_KEY = getEnvValue('VITE_FIREBASE_VAPID_KEY') || 'BEl5N6-Sg6VfP8m_B-pG9qVfR8WfH7YgP8XqH7M7D8h_A7_N6jS6F7e8J9wX_H7fK8g9J6G7e8L9wH_W8g_T8Y8';
 
 export interface DeviceToken {
   token: string;
@@ -100,30 +101,68 @@ export const updateNotificationPreferences = async (userId: string, prefs: Parti
 };
 
 // Request permission and register token
-export const requestNotificationPermission = async (userId: string): Promise<string | null> => {
-  if (!isSafeToAccessMessaging()) {
+export const requestNotificationPermission = async (userId: string, silent: boolean = false): Promise<string | null> => {
+  // Check if we are running in an iframe
+  try {
+    if (window.self !== window.top) {
+      if (!silent) console.warn("Push notifications are disabled inside the preview window. Please open the app in a new tab to enable notifications.");
+      return null;
+    }
+  } catch (e) {
+    // Cross-origin restriction implies we're in an iframe
+    if (!silent) console.warn("Push notifications are disabled inside the preview window. Please open the app in a new tab to enable notifications.");
     return null;
   }
-  const isSupportedBrowser = await checkNotificationSupport();
-  if (!isSupportedBrowser) {
-    console.log('Push notifications are not supported in this browser.');
+
+  if (!isSafeToAccessMessaging()) {
+    if (!silent) console.warn("Push notifications are not safely accessible in this environment. Please open in a new tab.");
     return null;
   }
 
   try {
-    // Request permission from user safely
+    // 1. Request permission FIRST to preserve the user gesture (crucial for Chrome)
     let permission: NotificationPermission = 'default';
     if ('Notification' in window && window.Notification && typeof Notification.requestPermission === 'function') {
-      permission = await Notification.requestPermission();
+      // If we are calling this silently (e.g. on load) and it's not already granted, don't trigger the prompt automatically.
+      // Browsers block automatic prompts anyway, so we only request if it's not silent OR it's already granted.
+      const currentPermission = getSafeNotificationPermission();
+      if (currentPermission === 'granted' || !silent) {
+        permission = await Notification.requestPermission();
+      } else {
+        permission = currentPermission;
+      }
     }
+    
     if (permission !== 'granted') {
-      console.log('Notification permission was denied.');
+      if (!silent && permission === 'denied') {
+        console.warn('Notification permission was denied.');
+      }
       return null;
     }
 
-    // Get the FCM registration token
+    // 2. Check browser support after we get permission
+    const isSupportedBrowser = await checkNotificationSupport();
+    if (!isSupportedBrowser) {
+      if (!silent) console.warn('Push notifications are not supported in this browser or Firebase is blocked.');
+      return null;
+    }
+
+    // 3. Get the FCM registration token
     const messaging = getMessaging(app);
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+    let registration;
+    try {
+      if ('serviceWorker' in navigator) {
+        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        await navigator.serviceWorker.ready;
+      }
+    } catch (swError) {
+      console.warn("Service worker registration failed for FCM: ", swError);
+    }
+    
+    const token = await getToken(messaging, { 
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration
+    });
     
     if (token) {
       console.log('FCM Registration Token received:', token);

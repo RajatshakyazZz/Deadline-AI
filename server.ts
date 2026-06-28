@@ -52,6 +52,34 @@ const setupFirebaseAdmin = () => {
 
 setupFirebaseAdmin();
 
+// Dynamically generate .env file for Vite at startup based on system/container environment variables
+const envFilePath = path.join(process.cwd(), '.env');
+const envVars = {
+  VITE_FIREBASE_API_KEY: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
+  VITE_FIREBASE_AUTH_DOMAIN: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
+  VITE_FIREBASE_PROJECT_ID: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+  VITE_FIREBASE_STORAGE_BUCKET: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
+  VITE_FIREBASE_MESSAGING_SENDER_ID: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID,
+  VITE_FIREBASE_APP_ID: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID,
+  VITE_FIREBASE_DATABASE_ID: process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID,
+  VITE_FIREBASE_VAPID_KEY: process.env.VITE_FIREBASE_VAPID_KEY || process.env.FIREBASE_VAPID_KEY,
+  VITE_GEMINI_API_KEY: process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY,
+};
+
+const envContent = Object.entries(envVars)
+  .filter(([_, value]) => value !== undefined && value !== null)
+  .map(([key, value]) => `${key}="${value}"`)
+  .join('\n');
+
+if (envContent) {
+  try {
+    fs.writeFileSync(envFilePath, envContent, 'utf8');
+    console.log('Successfully generated .env file from environment secrets.');
+  } catch (err) {
+    console.error('Failed to write .env file:', err);
+  }
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -213,11 +241,30 @@ async function startServer() {
     console.log('Vite middleware mounted in development mode.');
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { index: false }));
     app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        let html = fs.readFileSync(indexPath, 'utf8');
+        const runtimeConfig = {
+          VITE_FIREBASE_API_KEY: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || '',
+          VITE_FIREBASE_AUTH_DOMAIN: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN || '',
+          VITE_FIREBASE_PROJECT_ID: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || '',
+          VITE_FIREBASE_STORAGE_BUCKET: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || '',
+          VITE_FIREBASE_MESSAGING_SENDER_ID: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+          VITE_FIREBASE_APP_ID: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID || '',
+          VITE_FIREBASE_DATABASE_ID: process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID || '',
+          VITE_FIREBASE_VAPID_KEY: process.env.VITE_FIREBASE_VAPID_KEY || process.env.FIREBASE_VAPID_KEY || '',
+          VITE_GEMINI_API_KEY: process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '',
+        };
+        const scriptTag = `<script>window.__RUNTIME_CONFIG__ = ${JSON.stringify(runtimeConfig)};</script>`;
+        html = html.replace('<head>', `<head>${scriptTag}`);
+        res.send(html);
+      } else {
+        res.status(404).send('Not Found');
+      }
     });
-    console.log('Serving production build from dist/');
+    console.log('Serving production build with runtime configuration injection from dist/');
   }
 
   app.listen(PORT, '0.0.0.0', () => {

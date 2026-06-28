@@ -814,6 +814,126 @@
   background: rgba(163, 177, 198, 0.8) !important;
 }
 
+/* ==========================================
+   PREMIUM ABSTRACT AI CORE ORB ANIMATIONS
+   ========================================== */
+
+@keyframes auroraSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ringRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes shadowPulse {
+  0%, 100% { opacity: 0.4; width: 40px; }
+  50% { opacity: 0.7; width: 50px; }
+}
+
+@keyframes centerDotPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+}
+
+@keyframes centerDotFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes outerArcRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes innerArcRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes beaconPulse {
+  0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, 0) scale(1.5); opacity: 0; }
+  100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+}
+
+@keyframes outerGlowFlash {
+  0%, 100% { opacity: 0.4; filter: blur(12px) brightness(1); }
+  50% { opacity: 1; filter: blur(16px) brightness(1.6); }
+}
+
+/* Orb styles */
+.orb-aurora-spin {
+  animation: auroraSpin 4s linear infinite;
+}
+
+.orb-aurora-spin-fast {
+  animation: auroraSpin 1s linear infinite;
+}
+
+.orb-aurora-spin-hover {
+  animation: auroraSpin 2s linear infinite;
+}
+
+.orb-ring-rotate {
+  animation: ringRotate 6s linear infinite;
+}
+
+.orb-glow-pulse {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.orb-glow-flash {
+  animation: outerGlowFlash 1s ease-in-out infinite;
+}
+
+.orb-shadow-pulse {
+  animation: shadowPulse 3s ease-in-out infinite;
+}
+
+.orb-outer-ring {
+  background: conic-gradient(
+    from 0deg,
+    rgba(99,179,237,0.6),
+    rgba(159,122,234,0.3),
+    transparent,
+    rgba(99,179,237,0.6)
+  ) border-box;
+  mask: 
+    linear-gradient(white, white) padding-box,
+    linear-gradient(white, white);
+  -webkit-mask:
+    linear-gradient(white, white) padding-box,
+    linear-gradient(white, white);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+}
+
+/* Neural pulse arc rotations */
+.orb-outer-arc {
+  animation: outerArcRotate 6s linear infinite;
+}
+
+.orb-inner-arc {
+  animation: innerArcRotate 4s linear infinite;
+}
+
+.orb-center-dot-pulse {
+  animation: centerDotPulse 2s ease-in-out infinite;
+}
+
+.orb-center-dot-flicker {
+  animation: centerDotFlicker 0.4s ease-in-out infinite;
+}
+
+
 
 
 

@@ -416,49 +416,104 @@ Return this exact JSON:
     navigate('/focus');
   };
 
-  // Skeleton Loader design
+  // Skeleton Loader design (staggered & premium)
   const SkeletonLoader = () => (
-    <div className="space-y-12 animate-pulse">
+    <motion.div 
+      initial="initial"
+      animate="animate"
+      variants={{
+        animate: { transition: { staggerChildren: 0.05 } }
+      }}
+      className="space-y-12 max-w-[800px] mx-auto"
+    >
       {/* Hero Skeleton */}
-      <div className="pt-12 pb-8 space-y-4 border-b border-white/[0.06] mb-8">
+      <motion.div 
+        variants={{
+          initial: { opacity: 0, y: 10 },
+          animate: { opacity: 1, y: 0 }
+        }}
+        className="pt-12 pb-8 space-y-3"
+      >
         <div className="h-4 bg-white/5 rounded w-24 animate-shimmer" />
         <div className="h-10 bg-white/5 rounded w-72 animate-shimmer" />
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-6 pt-4 border-b border-white/[0.06]">
           <div className="h-4 bg-white/5 rounded w-36 animate-shimmer" />
           <div className="h-8 bg-white/5 rounded-full w-24 animate-shimmer" />
         </div>
-      </div>
+      </motion.div>
 
       {/* Today's Single Focus Skeleton */}
-      <div className="h-56 bg-white/[0.03] border border-white/[0.06] rounded-[20px] animate-shimmer" />
+      <motion.div 
+        variants={{
+          initial: { opacity: 0, y: 10 },
+          animate: { opacity: 1, y: 0 }
+        }}
+        className="h-[180px] bg-white/[0.03] border border-white/[0.06] rounded-[20px] p-8 space-y-4 animate-shimmer"
+      >
+        <div className="h-3 bg-white/5 rounded w-32" />
+        <div className="h-8 bg-white/5 rounded w-3/4" />
+        <div className="h-4 bg-white/5 rounded w-40" />
+      </motion.div>
 
       {/* Tasks & Quick Wins Columns Skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        <div className="space-y-4">
+        {/* Task Priority Cards Skeleton */}
+        <motion.div 
+          variants={{
+            initial: { opacity: 0, y: 10 },
+            animate: { opacity: 1, y: 0 }
+          }}
+          className="space-y-4"
+        >
           <div className="h-4 bg-white/5 rounded w-48 mb-6 animate-shimmer" />
-          <div className="h-24 bg-white/[0.03] border border-white/[0.05] rounded-[14px] animate-shimmer" />
-          <div className="h-24 bg-white/[0.03] border border-white/[0.05] rounded-[14px] animate-shimmer" />
-          <div className="h-24 bg-white/[0.03] border border-white/[0.05] rounded-[14px] animate-shimmer" />
-        </div>
-        <div className="space-y-4">
+          <div className="h-[76px] bg-white/[0.03] border border-white/[0.06] rounded-[14px] animate-shimmer" />
+          <div className="h-[76px] bg-white/[0.03] border border-white/[0.06] rounded-[14px] animate-shimmer" />
+          <div className="h-[76px] bg-white/[0.03] border border-white/[0.06] rounded-[14px] animate-shimmer" />
+        </motion.div>
+
+        {/* Quick Wins Skeleton */}
+        <motion.div 
+          variants={{
+            initial: { opacity: 0, y: 10 },
+            animate: { opacity: 1, y: 0 }
+          }}
+          className="space-y-4"
+        >
           <div className="h-4 bg-white/5 rounded w-40 mb-6 animate-shimmer" />
           <div className="flex gap-4 overflow-hidden">
-            <div className="h-16 bg-white/[0.03] border border-white/[0.05] rounded-[14px] w-48 shrink-0 animate-shimmer" />
-            <div className="h-16 bg-white/[0.03] border border-white/[0.05] rounded-[14px] w-48 shrink-0 animate-shimmer" />
+            <div className="h-16 bg-[#68D391]/[0.02] border border-[#68D391]/10 rounded-[14px] w-48 shrink-0 animate-shimmer" />
+            <div className="h-16 bg-[#68D391]/[0.02] border border-[#68D391]/10 rounded-[14px] w-48 shrink-0 animate-shimmer" />
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Focus Suggestion Skeleton */}
-      <div className="h-44 bg-white/[0.03] border border-white/[0.05] rounded-[20px] animate-shimmer" />
+      <motion.div 
+        variants={{
+          initial: { opacity: 0, y: 10 },
+          animate: { opacity: 1, y: 0 }
+        }}
+        className="h-[160px] bg-white/[0.03] border border-white/[0.06] rounded-[20px] p-8 space-y-4 animate-shimmer"
+      >
+        <div className="h-3 bg-white/5 rounded w-40" />
+        <div className="h-6 bg-white/5 rounded w-2/3" />
+        <div className="h-4 bg-white/5 rounded w-1/2" />
+      </motion.div>
 
       {/* Motivation Skeleton */}
-      <div className="flex flex-col items-center space-y-3 pt-6 pb-6">
+      <motion.div 
+        variants={{
+          initial: { opacity: 0, y: 10 },
+          animate: { opacity: 1, y: 0 }
+        }}
+        className="flex flex-col items-center space-y-3 pt-6 pb-6"
+      >
+        <div className="h-8 bg-white/5 rounded-full w-8 animate-shimmer" />
         <div className="h-4 bg-white/5 rounded w-1/2 animate-shimmer" />
         <div className="h-4 bg-white/5 rounded w-1/3 animate-shimmer" />
         <div className="h-3 bg-white/5 rounded w-1/4 animate-shimmer" />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 
   // Styles for the shimmer backgrounds
@@ -604,22 +659,18 @@ Return this exact JSON:
                   </p>
                 )}
               </div>
-              <div className="relative group/pri w-full md:w-auto inline-block mt-4 self-start">
-                <div className="absolute -inset-1.5 bg-rose-500 rounded-full blur-md opacity-20 group-hover/pri:opacity-40 transition duration-500 animate-pulse"></div>
-                <motion.button 
-                  whileHover={{ 
-                    scale: 1.04,
-                    boxShadow: "0 0 20px rgba(244, 63, 94, 0.45)"
-                  }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleStartFocus(briefing.topPriority.taskTitle, briefing.topPriority.taskId)}
-                  className="relative px-6 py-3 rounded-full bg-gradient-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-rose-950/20 border border-white/10"
-                >
-                  <Play className="w-3.5 h-3.5 fill-white" />
-                  <span>Launch Priority Focus</span>
-                  <ArrowRight className="w-4 h-4 group-hover/pri:translate-x-1 transition-transform" />
-                </motion.button>
-              </div>
+              <motion.button 
+                whileHover={{ 
+                  scale: 1.05,
+                  backgroundColor: 'rgba(252, 129, 129, 0.15)'
+                }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleStartFocus(briefing.topPriority.taskTitle, briefing.topPriority.taskId)}
+                className="mt-5 px-5 py-2.5 rounded-full border border-[rgba(252,129,129,0.3)] text-[#FC8181] font-semibold text-xs flex items-center gap-1.5 cursor-pointer bg-transparent transition-all self-start"
+              >
+                <span>View Task</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </motion.button>
             </div>
           </section>
 

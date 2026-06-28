@@ -21,98 +21,6 @@ interface GeminiResponse {
   }[];
 }
 
-// Coded Cybernetic/Robotic Waving Hand Component
-interface RoboticHandProps {
-  isWaving: boolean;
-}
-
-const RoboticHand: React.FC<RoboticHandProps> = ({ isWaving }) => {
-  return (
-    <motion.div
-      id="aria-wave-hand-robotic"
-      className="absolute -top-7 -left-5 w-10 h-10 select-none pointer-events-none drop-shadow-[0_2px_8px_rgba(99,179,237,0.6)] flex items-center justify-center z-10"
-      style={{ transformOrigin: 'bottom right' }}
-      animate={isWaving ? { 
-        rotate: [-30, 5, -30, 5, -30, 5, -30, -10],
-        x: [0, -1.5, 1.5, -1.5, 1.5, -1.5, 1.5, 0],
-        y: [0, -1, 0, -1, 0, -1, 0, 0]
-      } : { rotate: -10, x: 0, y: 0 }}
-      transition={{ 
-        duration: 1.8, 
-        ease: "easeInOut" 
-      }}
-    >
-      <svg
-        width="34"
-        height="34"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full"
-      >
-        <defs>
-          <linearGradient id="metal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#E2E8F0" />
-            <stop offset="50%" stopColor="#cbd5e0" />
-            <stop offset="100%" stopColor="#4A5568" />
-          </linearGradient>
-          <linearGradient id="dark-metal" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4A5568" />
-            <stop offset="100%" stopColor="#1A202C" />
-          </linearGradient>
-          <radialGradient id="core-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#63B3ED" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-
-        {/* Wrist Connector */}
-        <path d="M10 20H14V23H10V20Z" fill="#718096" />
-        <rect x="9" y="17" width="6" height="3" rx="1.5" fill="url(#dark-metal)" stroke="#cbd5e0" strokeWidth="0.75" />
-        {/* Wrist neon status bar */}
-        <line x1="10.5" y1="18.5" x2="13.5" y2="18.5" stroke="#63B3ED" strokeWidth="1" strokeLinecap="round" />
-
-        {/* Outer Palm Plate */}
-        <path d="M8 11.5C8 9.5 9 9 10 9H14C15 9 16 9.5 16 11.5V17H8V11.5Z" fill="url(#metal-grad)" stroke="#2D3748" strokeWidth="0.75" />
-        
-        {/* Inner Palm Cybernetic Chamber */}
-        <path d="M9.5 12C9.5 11 10 10.5 11 10.5H13C14 10.5 14.5 11 14.5 12V15.5H9.5V12Z" fill="#1A202C" stroke="#4A5568" strokeWidth="0.5" />
-        
-        {/* Core Reactor Indicator */}
-        <circle cx="12" cy="13" r="2" fill="url(#core-glow)" />
-        <circle cx="12" cy="13" r="0.8" fill="#EBF8FF" />
-
-        {/* Cybernetic wiring track */}
-        <path d="M12 14.5V16" stroke="#63B3ED" strokeWidth="0.5" strokeLinecap="round" />
-
-        {/* Articulated Thumb */}
-        <path d="M8 13.5L5.5 12L4.5 12.5L7 14.5L8 14.2" fill="url(#dark-metal)" stroke="#2D3748" strokeWidth="0.5" />
-        <circle cx="4.5" cy="12.5" r="0.8" fill="#9F7AEA" />
-
-        {/* Articulated Index Finger */}
-        <path d="M9.5 9V5.5" stroke="#718096" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M9.5 5.5V3.5" stroke="#cbd5e0" strokeWidth="1" strokeLinecap="round" />
-        <circle cx="9.5" cy="5.5" r="0.7" fill="#9F7AEA" />
-
-        {/* Articulated Middle Finger */}
-        <path d="M11.1 9V4.5" stroke="#718096" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M11.1 4.5V2.3" stroke="#cbd5e0" strokeWidth="1" strokeLinecap="round" />
-        <circle cx="11.1" cy="4.5" r="0.7" fill="#9F7AEA" />
-
-        {/* Articulated Ring Finger */}
-        <path d="M12.8 9V5" stroke="#718096" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M12.8 5V2.8" stroke="#cbd5e0" strokeWidth="1" strokeLinecap="round" />
-        <circle cx="12.8" cy="5" r="0.7" fill="#9F7AEA" />
-
-        {/* Articulated Pinky Finger */}
-        <path d="M14.5 9V6" stroke="#718096" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M14.5 6V4.2" stroke="#cbd5e0" strokeWidth="1" strokeLinecap="round" />
-        <circle cx="14.5" cy="6" r="0.7" fill="#9F7AEA" />
-      </svg>
-    </motion.div>
-  );
-};
-
 export const AriaChat: React.FC = () => {
   const { profile, tasks, habits, sessions, showToast, setIsAddTaskOpen } = useApp();
   
@@ -124,12 +32,18 @@ export const AriaChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isAriaTyping, setIsAriaTyping] = useState(false);
+  const [isAriaSpeaking, setIsAriaSpeaking] = useState(false);
   const [ariaExpression, setAriaExpression] = useState<AriaExpression>('happy');
   
-  // Waving and Idle tracking
-  const [isWaving, setIsWaving] = useState(false);
+  // Hover and Idle tracking (replaced waving hand with premium beacon)
+  const [isHovered, setIsHovered] = useState(false);
   const [isIdle60s, setIsIdle60s] = useState(false);
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Subtle notification beacon
+  const [showBeacon, setShowBeacon] = useState(false);
+  const beaconTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const beaconIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Speech Recognition state
   const [isListening, setIsListening] = useState(false);
@@ -146,28 +60,35 @@ export const AriaChat: React.FC = () => {
   });
   const crisisCount = crisisTasks.length;
 
-  // 2. Triggers waving animation on page load after 2s, then every 30s
-  useEffect(() => {
-    const waveAndReset = () => {
-      setIsWaving(true);
-      setTimeout(() => setIsWaving(false), 2000); // 2s wave
+  // Beacon management: triggers after 30s of idle, lasts 3 pulses (6s), reappears every 2 mins
+  const resetBeaconTimer = () => {
+    setShowBeacon(false);
+    if (beaconTimerRef.current) clearTimeout(beaconTimerRef.current);
+    if (beaconIntervalRef.current) clearInterval(beaconIntervalRef.current);
+
+    if (isOpen) return;
+
+    const triggerBeacon = () => {
+      setShowBeacon(true);
+      beaconTimerRef.current = setTimeout(() => {
+        setShowBeacon(false);
+      }, 6000);
     };
 
-    // Initial 2s delay
-    const initialWaveTimer = setTimeout(waveAndReset, 2000);
+    // First appearance after 30 seconds
+    beaconTimerRef.current = setTimeout(() => {
+      triggerBeacon();
+      // Reappears every 2 minutes
+      beaconIntervalRef.current = setInterval(() => {
+        triggerBeacon();
+      }, 120000);
+    }, 30000);
+  };
 
-    // 30s interval
-    const intervalWaveTimer = setInterval(waveAndReset, 30000);
-
-    return () => {
-      clearTimeout(initialWaveTimer);
-      clearInterval(intervalWaveTimer);
-    };
-  }, []);
-
-  // 3. Monitor Idle State: 60s of inactivity triggers attention pulse rings
+  // Monitor Idle State: 60s of inactivity triggers attention pulse rings
   const resetIdleTimer = () => {
     setIsIdle60s(false);
+    resetBeaconTimer();
     if (idleTimerRef.current) {
       clearTimeout(idleTimerRef.current);
     }
@@ -188,6 +109,8 @@ export const AriaChat: React.FC = () => {
       window.removeEventListener('mousemove', resetIdleTimer);
       window.removeEventListener('keydown', resetIdleTimer);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      if (beaconTimerRef.current) clearTimeout(beaconTimerRef.current);
+      if (beaconIntervalRef.current) clearInterval(beaconIntervalRef.current);
     };
   }, [isOpen]);
 
@@ -298,6 +221,7 @@ export const AriaChat: React.FC = () => {
   // 7. Typewriter text display simulation
   const typeOutAriaResponse = (fullText: string) => {
     setIsAriaTyping(false);
+    setIsAriaSpeaking(true);
     
     const messageId = `msg-aria-${Date.now()}`;
     const newMsg: Message = {
@@ -320,6 +244,7 @@ export const AriaChat: React.FC = () => {
 
       if (charIdx >= fullText.length) {
         clearInterval(interval);
+        setIsAriaSpeaking(false);
         // Set face expression back to normal or happy
         if (crisisCount > 0) {
           setAriaExpression('concerned');
@@ -382,8 +307,6 @@ export const AriaChat: React.FC = () => {
     ) {
       setIsAddTaskOpen(true);
       setAriaExpression('excited');
-      setIsWaving(true);
-      setTimeout(() => setIsWaving(false), 2000);
       setTimeout(() => {
         typeOutAriaResponse("I have automatically opened the **Create AI-Prioritized Task** window for you! 📋 Fill in your task details, and I will instantly analyze its complexity, subtasks, and deadlines for you. 🚀");
       }, 500);
@@ -560,31 +483,26 @@ export const AriaChat: React.FC = () => {
 
   return (
     <div id="aria-chatbot-root">
-      {/* 1. Floating Circle Button */}
+      {/* 1. Floating Circle Button (Abstract Core Orb) */}
       <motion.button
         id="aria-floating-button"
         onClick={handleOpenChat}
-        whileHover={{ scale: 1.1 }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed z-[9999] bottom-7 right-7 md:bottom-7 md:right-7 w-16 h-16 rounded-full flex items-center justify-center cursor-pointer select-none transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="fixed z-[9999] bottom-7 right-7 w-16 h-16 rounded-full flex items-center justify-center cursor-pointer select-none focus:outline-none bg-transparent"
         style={{
-          background: isOpen 
-            ? 'linear-gradient(135deg, #FC8181, #E53E3E)' // Red close state
-            : '#080D1A', // Dark cyber-blue background matching head
-          border: isOpen 
-            ? '1px solid rgba(255, 255, 255, 0.2)' 
-            : '1.8px solid rgba(99, 179, 237, 0.5)', // Neon blue border
-          boxShadow: isOpen
-            ? '0 8px 32px rgba(229, 62, 62, 0.4), 0 0 0 1px rgba(255,255,255,0.2) inset'
-            : '0 8px 32px rgba(99, 179, 237, 0.35), 0 0 15px rgba(99, 179, 237, 0.15), inset 0 0 10px rgba(99, 179, 237, 0.15)',
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none',
         }}
       >
-        {/* Coded Robotic Waving Hand above button */}
-        {!isOpen && (
-          <AnimatePresence>
-            <RoboticHand isWaving={isWaving} />
-          </AnimatePresence>
-        )}
+        {/* Subtle platform/shadow below orb */}
+        <div
+          className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 rounded-full bg-blue-400/20 blur-[6px] orb-shadow-pulse pointer-events-none"
+          style={{ height: '6px' }}
+        />
 
         {/* Attention Pulse Ring when idle for 60s */}
         {!isOpen && isIdle60s && (
@@ -594,37 +512,23 @@ export const AriaChat: React.FC = () => {
           </>
         )}
 
-        {/* Floating Button Tooltip on Hover */}
-        <div className="absolute right-0 bottom-20 opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity pointer-events-none hidden md:block">
-          <div className="bg-slate-900/90 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-lg whitespace-nowrap">
-            Chat with Aria 💬
-          </div>
-        </div>
+        {/* Subtle notification beacon TOP of orb */}
+        {!isOpen && showBeacon && (
+          <div
+            className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#63B3ED] shadow-[0_0_8px_rgba(99,179,237,0.8)] pointer-events-none z-30"
+            style={{ animation: 'beaconPulse 2s ease-in-out infinite' }}
+          />
+        )}
 
-        {/* Inner Content: Aria Face (or Spinning 'X' Close Icon) */}
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <motion.div
-              key="close-icon"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 180, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
-            >
-              <X size={26} className="text-white stroke-[2.5]" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="face"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            >
-              <AriaFace size={44} expression={ariaExpression} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Premium Abstract AI core orb */}
+        <AriaFace
+          size={64}
+          isOpen={isOpen}
+          isHovered={isHovered}
+          isThinking={isAriaTyping}
+          isSpeaking={isAriaSpeaking}
+          expression={ariaExpression}
+        />
 
         {/* Notification Badge for Crisis Tasks */}
         {!isOpen && crisisCount > 0 && (
@@ -633,11 +537,32 @@ export const AriaChat: React.FC = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-            className="absolute -top-1 -left-1.5 bg-red-500 border border-white/20 text-white font-bold text-[10px] h-6 px-2 rounded-full flex items-center justify-center shadow-md animate-pulse"
+            className={`absolute -top-1.5 -right-1.5 bg-gradient-to-br from-[#FC8181] to-[#F56565] border-[1.5px] border-[#080B14]/80 shadow-[0_0_10px_rgba(252,129,129,0.5)] text-white font-mono font-bold text-[10px] h-5 flex items-center justify-center z-20 ${
+              crisisCount >= 10 
+                ? 'px-1.5 min-w-[20px] rounded-full' 
+                : 'w-5 rounded-full'
+            }`}
           >
-            🚨 {crisisCount}
+            {crisisCount}
           </motion.div>
         )}
+
+        {/* Floating Button Premium Tooltip on Hover */}
+        <AnimatePresence>
+          {isHovered && !isOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="absolute right-[76px] bottom-4 bg-[#060A16]/95 border border-[#63B3ED]/30 rounded-[10px] py-2 px-3.5 shadow-lg shadow-black/40 text-[#E2E8F0] font-sans text-[13px] whitespace-nowrap pointer-events-none flex items-center gap-2 z-50"
+            >
+              <span className="text-[#63B3ED] font-medium">✦ Ask Aria</span>
+              <span className="w-1 h-1 rounded-full bg-gray-600" />
+              <span className="text-gray-400 font-normal">AI Assistant</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.button>
 
       {/* 2. Floating Chat Window */}
@@ -664,20 +589,23 @@ export const AriaChat: React.FC = () => {
               className="relative p-4 flex items-center justify-between border-b border-white/8 bg-white/5 backdrop-blur-md"
             >
               <div className="flex items-center space-x-3 select-none">
-                {/* Mini Avatar inside Header */}
-                <div className="relative">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center p-0.5 border border-white/10 shadow">
-                    <AriaFace size={32} expression={ariaExpression} />
-                  </div>
+                {/* Mini Avatar inside Header (Small 28px version of new orb design) */}
+                <div className="relative flex items-center justify-center">
+                  <AriaFace 
+                    size={28} 
+                    isOpen={false} 
+                    isThinking={isAriaTyping} 
+                    isSpeaking={isAriaSpeaking} 
+                    expression={ariaExpression}
+                  />
                   {/* Online dot */}
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border border-[#080D1A] animate-pulse" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border border-[#080D1A] animate-pulse" />
                 </div>
 
                 <div className="flex flex-col">
                   <span className="text-sm font-bold text-white tracking-wide">Aria</span>
-                  <span className="text-[10px] text-gray-400 flex items-center">
-                    <Sparkles size={10} className="text-yellow-400 mr-1 animate-pulse" />
-                    DeadlineAI Companion
+                  <span className="text-[10px] text-[#4A5568] font-mono flex items-center">
+                    AI · Gemini 2.0 Flash
                   </span>
                 </div>
               </div>

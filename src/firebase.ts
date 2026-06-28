@@ -15,16 +15,17 @@ import {
 import { getFirestore } from 'firebase/firestore';
 import firebaseAppletConfig from '../firebase-applet-config.json';
 import { safeStorage } from './utils/storage';
+import { getEnvValue } from './utils/env';
 
-// Prioritize environment variables from Vite, falling back to firebase-applet-config.json
+// Prioritize environment variables from window runtime, Vite, falling back to firebase-applet-config.json
 const firebaseConfig = {
-  apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
-  authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain,
-  projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
-  storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket,
-  messagingSenderId: (import.meta as any).env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
-  appId: (import.meta as any).env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
-  measurementId: (import.meta as any).env.VITE_FIREBASE_MEASUREMENT_ID || (firebaseAppletConfig as any).measurementId || ""
+  apiKey: getEnvValue('VITE_FIREBASE_API_KEY') || firebaseAppletConfig.apiKey,
+  authDomain: getEnvValue('VITE_FIREBASE_AUTH_DOMAIN') || firebaseAppletConfig.authDomain,
+  projectId: getEnvValue('VITE_FIREBASE_PROJECT_ID') || firebaseAppletConfig.projectId,
+  storageBucket: getEnvValue('VITE_FIREBASE_STORAGE_BUCKET') || firebaseAppletConfig.storageBucket,
+  messagingSenderId: getEnvValue('VITE_FIREBASE_MESSAGING_SENDER_ID') || firebaseAppletConfig.messagingSenderId,
+  appId: getEnvValue('VITE_FIREBASE_APP_ID') || firebaseAppletConfig.appId,
+  measurementId: getEnvValue('VITE_FIREBASE_MEASUREMENT_ID') || (firebaseAppletConfig as any).measurementId || ""
 };
 
 export const app = initializeApp(firebaseConfig);
@@ -117,7 +118,7 @@ const initializeSafeAuth = () => {
 export const auth = initializeSafeAuth();
 
 const getSafeFirestore = () => {
-  const dbId = (import.meta as any).env.VITE_FIREBASE_DATABASE_ID || (firebaseAppletConfig as any).firestoreDatabaseId;
+  const dbId = getEnvValue('VITE_FIREBASE_DATABASE_ID') || (firebaseAppletConfig as any).firestoreDatabaseId;
   try {
     if (dbId && dbId !== "(default)" && dbId !== "default") {
       return getFirestore(app, dbId);

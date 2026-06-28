@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import React from 'react';
 
 export type AriaExpression = 'happy' | 'thinking' | 'excited' | 'concerned';
 
@@ -7,210 +6,213 @@ interface AriaFaceProps {
   expression?: AriaExpression;
   size?: 'small' | 'medium' | 'large' | number;
   className?: string;
+  isOpen?: boolean;
+  isHovered?: boolean;
+  isThinking?: boolean;
+  isSpeaking?: boolean;
 }
 
 export const AriaFace: React.FC<AriaFaceProps> = ({
   expression = 'happy',
-  size = 'medium',
+  size = 'large',
   className = '',
+  isOpen = false,
+  isHovered = false,
+  isThinking = false,
+  isSpeaking = false,
 }) => {
-  const [blink, setBlink] = useState(false);
-
-  // Trigger eye blink every 4 seconds
-  useEffect(() => {
-    const blinkInterval = setInterval(() => {
-      setBlink(true);
-      setTimeout(() => setBlink(false), 150);
-    }, 4000);
-
-    return () => clearInterval(blinkInterval);
-  }, []);
-
-  // Map size keys to px
+  // Map preset sizes to pixel numbers
   const sizeMap = {
-    small: 36,
+    small: 28,
     medium: 48,
     large: 64,
   };
-  const finalSize = typeof size === 'number' ? size : sizeMap[size] || 48;
+  const finalSize = typeof size === 'number' ? size : sizeMap[size] || 64;
 
-  // Resolve expressions SVG parameters for robotic '<' and '>' eyes
-  let leftEyePath = "M 18 19 L 14 22 L 18 25"; // default '<'
-  let rightEyePath = "M 30 19 L 34 22 L 30 25"; // default '>'
-  let mouthPath = "M 20 31 Q 24 35 28 31"; // happy curve '-'
+  // Determine active states based on props & expressions
+  const activeThinking = isThinking || expression === 'thinking';
+  const activeSpeaking = isSpeaking || expression === 'excited';
 
-  if (expression === 'thinking') {
-    leftEyePath = "M 18 21 L 14 22 L 18 23"; // narrow squint
-    rightEyePath = "M 30 21 L 34 22 L 30 23"; // narrow squint
-    mouthPath = "M 21 31 L 27 31"; // straight dash '-'
-  } else if (expression === 'excited') {
-    leftEyePath = "M 17 17 L 13 22 L 17 27"; // larger '<'
-    rightEyePath = "M 31 17 L 35 22 L 31 27"; // larger '>'
-    mouthPath = "M 19 29 Q 24 38 29 29"; // wide open cyber smile
-  } else if (expression === 'concerned') {
-    leftEyePath = "M 18 20 L 14 22 L 18 24";
-    rightEyePath = "M 30 20 L 34 22 L 30 24";
-    mouthPath = "M 20 33 Q 24 29 28 33"; // soft inverse curve
-  }
+  // Responsive scale factor (relative to 64px design size)
+  const scaleFactor = finalSize / 64;
 
-  // Define variants for idle bobbing, thinking tilting, and excited jumps
-  const faceContainerVariants = {
-    happy: {
-      y: [0, -2, 0],
-      transition: {
-        duration: 3,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      },
-    },
-    thinking: {
-      rotate: [-4, 4, -4],
-      y: [0, -1, 0],
-      transition: {
-        rotate: {
-          duration: 1.0,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        },
-        y: {
-          duration: 1.8,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        },
-      },
-    },
-    excited: {
-      y: [0, -7, 0],
-      scale: [1, 1.08, 1],
-      transition: {
-        duration: 0.4,
-        ease: 'easeOut',
-      },
-    },
-    concerned: {
-      y: [0, -1.5, 0],
-      transition: {
-        duration: 3.5,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      },
-    },
+  // Layer size calculations
+  const baseStyle: React.CSSProperties = {
+    width: `${finalSize}px`,
+    height: `${finalSize}px`,
+    borderRadius: '50%',
+    background: 'radial-gradient(circle at 50% 50%, #0A0F2E 0%, #050818 100%)',
+    position: 'relative',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    transform: isHovered ? 'scale(1.1)' : 'scale(1)',
   };
 
+  // Layer 2: Aurora Core Conic Gradient
+  // When Chat is open, shift colors to a purple dominant spectrum
+  const auroraBg = isOpen
+    ? 'conic-gradient(from 0deg, rgba(159,122,234,0.9) 0%, rgba(128,90,213,0.9) 20%, rgba(99,179,237,0.3) 50%, rgba(159,122,234,0.9) 70%, rgba(128,90,213,0.5) 85%, rgba(159,122,234,0.9) 100%)'
+    : 'conic-gradient(from 0deg, rgba(99,179,237,0.9), rgba(159,122,234,0.9), rgba(99,179,237,0.4), rgba(56,178,172,0.8), rgba(159,122,234,0.6), rgba(99,179,237,0.9))';
+
+  // Aurora rotation speed: Fast (1s) for thinking, medium (2s) for hover, slow (4s) for idle
+  let auroraAnimationClass = 'orb-aurora-spin';
+  if (activeThinking) {
+    auroraAnimationClass = 'orb-aurora-spin-fast';
+  } else if (isHovered) {
+    auroraAnimationClass = 'orb-aurora-spin-hover';
+  }
+
+  // Layer 6: Dynamic outer ring offset
+  const outerRingOffset = -6 * scaleFactor;
+
+  // Layer 7: Outer glow scale and speed
+  const glowInset = isHovered ? -30 * scaleFactor : -20 * scaleFactor;
+  const glowBlur = 12 * scaleFactor;
+
+  // Center dot scale classes and variables
+  let centerDotAnimationClass = 'orb-center-dot-pulse';
+  if (activeThinking) {
+    centerDotAnimationClass = 'orb-center-dot-flicker';
+  } else if (activeSpeaking) {
+    // Speaking rapid pulse is configured via rapid keyframes or custom timing
+    centerDotAnimationClass = '';
+  }
+
   return (
-    <motion.div
-      id="aria-face-container"
-      className={`relative inline-block ${className}`}
-      style={{ width: finalSize, height: finalSize }}
-      animate={expression}
-      variants={faceContainerVariants}
+    <div
+      id="aria-premium-core-orb"
+      className={`relative select-none ${className}`}
+      style={baseStyle}
     >
-      <svg
-        viewBox="0 0 48 48"
-        width="100%"
-        height="100%"
-        className="overflow-visible"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+      {/* LAYER 7 — Ambient glow (behind orb) */}
+      <div
+        className={`absolute rounded-full pointer-events-none -z-10 ${
+          activeThinking ? 'orb-glow-flash' : 'orb-glow-pulse'
+        }`}
+        style={{
+          inset: `${glowInset}px`,
+          background: 'radial-gradient(circle, rgba(99,179,237,0.25) 0%, rgba(159,122,234,0.12) 40%, transparent 70%)',
+          filter: `blur(${glowBlur}px)`,
+        }}
+      />
+
+      {/* LAYER 6 — Outer ring */}
+      <div
+        className="absolute rounded-full orb-ring-rotate orb-outer-ring pointer-events-none"
+        style={{
+          inset: `${outerRingOffset}px`,
+          border: '1px solid transparent',
+        }}
+      />
+
+      {/* LAYER 2 — Animated aurora core */}
+      <div
+        className={`absolute rounded-full ${auroraAnimationClass}`}
+        style={{
+          inset: `${8 * scaleFactor}px`,
+          background: auroraBg,
+          filter: `blur(${4 * scaleFactor}px)`,
+        }}
+      />
+
+      {/* LAYER 3 — Dark center overlay */}
+      <div
+        className="absolute rounded-full"
+        style={{
+          inset: `${16 * scaleFactor}px`,
+          background: 'radial-gradient(circle at 40% 35%, #0D1530, #060A1A)',
+          boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)',
+        }}
+      />
+
+      {/* LAYER 4 — Center Symbol or Close (X) Icon */}
+      <div
+        className="absolute flex items-center justify-center"
+        style={{
+          width: `${24 * scaleFactor}px`,
+          height: `${24 * scaleFactor}px`,
+        }}
       >
-        <defs>
-          <filter id="cyberGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="1.8" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-          <radialGradient id="antennaGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#63B3ED" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-
-        {/* Antenna Base Joint */}
-        <ellipse cx="24" cy="8" rx="3.5" ry="1.5" fill="#4A5568" stroke="#cbd5e0" strokeWidth="0.5" />
-
-        {/* Antenna Stem */}
-        <line x1="24" y1="8" x2="24" y2="2" stroke="#cbd5e0" strokeWidth="1.5" strokeLinecap="round" />
-
-        {/* Glowing Antenna Node (Pulse effect) */}
-        <motion.circle
-          cx="24"
-          cy="2"
-          r="2.5"
-          fill="#63B3ED"
-          filter="url(#cyberGlow)"
-          animate={{
-            scale: [1, 1.25, 1],
-            opacity: [0.8, 1, 0.8],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-
-        {/* Base Robotic Face Circle - Dark/Black inner cavity, glowing border */}
-        <circle 
-          cx="24" 
-          cy="26" 
-          r="17" 
-          fill="#080D1A" 
-          stroke="#63B3ED" 
-          strokeWidth="2.2" 
-          filter="url(#cyberGlow)" 
-          className="shadow-inner"
-        />
-
-        {/* Left Eye Group (Articulated '<') */}
-        <g id="left-eye-group">
-          <motion.path
-            d={leftEyePath}
-            stroke="#63B3ED"
+        {isOpen ? (
+          // Simple X close icon for open state (no animations)
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            className="w-full h-full p-1 opacity-90 drop-shadow-[0_0_4px_rgba(255,255,255,0.4)]"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        ) : (
+          // Neural Pulse Abstract AI core
+          <svg
+            viewBox="0 0 24 24"
+            className="w-full h-full overflow-visible"
             fill="none"
-            animate={blink ? { scaleY: 0.1, y: 1 } : { scaleY: 1, y: 0 }}
-            style={{ transformOrigin: '16px 22px' }}
-            transition={{ duration: 0.12 }}
-          />
-        </g>
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-        {/* Right Eye Group (Articulated '>') */}
-        <g id="right-eye-group">
-          <motion.path
-            d={rightEyePath}
-            stroke="#63B3ED"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-            animate={blink ? { scaleY: 0.1, y: 1 } : { scaleY: 1, y: 0 }}
-            style={{ transformOrigin: '32px 22px' }}
-            transition={{ duration: 0.12 }}
-          />
-        </g>
+            {/* Outer rotating arc */}
+            <path
+              className="orb-outer-arc"
+              d="M6 12 Q6 6 12 6 Q18 6 18 12"
+              stroke="rgba(99,179,237,0.9)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              style={{ transformOrigin: '12px 12px' }}
+            />
 
-        {/* Robotic Mouth Path (dash) */}
-        <motion.path
-          d={mouthPath}
-          stroke="#63B3ED"
-          strokeWidth="2.2"
-          fill="none"
-          strokeLinecap="round"
-          animate={{ d: mouthPath }}
-          transition={{ duration: 0.2 }}
-        />
+            {/* Inner counter-rotating arc */}
+            <path
+              className="orb-inner-arc"
+              d="M8.5 12 Q8.5 8.5 12 8.5 Q15.5 8.5 15.5 12"
+              stroke="rgba(159,122,234,0.8)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              style={{ transformOrigin: '12px 12px' }}
+            />
 
-        {/* Cyber sparks around head in Excited Mode */}
-        {expression === 'excited' && (
-          <g opacity="0.95">
-            <line x1="4" y1="12" x2="1" y2="9" stroke="#9F7AEA" strokeWidth="1.2" strokeLinecap="round" />
-            <line x1="44" y1="12" x2="47" y2="9" stroke="#9F7AEA" strokeWidth="1.2" strokeLinecap="round" />
-            <line x1="2" y1="38" x2="-1" y2="41" stroke="#63B3ED" strokeWidth="1.2" strokeLinecap="round" />
-            <line x1="46" y1="38" x2="49" y2="41" stroke="#63B3ED" strokeWidth="1.2" strokeLinecap="round" />
-          </g>
+            {/* Center dot */}
+            <circle
+              cx="12"
+              cy="12"
+              r={isHovered ? 3.2 : 2}
+              fill="white"
+              filter="url(#dotGlow)"
+              className={centerDotAnimationClass}
+              style={{
+                transformOrigin: '12px 12px',
+                animation: activeSpeaking 
+                  ? 'centerDotPulse 0.5s ease-in-out infinite' 
+                  : undefined,
+              }}
+            />
+          </svg>
         )}
-      </svg>
-    </motion.div>
+      </div>
+
+      {/* LAYER 5 — Glass sphere overlay */}
+      <div
+        className="absolute inset-0 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at 32% 28%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 40%, transparent 70%)',
+        }}
+      />
+    </div>
   );
 };

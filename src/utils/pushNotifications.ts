@@ -44,18 +44,26 @@ export function sendPushNotification(options: {
         });
       }).catch(() => {
         // Fallback
+        try {
+          new Notification(options.title, {
+            body: options.body,
+            icon: '/favicon.svg',
+            tag: options.tag || 'deadline-monitor-alert',
+          });
+        } catch (e) {
+          console.warn('Failed to display fallback notification in iframe:', e);
+        }
+      });
+    } else {
+      try {
         new Notification(options.title, {
           body: options.body,
           icon: '/favicon.svg',
           tag: options.tag || 'deadline-monitor-alert',
         });
-      });
-    } else {
-      new Notification(options.title, {
-        body: options.body,
-        icon: '/favicon.svg',
-        tag: options.tag || 'deadline-monitor-alert',
-      });
+      } catch (e) {
+        console.warn('Failed to display fallback notification in iframe:', e);
+      }
     }
   } catch (err) {
     console.warn('Native push notification display failed:', err);

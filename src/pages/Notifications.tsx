@@ -260,12 +260,7 @@ export const Notifications: React.FC = () => {
               {permission !== 'granted' ? (
                 <button
                   onClick={handleRequestPermission}
-                  disabled={permission === 'denied'}
-                  className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm cursor-pointer ${
-                    permission === 'denied'
-                      ? 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 cursor-not-allowed'
-                      : 'bg-indigo-500 text-white hover:bg-indigo-600 hover:scale-[1.02] active:scale-[0.98]'
-                  }`}
+                  className="px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm cursor-pointer bg-indigo-500 text-white hover:bg-indigo-600 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Request Permission
                 </button>
