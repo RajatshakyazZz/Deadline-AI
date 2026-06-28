@@ -79,16 +79,12 @@ export const LandingPage: React.FC = () => {
           {/* Quick Guest Demo Button */}
           <button
             onClick={loginAsGuest}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-white/80 hover:text-white font-bold border border-white/10 hover:border-white/20 hover:bg-white/[0.04] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer bg-white/[0.02]"
+            className="group w-full sm:w-auto px-8 py-3.5 rounded-xl text-white font-bold bg-gradient-to-r from-violet-600/30 via-fuchsia-600/20 to-indigo-600/30 border border-violet-500/40 hover:border-violet-400 hover:from-violet-600/40 hover:to-indigo-600/40 shadow-[0_4px_24px_rgba(124,58,237,0.2)] hover:shadow-[0_8px_32px_rgba(124,58,237,0.45)] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
           >
+            <Sparkles className="w-4 h-4 text-violet-300 group-hover:rotate-12 transition-transform duration-300" />
             <span className="font-sans font-bold text-sm tracking-wide">Quick Guest Demo</span>
           </button>
         </div>
-
-        {/* Footer info */}
-        <p className="text-[10px] text-gray-500 mt-12 font-mono tracking-widest uppercase">
-          Vibe2Ship x Google for Developers Hackathon Entry
-        </p>
       </motion.div>
     </div>
   );

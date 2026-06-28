@@ -403,7 +403,6 @@
 }
 
 /* Preserve original button colors & svg inherits */
-.apple-glass-btn,
 .apple-glass-btn *,
 .apple-glass-btn svg {
   color: inherit !important;
@@ -744,6 +743,10 @@
   padding: 12px 16px !important;
   outline: none !important;
   transition: all 0.3s ease-out !important;
+}
+
+.light-theme input.pl-9 {
+  padding-left: 2.25rem !important;
 }
 
 .light-theme input::placeholder,

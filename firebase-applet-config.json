@@ -1,9 +1,10 @@
 {
-  "projectId": "isometric-catalyst-dhh41",
-  "appId": "1:462209499148:web:1dc2cff80a49b637b8ee29",
-  "apiKey": "AIzaSyB29m4hDsHKW2kKcZJjibGBRIINURtftXg",
-  "authDomain": "isometric-catalyst-dhh41.firebaseapp.com",
-  "storageBucket": "isometric-catalyst-dhh41.firebasestorage.app",
-  "messagingSenderId": "462209499148",
-  "measurementId": ""
+  "apiKey": "",
+  "authDomain": "",
+  "projectId": "",
+  "storageBucket": "",
+  "messagingSenderId": "",
+  "appId": "",
+  "firestoreDatabaseId": "",
+  "vapidKey": ""
 }

@@ -603,13 +603,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!task) return;
 
     try {
-      showToast('Syncing task with Google Calendar...', 'info');
+      // showToast('Syncing task with Google Calendar...', 'info');
       const eventId = await createCalendarEvent(token, task);
       await updateTask(taskId, { googleEventId: eventId });
-      showToast('Task synchronized with Google Calendar!', 'success');
+      // showToast('Task synchronized with Google Calendar!', 'success');
     } catch (error) {
       console.error('Failed to sync to Google Calendar:', error);
-      showToast('Sync failed. Please ensure permission is granted.', 'error');
+      // showToast('Sync failed. Please ensure permission is granted.', 'error');
     }
   };
 
@@ -634,7 +634,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const newId = await addTask(taskData);
     if (newId) {
-      showToast('Event successfully imported as task!', 'success');
+      // showToast('Event successfully imported as task!', 'success');
     }
   };
 
@@ -652,7 +652,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (isDemo) {
       setTasks((prev) => [newTask, ...prev]);
-      showToast('Task added in Guest Mode!', 'success');
+      // showToast('Task added in Guest Mode!', 'success');
 
       // Add "task created" notification
       const notifItem = {
@@ -677,7 +677,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const docRef = doc(db, 'users', user.uid, 'tasks', newId);
       try {
         await setDoc(docRef, newTask);
-        showToast('Task synchronized to Cloud Firestore!', 'success');
+        // showToast('Task synchronized to Cloud Firestore!', 'success');
 
         // Add "task created" notification
         const notifId = Math.random().toString(36).substring(2, 9);
@@ -716,7 +716,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, ...updates, updatedAt: nowStr } : t))
       );
-      showToast('Task updated!', 'success');
+      // showToast('Task updated!', 'success');
     } else if (user) {
       const docPath = `users/${user.uid}/tasks/${taskId}`;
       const docRef = doc(db, 'users', user.uid, 'tasks', taskId);
@@ -731,7 +731,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteTask = async (taskId: string) => {
     if (isDemo) {
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
-      showToast('Task removed.', 'success');
+      // showToast('Task removed.', 'success');
     } else if (user) {
       const docPath = `users/${user.uid}/tasks/${taskId}`;
       const docRef = doc(db, 'users', user.uid, 'tasks', taskId);
@@ -740,7 +740,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, docPath);
       }
-      showToast('Task removed from Cloud.', 'success');
+      // showToast('Task removed from Cloud.', 'success');
     }
   };
 
@@ -812,7 +812,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }, 500);
         showToast(`🏆 LEVEL UP! You reached Level ${newLevel}!`, 'success');
       } else {
-        showToast(`Task completed! +${xpGained} XP Earned.`, 'success');
+        // showToast(`Task completed! +${xpGained} XP Earned.`, 'success');
       }
 
       // Add "task completed" notification

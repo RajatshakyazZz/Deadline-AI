@@ -404,7 +404,7 @@ Return this exact JSON:
     if (taskId && tasks.some(t => t.id === taskId)) {
       await completeTask(taskId);
     }
-    showToast("✅ Marked as done!", "success");
+    // showToast("✅ Marked as done!", "success");
   };
 
   const handleStartFocus = (taskTitle: string, taskId?: string) => {

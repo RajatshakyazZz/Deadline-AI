@@ -5,8 +5,15 @@ class SafeStorage {
   private isStorageAvailable: boolean = false;
 
   constructor() {
+    let isIframe = false;
     try {
-      if (typeof window !== 'undefined' && 'localStorage' in window) {
+      isIframe = typeof window !== 'undefined' && window.self !== window.top;
+    } catch (_) {
+      isIframe = true;
+    }
+
+    try {
+      if (typeof window !== 'undefined' && !isIframe && 'localStorage' in window) {
         // Test if localStorage is actually writable and accessible
         const testKey = '__storage_test__';
         window.localStorage.setItem(testKey, testKey);

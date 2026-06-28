@@ -1,4 +1,3 @@
-import { getMessaging, getToken, onMessage, isSupported, MessagePayload } from 'firebase/messaging';
 import { doc, setDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from '../firebase'; // Initialize app
 import { db, auth } from '../firebase';
@@ -6,6 +5,15 @@ import { getEnvValue } from '../utils/env';
 
 // Public VAPID key generated from Firebase Console
 const VAPID_KEY = getEnvValue('VITE_FIREBASE_VAPID_KEY') || 'BEl5N6-Sg6VfP8m_B-pG9qVfR8WfH7YgP8XqH7M7D8h_A7_N6jS6F7e8J9wX_H7fK8g9J6G7e8L9wH_W8g_T8Y8';
+
+export interface MessagePayload {
+  data?: Record<string, string>;
+  notification?: {
+    title?: string;
+    body?: string;
+    [key: string]: any;
+  };
+}
 
 export interface DeviceToken {
   token: string;
@@ -30,12 +38,34 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   system: true,
 };
 
+// Safe lazy loading helper for firebase/messaging
+const getFirebaseMessagingModule = async () => {
+  try {
+    return await import('firebase/messaging');
+  } catch (err) {
+    console.warn('Failed to dynamically import firebase/messaging:', err);
+    return null;
+  }
+};
+
 // Pre-flight check to verify if browser messaging components are securely accessible
 export const isSafeToAccessMessaging = (): boolean => {
   try {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') {
       return false;
     }
+
+    // Cross-origin safe iframe detection
+    let isIframe = false;
+    try {
+      isIframe = window.self !== window.top;
+    } catch (_) {
+      isIframe = true;
+    }
+    if (isIframe) {
+      return false;
+    }
+
     // Accessing or checking properties like 'serviceWorker' or 'indexedDB' can throw a SecurityError inside sandboxed iframes
     const hasServiceWorker = 'serviceWorker' in navigator && navigator.serviceWorker !== undefined;
     const hasNotification = 'Notification' in window && window.Notification !== undefined;
@@ -53,7 +83,9 @@ export const checkNotificationSupport = async (): Promise<boolean> => {
     return false;
   }
   try {
-    const supported = await isSupported();
+    const messagingModule = await getFirebaseMessagingModule();
+    if (!messagingModule) return false;
+    const supported = await messagingModule.isSupported();
     return supported;
   } catch (err) {
     console.warn('FCM isSupported check failed (likely due to sandbox/iframe restrictions):', err);
@@ -64,8 +96,18 @@ export const checkNotificationSupport = async (): Promise<boolean> => {
 // Safe helper to get notification permission without throwing security errors in iframes
 export const getSafeNotificationPermission = (): NotificationPermission => {
   try {
-    if (typeof window !== 'undefined' && 'Notification' in window && window.Notification) {
-      return Notification.permission;
+    if (typeof window !== 'undefined') {
+      let isIframe = false;
+      try {
+        isIframe = window.self !== window.top;
+      } catch (_) {
+        isIframe = true;
+      }
+      if (isIframe) return 'default';
+
+      if ('Notification' in window && window.Notification) {
+        return Notification.permission;
+      }
     }
   } catch (err) {
     console.warn('Failed to safely read Notification.permission in iframe:', err);
@@ -148,7 +190,10 @@ export const requestNotificationPermission = async (userId: string, silent: bool
     }
 
     // 3. Get the FCM registration token
-    const messaging = getMessaging(app);
+    const messagingModule = await getFirebaseMessagingModule();
+    if (!messagingModule) return null;
+
+    const messaging = messagingModule.getMessaging(app);
     let registration;
     try {
       if ('serviceWorker' in navigator) {
@@ -159,7 +204,7 @@ export const requestNotificationPermission = async (userId: string, silent: bool
       console.warn("Service worker registration failed for FCM: ", swError);
     }
     
-    const token = await getToken(messaging, { 
+    const token = await messagingModule.getToken(messaging, { 
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration
     });
@@ -221,8 +266,11 @@ export const setupForegroundListener = async (
   if (!isSupportedBrowser) return null;
 
   try {
-    const messaging = getMessaging(app);
-    const unsubscribe = onMessage(messaging, (payload) => {
+    const messagingModule = await getFirebaseMessagingModule();
+    if (!messagingModule) return null;
+
+    const messaging = messagingModule.getMessaging(app);
+    const unsubscribe = messagingModule.onMessage(messaging, (payload) => {
       console.log('Received foreground message:', payload);
       onNotificationReceived(payload);
     });

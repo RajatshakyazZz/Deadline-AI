@@ -18,7 +18,8 @@ import {
   ExternalLink,
   RefreshCw,
   PlusCircle,
-  ArrowDown
+  ArrowDown,
+  Plus
 } from 'lucide-react';
 import { useApp } from '../components/AppContext';
 import { Task, CategoryType, ComplexityType } from '../types';
@@ -335,36 +336,36 @@ ${JSON.stringify(taskPayload, null, 2)}`;
         <div className="flex gap-2.5">
           <button
             onClick={() => setIsCalendarPanelOpen(!isCalendarPanelOpen)}
-            className={`apple-glass-btn text-xs font-bold uppercase tracking-wider ${
+            className={`apple-glass-btn text-xs font-bold uppercase tracking-wider !text-white ${
               googleAccessToken 
-                ? 'apple-glass-green text-[#D1FAE5]' 
-                : 'apple-glass-gray'
+                ? 'apple-glass-green' 
+                : 'apple-glass-blue'
             }`}
             title="Google Calendar Integration"
           >
-            <CalendarDays className="w-4 h-4 text-[#63B3ED]" />
-            <span>Calendar Sync</span>
+            <CalendarDays className="w-4 h-4 !text-white" />
+            <span className="!text-white">Calendar Sync</span>
           </button>
 
           <button
             onClick={handleAIPrioritize}
             disabled={isSortingByAI || tasks.length === 0}
-            className={`apple-glass-btn text-xs font-bold uppercase tracking-wider ${
+            className={`apple-glass-btn text-xs font-bold uppercase tracking-wider !text-white ${
               isSortingByAI 
                 ? 'apple-glass-gray animate-pulse' 
                 : 'apple-glass-purple text-white'
             }`}
           >
-            <Sparkles className={`w-4 h-4 ${isSortingByAI ? 'animate-spin' : ''}`} />
-            <span>{isSortingByAI ? 'Optimizing...' : 'AI Prioritize All'}</span>
+            <Sparkles className={`w-4 h-4 !text-white ${isSortingByAI ? 'animate-spin' : ''}`} />
+            <span className="!text-white">{isSortingByAI ? 'Optimizing...' : 'AI Prioritize All'}</span>
           </button>
 
           <button
-            onClick={triggerVoiceAdd}
-            className="apple-glass-btn apple-glass-gray !p-2.5"
-            title="Add task via Voice"
+            onClick={() => setIsAddTaskOpen(true)}
+            className="apple-glass-btn apple-glass-indigo !p-2.5 !text-white"
+            title="Add Task"
           >
-            <Mic className="w-5 h-5 text-[#63B3ED]" />
+            <Plus className="w-5 h-5 !text-white" />
           </button>
         </div>
       </div>

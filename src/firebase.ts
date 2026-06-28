@@ -34,10 +34,18 @@ export const app = initializeApp(firebaseConfig);
 const getSafePersistence = () => {
   const persistences = [];
   
+  // Test if we are in an iframe (sandboxed environments block local storage/indexedDB access)
+  let isIframe = false;
+  try {
+    isIframe = typeof window !== 'undefined' && window.self !== window.top;
+  } catch (e) {
+    isIframe = true;
+  }
+  
   // Test localStorage
   let isLocalStorageAvailable = false;
   try {
-    if (typeof window !== 'undefined' && 'localStorage' in window) {
+    if (typeof window !== 'undefined' && !isIframe && 'localStorage' in window) {
       const testKey = '__auth_storage_test__';
       window.localStorage.setItem(testKey, testKey);
       window.localStorage.removeItem(testKey);
@@ -50,7 +58,7 @@ const getSafePersistence = () => {
   // Test indexedDB - accessing or referencing indexedDB inside sandboxed iframes can throw a SecurityError
   let isIndexedDBAvailable = false;
   try {
-    if (typeof window !== 'undefined' && 'indexedDB' in window && window.indexedDB) {
+    if (typeof window !== 'undefined' && !isIframe && 'indexedDB' in window && window.indexedDB) {
       // Actually try to open a test database to trigger any potential SecurityError synchronously or asynchronously
       const request = window.indexedDB.open('__firebase_auth_test_db__');
       if (request) {
@@ -69,7 +77,7 @@ const getSafePersistence = () => {
   // Test sessionStorage
   let isSessionStorageAvailable = false;
   try {
-    if (typeof window !== 'undefined' && 'sessionStorage' in window) {
+    if (typeof window !== 'undefined' && !isIframe && 'sessionStorage' in window) {
       const testKey = '__auth_session_test__';
       window.sessionStorage.setItem(testKey, testKey);
       window.sessionStorage.removeItem(testKey);

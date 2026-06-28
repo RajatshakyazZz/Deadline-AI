@@ -52,7 +52,7 @@ export const NotificationCenter: React.FC = () => {
           {unreadCount > 0 && (
             <motion.span
               initial={{ scale: 0 }}
-              animate={{ scale: [0, 1.25, 1] }}
+              animate={{ scale: 1 }}
               exit={{ scale: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 14 }}
               className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 border border-[#0d121e] text-[10px] font-extrabold text-white flex items-center justify-center shadow-lg"

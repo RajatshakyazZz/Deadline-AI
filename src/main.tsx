@@ -6,14 +6,18 @@ import { validateEnvironment } from './utils/envCheck.ts';
 import { SecurityStatus } from './components/SecurityStatus.tsx';
 
 // 1. Frame-busting Javascript for clickjacking protection, allowing local/preview iframe hosts safely
-if (window.self !== window.top) {
-  const isAllowedHost = 
-    window.location.hostname.includes('run.app') || 
-    window.location.hostname.includes('localhost') || 
-    window.location.hostname.includes('127.0.0.1');
-  if (!isAllowedHost && window.top) {
-    window.top.location.href = window.self.location.href;
+try {
+  if (window.self !== window.top) {
+    const isAllowedHost = 
+      window.location.hostname.includes('run.app') || 
+      window.location.hostname.includes('localhost') || 
+      window.location.hostname.includes('127.0.0.1');
+    if (!isAllowedHost && window.top) {
+      window.top.location.href = window.self.location.href;
+    }
   }
+} catch (e) {
+  console.warn('Frame protection check bypassed due to cross-origin sandboxing limits:', e);
 }
 
 // 2. Validate all critical environment variables on startup

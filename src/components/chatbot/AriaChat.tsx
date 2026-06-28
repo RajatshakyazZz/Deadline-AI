@@ -174,30 +174,34 @@ export const AriaChat: React.FC = () => {
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
 
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
 
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInputValue(prev => prev ? `${prev} ${transcript}` : transcript);
-      };
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInputValue(prev => prev ? `${prev} ${transcript}` : transcript);
+        };
 
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
-        setIsListening(false);
-      };
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          setIsListening(false);
+        };
 
-      recognition.onend = () => {
-        setIsListening(false);
-      };
+        recognition.onend = () => {
+          setIsListening(false);
+        };
 
-      recognitionRef.current = recognition;
+        recognitionRef.current = recognition;
+      } catch (err) {
+        console.warn('SpeechRecognition instantiation failed in chatbot due to iframe security restrictions:', err);
+      }
     }
   }, []);
 
@@ -308,7 +312,7 @@ export const AriaChat: React.FC = () => {
       setIsAddTaskOpen(true);
       setAriaExpression('excited');
       setTimeout(() => {
-        typeOutAriaResponse("I have automatically opened the **Create AI-Prioritized Task** window for you! 📋 Fill in your task details, and I will instantly analyze its complexity, subtasks, and deadlines for you. 🚀");
+        typeOutAriaResponse("I have automatically opened the **Add Task** window for you! 📋 Fill in your task details, and I will instantly analyze its complexity, subtasks, and deadlines for you. 🚀");
       }, 500);
       return;
     }
@@ -498,6 +502,13 @@ export const AriaChat: React.FC = () => {
           boxShadow: 'none',
         }}
       >
+        {/* Elegant "AI CHAT BOT" floating label above the orb */}
+        {!isOpen && (
+          <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#060A16]/95 border border-[#63B3ED]/40 rounded-full py-1 px-3 shadow-lg shadow-black/50 text-[#63B3ED] font-mono font-bold text-[9px] tracking-widest uppercase whitespace-nowrap pointer-events-none select-none">
+            AI CHAT BOT
+          </div>
+        )}
+
         {/* Subtle platform/shadow below orb */}
         <div
           className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 rounded-full bg-blue-400/20 blur-[6px] orb-shadow-pulse pointer-events-none"

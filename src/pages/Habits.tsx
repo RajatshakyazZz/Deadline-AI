@@ -462,10 +462,15 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
             }}
           >
             {/* --- COLUMN HEADERS (Day Numbers) --- */}
-            <div className={`text-xs font-black uppercase tracking-widest font-mono self-center sticky left-0 z-20 ${
-              isLight ? 'bg-slate-50/95 text-slate-400 border-r border-slate-100' : 'bg-[#0a0e17]/95 text-[#A0AEC0] border-r border-white/5'
-            } px-3 py-2.5 h-full flex items-center shadow-[4px_0_12px_-4px_rgba(0,0,0,0.15)] mr-2`}>
-              🚀 Routines
+            <div className={`text-xs font-extrabold uppercase tracking-widest sticky left-0 z-20 ${
+              isLight 
+                ? 'bg-white border-slate-200 text-slate-800 shadow-sm' 
+                : 'bg-[#0b101f] border-white/5 text-white backdrop-blur-md shadow-[4px_0_16px_rgba(0,0,0,0.2)]'
+            } px-3 py-2 border rounded-2xl flex items-center justify-between mr-2`}>
+              <span className="flex items-center gap-1.5">
+                <span>🚀</span>
+                <span className="font-extrabold tracking-wider font-sans text-[11px]">Routines</span>
+              </span>
             </div>
             {monthDaysArray.map((day) => {
               const dateStr = getDayDateString(day);
@@ -474,10 +479,10 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
               return (
                 <div 
                   key={day} 
-                  className={`text-center py-1.5 rounded-lg font-mono text-xs font-bold transition-all ${
+                  className={`text-center py-1.5 rounded-lg font-mono text-xs font-black transition-all ${
                     isTodayCell 
                       ? 'text-[#8B5CF6] scale-110 bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 shadow-[0_0_10px_rgba(139,92,246,0.15)]' 
-                      : 'text-[#4A5568]'
+                      : isLight ? 'text-slate-700' : 'text-slate-300'
                   }`}
                   title={isTodayCell ? "Today's column" : `Day ${day}`}
                 >
@@ -558,8 +563,10 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
 
                       if (isFuture) {
                         // Future locked cell
-                        cellClass = 'bg-white/[0.01] border-white/[0.03] text-white/[0.04] cursor-not-allowed';
-                        content = <Lock className="w-2.5 h-2.5 opacity-20" />;
+                        cellClass = isLight 
+                          ? 'bg-slate-100/60 border-slate-200/80 text-slate-400 cursor-not-allowed' 
+                          : 'bg-white/[0.03] border-white/[0.08] text-white/[0.15] cursor-not-allowed';
+                        content = <Lock className={`w-2.5 h-2.5 ${isLight ? 'opacity-45 text-slate-400' : 'opacity-25 text-white'}`} />;
                       } else if (isCompleted) {
                         // Completed day cell (gorgeous purple gradient checkmark)
                         cellClass = 'bg-gradient-to-br from-[#8B5CF6] to-[#6366F1] border-[#8B5CF6]/30 text-white shadow-[0_0_12px_rgba(139,92,246,0.35)]';
@@ -573,13 +580,21 @@ Return ONLY a single sentence of tactical guidance. No emojis, no markdown wrapp
                         // Past uncompleted day cell or today cell
                         if (isCellLocked) {
                           // Past locked cell in Strict Mode (a missed day box)
-                          cellClass = 'bg-white/[0.01] border-white/[0.02] text-white/[0.05] cursor-pointer hover:border-red-500/20 hover:bg-red-500/5';
-                          content = <Lock className="w-2.5 h-2.5 opacity-25 text-red-400" />;
+                          cellClass = isLight
+                            ? 'bg-red-50 border-red-200 text-red-500 hover:border-red-400 hover:bg-red-100 cursor-pointer shadow-sm'
+                            : 'bg-red-950/15 border-red-900/40 text-red-400 hover:border-red-500/40 hover:bg-red-500/10 cursor-pointer';
+                          content = <Lock className={`w-2.5 h-2.5 ${isLight ? 'text-red-500 font-extrabold' : 'opacity-60 text-red-400'}`} />;
                         } else {
                           // Interactive uncompleted cell (today or past if not strict)
-                          cellClass = isTodayCell
-                            ? 'bg-purple-500/5 border-purple-500/20 hover:border-purple-500/40 text-purple-400 hover:bg-purple-500/10 cursor-pointer shadow-[0_0_8px_rgba(139,92,246,0.15)]'
-                            : 'bg-white/[0.02] border-white/5 hover:border-white/20 text-[#4A5568] hover:bg-white/[0.05] cursor-pointer';
+                          if (isTodayCell) {
+                            cellClass = isLight
+                              ? 'bg-purple-500/10 border-purple-400/80 hover:border-purple-600 text-purple-600 hover:bg-purple-500/20 cursor-pointer shadow-[0_0_8px_rgba(139,92,246,0.2)]'
+                              : 'bg-purple-500/15 border-purple-500/40 hover:border-purple-500/60 text-purple-400 hover:bg-purple-500/25 cursor-pointer shadow-[0_0_12px_rgba(139,92,246,0.3)]';
+                          } else {
+                            cellClass = isLight
+                              ? 'bg-slate-50 border-slate-300 hover:border-purple-400 hover:bg-purple-50 text-slate-500 cursor-pointer shadow-sm'
+                              : 'bg-white/[0.05] border-white/15 hover:border-purple-500/40 text-[#A0AEC0] hover:bg-purple-500/10 cursor-pointer';
+                          }
                         }
                       }
 

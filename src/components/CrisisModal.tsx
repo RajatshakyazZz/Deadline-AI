@@ -83,9 +83,55 @@ Return ONLY valid JSON (no markdown backticks, no wrapping text):
         const response = await callGemini(prompt, true);
         const cleaned = response.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleaned);
-        setPlan(parsed);
+        
+        // Robust validation and sanitization of the JSON parsed structure to prevent render crashes
+        const validatedPlan: EmergencyPlan = {
+          verdict: String(parsed.verdict || "CRITICAL_ACTION_REQUIRED"),
+          urgency: String(parsed.urgency || "CRITICAL"),
+          message: String(parsed.message || "High-stakes deadline pressure activated. Execute core objectives immediately."),
+          checklist: Array.isArray(parsed.checklist) 
+            ? parsed.checklist.map((item: any, index: number) => ({
+                id: String(item.id || `c-${index}`),
+                title: String(item.title || item.task || "Immediate tactical objective"),
+                completed: !!item.completed
+              }))
+            : [
+                { id: "c1", title: "Establish the core skeleton/layout and essential routes", completed: false },
+                { id: "c2", title: "Implement critical functionality and essential state handlers", completed: false },
+                { id: "c3", title: "Eliminate secondary visual widgets and unrequested details", completed: false }
+              ],
+          whatToCut: Array.isArray(parsed.whatToCut)
+            ? parsed.whatToCut.map((item: any) => String(item))
+            : [
+                "Auxiliary animations, transition effects, or decorative widgets",
+                "Optional configuration menus or custom preference sliders"
+              ],
+          motivation: String(parsed.motivation || "Focus entirely on one single line of code at a time. The clock is ticking, but you can clear this."),
+          finalTip: String(parsed.finalTip || "Commit fully to execution. Stop refining and start shipping.")
+        };
+        
+        setPlan(validatedPlan);
       } catch (err) {
         console.error('Failed to parse Gemini crisis plan, using mock:', err);
+        // High fidelity safe fallback structure
+        setPlan({
+          verdict: "CRITICAL_ACTION_REQUIRED",
+          urgency: "CRITICAL",
+          message: "Time is extremely short! Drop secondary tasks, focus only on core requirements, and build the minimal functional prototype.",
+          checklist: [
+            { id: "c1", title: "Establish the core skeleton/layout and essential routes", completed: false },
+            { id: "c2", title: "Implement critical functionality and essential state handlers", completed: false },
+            { id: "c3", title: "Eliminate secondary visual widgets and unrequested details", completed: false },
+            { id: "c4", title: "Run lint and compile tests to ensure zero deployment errors", completed: false }
+          ],
+          whatToCut: [
+            "Auxiliary animations, transition effects, or decorative widgets",
+            "Optional configuration menus or custom preference sliders",
+            "Complex sorting/filtering on list views"
+          ],
+          motivation: "Don't let the ticking clock freeze you. Take a deep breath and clear the single highest-impact item first.",
+          finalTip: "Commit fully to execution. Stop refining and start shipping."
+        });
       } finally {
         setLoading(false);
       }
